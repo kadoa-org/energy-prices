@@ -1,0 +1,24 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "outputDirectory": "dist",
+  "buildCommand": "vite build && DATA_SOURCE=cdn bun scripts/prerender.mjs",
+  "rewrites": [
+    {
+      "source": "/energy-prices/((?!data/|assets/|favicon|robots|sitemap).*)",
+      "destination": "/energy-prices/index.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/energy-prices/assets/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    }
+  ],
+  "trailingSlash": false,
+  "cleanUrls": true
+}

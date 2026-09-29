@@ -1,0 +1,265 @@
+/* Page styles for the food price monitor. Tokens and chrome come from the shared kit (GOV.UK palette at data-app density). */
+@import './chart.css';
+*{box-sizing:border-box}
+body{margin:0;background:#fcfcfd;color:var(--dk-ink);font:15px/1.5 var(--dk-font);-webkit-font-smoothing:antialiased}
+button,input,select{font:inherit}button{cursor:pointer}
+a{color:var(--dk-link);text-underline-offset:3px}a:hover{text-decoration-thickness:2px}
+h1,h2,h3,p,dl{margin-top:0}h1{font-size:28px;line-height:1.2;margin-bottom:12px;letter-spacing:-.4px}h2{font-size:19px;line-height:1.3}h3{font-size:17px;line-height:1.3}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:3px solid var(--dk-focus);outline-offset:2px}
+.skip-link{position:absolute;top:-100px;left:15px;background:var(--dk-focus);color:var(--dk-ink);padding:10px;z-index:20}.skip-link:focus{top:8px}
+.dk-container{max-width:1080px}.main{padding-top:28px;padding-bottom:24px;min-height:65vh}
+.hero{display:flex;justify-content:space-between;align-items:flex-start;gap:24px;margin-bottom:24px}.hero>div{max-width:760px}
+.lede{font-size:17px;line-height:1.55;color:var(--dk-muted);margin-bottom:0}.detail-hero .dk-hint{margin:10px 0 0}
+
+.dk-btn{text-decoration:none;min-height:36px;height:auto;padding-top:7px;padding-bottom:7px}
+.dk-section-head{align-items:flex-end}.dk-section-head .dk-hint{max-width:70ch}
+
+/* Tables: quote and caption stacked in one cell; numbers right-aligned in tabular figures (kit .dk-num). */
+.dk-table td{padding-top:10px;padding-bottom:10px;vertical-align:top}
+.cell-link{font-weight:600}.cell-nowrap{white-space:nowrap}.cell-quote{font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+.cell-note{display:block;font-size:12px;color:var(--dk-muted);margin-top:2px;line-height:1.4}
+.dk-table .dk-num .cell-note{text-align:right}
+.table-more{display:flex;align-items:center;gap:15px;padding-top:15px}
+.text-button{background:none;border:0;color:var(--dk-link);text-decoration:underline;text-underline-offset:3px;padding:0;font-size:14px}
+
+/* Filters: one row above everything they scope. GOV.UK select: square, dark 1px border. */
+.filters{display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px 16px;margin-bottom:24px}.filters>*{flex:0 1 auto;width:240px;max-width:100%}.filters .product-select{width:360px}
+.filters label{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;min-width:0}
+.filter-fact{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;min-width:0}.filter-fact-value{display:flex;align-items:center;min-height:40px;padding-bottom:6px;border-bottom:1px solid var(--dk-rule-soft);font-size:16px;font-weight:400;overflow-wrap:anywhere}.filters--single>*{width:320px}
+.filters select{min-width:0;width:100%;height:40px;padding:0 36px 0 10px;border:1px solid var(--dk-ink);border-radius:0;color:var(--dk-ink);background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='9'%3E%3Cpath d='M1 1l6 6 6-6' fill='none' stroke='%230b0c0c' stroke-width='1.5'/%3E%3C/svg%3E") no-repeat right 12px center;appearance:none;font-size:14px;font-weight:400;text-overflow:ellipsis}
+
+/* Chart panel */
+.chart-card{border:1px solid var(--dk-rule);background:#fff;padding:20px;margin-bottom:28px}
+.quote-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:24px;margin-bottom:8px}.quote-heading>div:first-child{min-width:0}
+.quote-value{font-size:30px;margin:10px 0 4px;line-height:1.2;letter-spacing:-.4px}.quote-value span{font-size:14px;font-weight:400;color:var(--dk-muted);letter-spacing:0}
+.product-caption{font-size:14px;line-height:1.5;margin-bottom:4px;color:#333;overflow-wrap:anywhere}
+.chart-controls{display:flex;flex-direction:column;align-items:flex-end;gap:10px;flex-shrink:0}
+.range-control{display:flex;border:1px solid var(--dk-rule)}
+.range-control button{background:#fff;border:0;min-width:56px;min-height:34px;padding:0 10px;font-size:13px;color:var(--dk-muted)}
+.range-control button+button{border-left:1px solid var(--dk-rule)}
+.range-control button[aria-pressed=true]{background:var(--dk-link);color:#fff;font-weight:600}
+.compare-toggle{display:inline-flex;align-items:center;gap:6px;font-size:13px;white-space:nowrap}.compare-toggle input{width:18px;height:18px;margin:0;accent-color:var(--dk-link)}
+.chart-gap-note{margin:12px 0 0;font-size:13px;line-height:1.5;color:var(--dk-muted)}
+.chart-note{margin:14px 0 0;padding-top:12px;border-top:1px solid var(--dk-rule-soft);font-size:12px;color:var(--dk-muted)}
+.chart-loading{position:relative;color:var(--dk-muted);padding-top:14px}
+.skeleton-chart{height:250px;background:#eeefef;margin-top:16px}.skeleton-title{width:240px;max-width:80%;height:32px;background:#eeefef;margin:20px 0}.skeleton-line{width:70%;height:20px;background:#eeefef;margin-bottom:24px}
+
+/* GOV.UK summary list at compact density */
+.dk-summary{margin:0 0 20px;font-size:14px;line-height:1.5}
+.dk-summary>div{display:grid;grid-template-columns:minmax(120px,32%) 1fr;gap:12px;padding:8px 0;border-bottom:1px solid var(--dk-rule-soft)}
+.dk-summary dt{font-weight:600;overflow-wrap:anywhere}.dk-summary dd{margin:0;overflow-wrap:anywhere}.dk-summary dd .dk-tag{margin-left:6px;vertical-align:middle}
+.dk-summary--wide{font-size:15px}.dk-summary--wide>div{padding:10px 0}
+
+/* Record dialog */
+.evidence-dialog{width:min(640px,calc(100vw - 32px));max-height:85vh;overflow:auto;border:1px solid var(--dk-muted);padding:24px;color:var(--dk-ink);background:#fff}
+.evidence-dialog::backdrop{background:rgba(11,12,12,.4)}
+.dialog-heading{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:12px}.dialog-heading h2{margin:0}
+.source-quotes p{font-size:14px;margin-bottom:8px;border-left:3px solid var(--dk-rule);padding-left:10px}
+.evidence-dialog summary{cursor:pointer;font-size:13px;color:var(--dk-link);margin-bottom:8px}.evidence-dialog details{margin:16px 0}
+
+/* Landing page: title block, one finding, a 3x2 grid of aligned panels, then full-width tables */
+.title-block{margin-bottom:20px}.title-block .lede{margin-bottom:6px}.title-block .dk-hint{margin:0}
+.board{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}
+.panel{background:var(--gov-grey-bg);padding:20px 25px 20px;display:grid;grid-template-rows:auto auto auto;row-gap:10px;min-width:0}
+.panel-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;min-width:0}.panel-head>div{min-width:0}
+.panel-head a{font-size:19px;font-weight:700;color:var(--dk-ink);text-decoration:none;display:block;line-height:1.2}.panel-head a:hover{text-decoration:underline}
+.panel-market{display:block;font-size:12px;color:var(--dk-muted);line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.panel-delta{text-align:right;line-height:1.2;flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+.change{font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}.change--up{color:var(--dk-red)}.change--down{color:var(--dk-green)}.change--up .tri{border-bottom-color:var(--dk-red)}.change--down .tri{border-top-color:var(--dk-green)}
+.tri{display:inline-block;width:0;height:0;border-left:4px solid transparent;border-right:4px solid transparent;border-bottom:7px solid var(--dk-ink);margin-right:5px;vertical-align:2px}.tri--down{border-bottom:0;border-top:7px solid var(--dk-ink)}
+.panel-value{display:block;font-size:26px;font-weight:400;line-height:1.15;font-variant-numeric:tabular-nums;letter-spacing:-.3px;white-space:nowrap}
+.panel-sub{display:block;font-size:12px;color:var(--dk-muted);line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.news-list--compact>li{padding:8px 0}.news-list--compact .news-head a{font-weight:600;font-size:14px}
+@media(max-width:640px){.panel{padding:12px}.panel-value{font-size:22px}}
+
+.toolbar-select{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:600}.toolbar-select select{height:32px;border:1px solid var(--dk-ink);border-radius:0;background:#fff;padding:0 8px;font-size:14px;font-weight:400}
+/* Market news */
+.emoji{margin-right:6px;font-size:1.05em}
+.dk-inset{border-left:5px solid var(--dk-rule);padding:6px 0 6px 14px;margin:14px 0 0;font-size:14px;line-height:1.5;color:#383f43}
+.news-list{list-style:none;margin:0;padding:0;border-top:1px solid var(--dk-rule-soft)}
+.news-list>li{padding:12px 0;border-bottom:1px solid var(--dk-rule-soft)}
+.news-head{display:grid;grid-template-columns:52px minmax(0,1fr) auto;gap:12px;align-items:baseline}.news-head a{font-weight:600;overflow-wrap:anywhere}.news-source{font-size:12px;color:var(--dk-muted);white-space:nowrap}.news-date{white-space:nowrap}
+.news-summary{margin:4px 0 0 64px;font-size:14px;color:#383f43;max-width:76ch}
+.news-tags{margin:8px 0 0;display:flex;gap:6px;flex-wrap:wrap}.news-tags a{text-decoration:none}
+.news-signals{margin:8px 0 0;padding-left:18px;font-size:13px;color:var(--dk-muted);line-height:1.5}.news-signals q{color:var(--dk-ink)}
+@media(max-width:700px){.news-head{flex-direction:column;gap:2px}}
+
+/* About page prose */
+.prose{max-width:760px}.prose h2{margin-top:30px}.prose p{color:#383f43}.prose .lede{font-size:17px}.prose ul{padding-left:20px}.prose li{margin-bottom:6px}.prose .dk-table-wrap{margin-bottom:8px}
+
+@media(max-width:700px){
+  h1{font-size:26px}.main{padding-top:22px}.header-date{display:none}
+  .hero{flex-direction:column;gap:16px}
+  .filters>*,.filters .product-select{width:100%}
+  .quote-heading{flex-direction:column;gap:12px}.chart-controls{align-items:flex-start}.quote-value{font-size:26px}
+  .chart-card{padding:14px}
+  .dk-summary>div{grid-template-columns:1fr;gap:2px}
+  .table-more{flex-wrap:wrap}.dk-nav-list{gap:20px}.dk-nav a{font-size:13px}
+}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+
+/* Header actions and Cmd+K palette */
+.header-right{display:flex;align-items:center;gap:14px}.header-kbd{font:12px ui-monospace,Menlo,monospace;opacity:.8;margin-left:2px}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.cmdk{position:fixed;inset:0;z-index:50;display:flex;align-items:flex-start;justify-content:center;padding:12vh 16px 0}
+.cmdk-backdrop{position:absolute;inset:0;background:rgba(11,12,12,.5)}
+.cmdk-box{position:relative;width:100%;max-width:560px;background:#fff;border:2px solid var(--dk-ink)}
+.cmdk-head{display:flex;align-items:center;gap:8px;padding:12px;border-bottom:1px solid var(--dk-rule)}.cmdk-input{flex:1;height:36px}
+.cmdk kbd{padding:1px 6px;border:1px solid var(--dk-rule);background:var(--dk-bg-hover);font:13px ui-monospace,Menlo,monospace;color:var(--dk-muted)}
+.cmdk-list{max-height:52vh;overflow:auto;padding:4px 0}.cmdk-group{padding:8px 12px 4px;font-size:13px;font-weight:700;color:var(--dk-muted)}
+.cmdk-item{display:flex;align-items:center;gap:12px;padding:7px 12px;color:var(--dk-ink);text-decoration:none;font-size:15px}.cmdk-item--active,.cmdk-item:hover{background:var(--dk-bg-hover)}
+.cmdk-label{flex:1;font-weight:700;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cmdk-item--active .cmdk-label{color:var(--dk-link)}
+.cmdk-hint{font-size:13px;color:var(--dk-muted);max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cmdk-right{font-size:13px;color:var(--dk-muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.cmdk-empty{padding:24px 12px;text-align:center;color:var(--dk-muted)}
+.cmdk-foot{display:flex;align-items:center;gap:6px;padding:0 12px;height:32px;border-top:1px solid var(--dk-rule);font-size:13px;color:var(--dk-muted)}
+@media(max-width:640px){.header-right .dk-btn-label,.header-kbd{display:none}}
+
+/* Reverse engineered from the UKHSA data dashboard, which is built on the GOV.UK Design System. Values are the ones
+   read off the live page, not approximations. */
+:root{--gov-grey-bg:#f3f2f1;--gov-border:#b1b4b6;--gov-secondary:#505a5f;--gov-text:#0b0c0c;--gov-tag-red-bg:#f4cdc6;--gov-tag-red:#2a0b06;--gov-tag-green-bg:#cce2d8;--gov-tag-green:#005a30}
+.govuk-visually-hidden{position:absolute!important;width:1px!important;height:1px!important;margin:0!important;padding:0!important;overflow:hidden!important;clip:rect(0 0 0 0)!important;clip-path:inset(50%)!important;border:0!important;white-space:nowrap!important}
+
+
+/* GOV.UK tag used for change */
+.change-tag{display:inline-flex;align-items:center;gap:4px;padding:3px 8px 4px;font-size:16px;line-height:20px;font-weight:700;font-variant-numeric:tabular-nums}
+.change-tag--up{background:var(--gov-tag-red-bg);color:var(--gov-tag-red)}.change-tag--down{background:var(--gov-tag-green-bg);color:var(--gov-tag-green)}.change-tag--flat{background:#e8f1f8;color:#0c2d4a}
+.change-tag__arrow{font-weight:700;font-size:18px;line-height:1}.change-tag--up .change-tag__arrow{color:#942514}.change-tag--down .change-tag__arrow{color:#005a30}
+.change-tag .change-tag__main+*{font-weight:400}
+
+/* Chart card: grey container, title, italic description, date, tabs */
+/* Measured from the UKHSA chart card: 20px padding, header and tabs 24px apart. */
+.chart-panel-card{background:var(--gov-grey-bg);padding:20px;margin:0 0 40px;min-width:0}
+.chart-panel-card__title{font-size:24px;line-height:30px;font-weight:700;margin:0 0 8px}
+.chart-panel-card__desc{font-size:16px;line-height:20px;font-style:italic;color:var(--gov-secondary);margin:0 0 10px}
+.chart-panel-card__date{font-size:16px;line-height:20px;color:var(--gov-secondary);margin:0 0 24px}
+
+/* GOV.UK tabs */
+/* GOV.UK Design System tab geometry, so switching tabs never moves anything: inactive tabs are padded 20px each side
+   and the active one 19px plus a 1px border (same width); the active tab grows only upward (-5px) and 1px over the
+   panel border, so its text stays on the same line. */
+.govuk-tabs{margin:0}.govuk-tabs__list{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;align-items:flex-start}
+.govuk-tabs__list-item{margin:0 5px 0 0;position:relative}
+.govuk-tabs__tab{display:block;font:inherit;font-size:19px;line-height:25px;background:none;border:0;cursor:pointer;color:var(--gov-text);text-decoration:underline;text-underline-offset:.15em;padding:10px 20px}
+.govuk-tabs__tab:hover{text-decoration-thickness:max(3px,.1875rem)}
+.govuk-tabs__list-item--selected .govuk-tabs__tab{background:#fff;border:1px solid var(--gov-border);border-bottom:0;text-decoration:none;padding:14px 19px 16px;margin:-5px 0 -1px;position:relative;z-index:1}
+.govuk-tabs__tab:focus-visible{outline:3px solid transparent;background:var(--dk-focus,#fd0);box-shadow:0 -2px var(--dk-focus,#fd0),0 4px var(--gov-text);text-decoration:none}
+/* As the UKHSA chart cards: every panel keeps a minimum height and a long table scrolls inside a fixed height, so a
+   switch from chart to table does not move what is below. */
+.govuk-tabs__panel{background:#fff;border:1px solid var(--gov-border);padding:24px 16px;min-width:0;min-height:560px;box-sizing:border-box}.govuk-tabs__short{display:none}
+.govuk-tabs__panel[hidden]{display:none}
+
+/* GOV.UK select */
+.chart-filters{display:flex;flex-wrap:wrap;gap:0 30px}.filter-select{margin:0 0 20px}.govuk-label{display:block;font-size:19px;line-height:25px;margin:0 0 5px;color:var(--gov-text)}
+.govuk-select{font:inherit;font-size:19px;line-height:25px;min-width:11.5em;max-width:100%;height:2.5rem;padding:5px;border:2px solid var(--gov-text);border-radius:0;background:#fff;color:var(--gov-text)}
+.govuk-select:focus{outline:3px solid var(--dk-focus,#fd0);outline-offset:0;box-shadow:inset 0 0 0 2px}
+
+/* Chart legend above the plot */
+/* The legend is the phone fallback: from 600px of chart width the lines are named at their ends instead (LineChart END_LABELS). */
+.chart{container-type:inline-size}
+@container (min-width: 600px){.chart .chart-legend--narrow{display:none}}
+.chart-legend{display:flex;justify-content:center;flex-wrap:wrap;gap:20px;margin:0 0 8px;font-size:14px;color:var(--gov-secondary)}
+.chart-legend__item{display:inline-flex;align-items:center;gap:8px}.chart-legend__swatch{display:inline-block;width:28px;height:3px;background:var(--chart-series-ink)}
+.chart-legend__swatch--gap{height:0;border-top:2px dotted var(--gov-border);background:none}
+
+@media (max-width:640px){.chart-panel-card{padding:15px}.govuk-tabs__tab{font-size:16px;padding:10px 8px}.govuk-tabs__list-item--selected .govuk-tabs__tab{padding:14px 7px 16px}.govuk-tabs__panel{padding:12px;min-height:400px}.govuk-tabs__long{display:none}.govuk-tabs__short{display:inline}}
+.table-intro{margin:0 0 15px}.download-intro{margin:0 0 20px;font-size:19px;line-height:25px}
+.download-row{display:flex;flex-wrap:wrap;gap:15px}.section-download{margin:20px 0 0;font-size:16px;line-height:24px}.section-download .dk-btn{margin-left:10px}
+
+/* Key figures on a detail page: one grey row, a figure per cell, divided by thin rules. */
+.key-figures{margin:0 0 30px}.key-figures__context{font-size:16px;margin:15px 0 0;max-width:80ch}
+.key-figures__row{display:grid;grid-template-columns:repeat(var(--key-columns),minmax(0,1fr));margin:0;background:var(--gov-grey-bg)}
+.key-figures__item{padding:15px 20px;min-width:0}
+.key-figures__item+.key-figures__item{border-left:1px solid var(--gov-border)}
+.key-figures__label{margin:0 0 6px;font-size:14px;color:var(--gov-secondary)}
+.key-figures__value{margin:0;font-size:22px;line-height:1.25;font-variant-numeric:tabular-nums}
+.key-figures__value .change-tag{font-size:17px}
+.key-figures__value a{color:var(--dk-link);text-underline-offset:3px}
+.change-tag--small{padding:1px 5px 2px;font-size:13px;line-height:17px;gap:2px}.change-tag--small .change-tag__arrow{font-size:14px}
+.key-figures__note{margin:4px 0 0;font-size:14px;color:var(--gov-secondary)}
+@media (max-width:640px){
+  .key-figures__row{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .key-figures__item:nth-child(odd){border-left:0}
+  .key-figures__item:nth-child(n+3){border-top:1px solid var(--gov-border)}
+  .key-figures__row--odd{grid-template-columns:1fr}.key-figures__row--odd .key-figures__item{border-left:0}.key-figures__row--odd .key-figures__item+.key-figures__item{border-top:1px solid var(--gov-border)}
+}
+
+.section-heading{margin:0 0 15px}.section-heading h2{font-size:24px;font-weight:700;line-height:1.25;margin:0 0 8px}.section-heading__desc{font-size:16px;font-style:italic;color:var(--gov-secondary);margin:0 0 8px}.section-heading__date{font-size:16px;color:var(--gov-secondary);margin:0}
+@media (max-width:640px){.section-heading h2{font-size:21px}}
+/* Grocery staples: small multiples of the change since 2019, name and change on one line, the price under it. */
+.staples__grid{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:24px 20px}
+.staples__item{display:flex;flex-direction:column;gap:2px;min-width:0}
+.staples__head{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.staples__head a{font-weight:700}.staples__price{font-size:16px;font-variant-numeric:tabular-nums}.staples__unit{font-size:14px;color:var(--gov-secondary)}
+@media (max-width:900px){.staples__grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:640px){.staples__grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:20px 14px}}
+
+.benchmarks{margin:0 0 36px}.benchmarks__more{margin:10px 0 0;font-size:16px}
+
+/* Staples ranking (StaplesChart.jsx): one row per food, a bar on a shared scale, the change, and a dashed line at
+   overall inflation. */
+.ranking__list{list-style:none;margin:0;padding:0}
+.ranking__row{display:grid;grid-template-columns:140px minmax(0,1fr) 56px;align-items:center;gap:12px;padding:3px 0}
+/* The line label stays in view while the 40 rows scroll inside the panel. */
+.ranking__row--label{padding:4px 0 8px;position:sticky;top:-24px;background:#fff;box-shadow:0 2px 0 #fff;z-index:1}
+.ranking__intro{margin:0 0 16px;font-size:16px}
+.ranking__name{font-weight:400;font-size:16px}
+.ranking__row--staple .ranking__name,.ranking__row--staple .ranking__value{font-weight:700}
+.ranking__track{position:relative;height:16px}
+.ranking__row--label .ranking__track{height:20px}
+.ranking__bar{position:absolute;top:0;bottom:0;background:var(--chart-series-ink)}
+.ranking__cpi{position:absolute;top:-4px;bottom:-4px;border-left:2px dashed #0b0c0c}
+.ranking__cpi-label{position:absolute;bottom:0;transform:translateX(-50%);white-space:nowrap;font-size:14px;font-weight:700}
+.ranking__value{font-variant-numeric:tabular-nums;text-align:right;font-size:16px}
+.ranking__key{margin:14px 0 0;font-size:14px;color:var(--gov-secondary)}
+@media (max-width:640px){.ranking__row{grid-template-columns:112px minmax(0,1fr) 48px;gap:8px}}
+
+/* Energy site additions. */
+.subnav{margin:0 0 20px}.subnav ul{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:6px 20px;font-size:16px}
+.subnav a[aria-current=page]{font-weight:700;color:var(--dk-ink);text-decoration:none}
+.back-link{margin:0 0 12px;font-size:16px}.back-link a::before{content:"‹ "}
+.staples__name{font-weight:700}
+.chart-legend__swatch--compare{height:0;border-top:2px dashed #8a9195;background:none}
+.dk-inset{margin:0 0 24px}
+.govuk-tabs__panel{min-height:0}
+/* State and utility names run longer than fuel names ("District of Columbia"), so the value ranking gives them room. */
+.ranking--wide .ranking__row{grid-template-columns:180px minmax(0,1fr) 56px}
+@media (max-width:640px){.ranking--wide .ranking__row{grid-template-columns:128px minmax(0,1fr) 48px}}
+
+/* Fuel hierarchy. GOV.UK breadcrumbs, the MOJ sub navigation for sibling fuels, UKHSA-style topic cards, the GOV.UK
+   details component for the location filter, and grouped Compare areas tables. */
+.govuk-breadcrumbs{margin:0 0 12px;font-size:16px}
+.govuk-breadcrumbs__list{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap}
+.govuk-breadcrumbs__list-item{display:inline-flex;align-items:center}
+.govuk-breadcrumbs__list-item+.govuk-breadcrumbs__list-item::before{content:"";display:inline-block;width:7px;height:7px;margin:0 10px 0 8px;border:solid var(--dk-muted);border-width:1px 1px 0 0;transform:rotate(45deg)}
+.govuk-breadcrumbs__link{color:var(--dk-ink)}
+.sub-navigation{margin:0 0 24px;border-bottom:1px solid var(--gov-border,#b1b4b6)}
+.sub-navigation__list{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:0 24px}
+.sub-navigation__link{display:block;padding:10px 0 8px;font-size:17px;color:var(--dk-link);text-decoration:none;border-bottom:4px solid transparent}
+.sub-navigation__link:hover{text-decoration:underline;text-decoration-thickness:2px}
+.sub-navigation__link[aria-current=page]{color:var(--dk-ink);font-weight:700;border-bottom-color:var(--dk-link)}
+.fuel-cards{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}
+@media (max-width:700px){.fuel-cards{grid-template-columns:1fr}}
+.fuel-card{border:1px solid var(--gov-border,#b1b4b6);padding:16px 18px 14px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.fuel-card__title{font-size:22px;margin:0}.fuel-card__title a{text-underline-offset:3px}
+.fuel-card__desc{margin:0;font-size:15px;color:var(--dk-muted)}
+.fuel-card__figure{margin:6px 0 4px;font-size:26px;font-variant-numeric:tabular-nums;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.fuel-card__note{font-size:14px;color:var(--dk-muted)}
+.fuel-card__more{margin:6px 0 0;font-size:15px}
+.govuk-details{margin:0 0 24px}
+.govuk-details__summary{display:inline-block;cursor:pointer;color:var(--dk-link);position:relative;padding-left:22px;list-style:none;font-size:17px}
+.govuk-details__summary::-webkit-details-marker{display:none}
+.govuk-details__summary::before{content:"";position:absolute;left:2px;top:6px;border-style:solid;border-width:7px 0 7px 12px;border-color:transparent transparent transparent currentColor}
+.govuk-details[open]>.govuk-details__summary::before{border-width:12px 7px 0 7px;border-color:currentColor transparent transparent transparent;top:8px}
+.govuk-details__summary-text{text-decoration:underline;text-underline-offset:3px}
+.govuk-details__summary:focus-visible{outline:3px solid transparent;background:var(--dk-focus);box-shadow:0 -2px var(--dk-focus),0 4px var(--dk-ink);text-decoration:none}
+.govuk-details__text{margin-top:10px;padding:12px 0 12px 16px;border-left:5px solid var(--gov-border,#b1b4b6)}
+.location-filter__row{display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px 16px}
+.location-filter__row label{display:flex;flex-direction:column;gap:6px;font-size:14px;font-weight:600;min-width:220px}
+.location-filter__row select{height:40px;padding:0 10px;border:2px solid var(--dk-ink);background:#fff;font:inherit;font-size:16px;font-weight:400}
+.location-filter__row select:focus{outline:3px solid var(--dk-focus);outline-offset:0;box-shadow:inset 0 0 0 2px}
+.location-filter__row select:disabled{border-color:var(--gov-border,#b1b4b6);color:var(--dk-muted)}
+.location-filter__reset{font-size:16px;padding-bottom:10px}
+.compare-group+.compare-group{margin-top:20px}
+.compare-group__title{font-size:19px;margin:0 0 8px}
+.compare-group .dk-table{table-layout:fixed;width:100%}
+.related-link{margin:0 0 28px;font-size:16px}
