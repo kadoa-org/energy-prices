@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Button, DataTable, LiveBadge, NavBar, Section, SiteFooter, SiteHeader } from './kit';
+import { Button, DataTable, GitHubButton, LiveBadge, NavBar, Section, SiteFooter, SiteHeader } from './kit';
 import { ChangeTag, ChartCard, FilterSelect, KeyFigures, SectionHeading, ShowMore } from './Figures';
 import LineChart, { SERIES_COLOURS } from './LineChart';
 import CommandPalette from './CommandPalette';
@@ -26,7 +26,7 @@ export function Shell({ page, children }) {
   const [search, setSearch] = useState(false);
   useEffect(() => { const onKey = (e) => { if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); setSearch((o) => !o); } }; window.addEventListener('keydown', onKey); return () => window.removeEventListener('keydown', onKey); }, []);
   return <><a className="skip-link" href="#main-content">Skip to content</a>
-    <SiteHeader brand="⚡ US Energy Price Monitor" brandHref={HOME} brandSuffix={<a href="https://www.kadoa.com" target="_blank" rel="noreferrer" className="dk-header-link">by Kadoa</a>} right={<span className="header-right"><LiveBadge>Updated weekly</LiveBadge><Button inverse onClick={() => setSearch(true)} aria-label="Search (Cmd+K)">Search <kbd className="header-kbd">⌘K</kbd></Button></span>} />
+    <SiteHeader brand="⚡ US Energy Price Monitor" brandHref={HOME} brandSuffix={<a href="https://www.kadoa.com" target="_blank" rel="noreferrer" className="dk-header-link">by Kadoa</a>} right={<span className="header-right"><LiveBadge>Updated weekly</LiveBadge><GitHubButton repo="kadoa-org/energy-prices" /><Button inverse onClick={() => setSearch(true)} aria-label="Search (Cmd+K)">Search <kbd className="header-kbd">⌘K</kbd></Button></span>} />
     <CommandPalette open={search} onClose={() => setSearch(false)} dataPath={dataPath(page?.common)} />
     <NavBar items={[{ href: HOME, label: 'Overview', active: kind === 'home' }, { href: `${BASE}/fuel`, label: 'Fuel prices', active: kind === 'fuel' || kind === 'fuels' }, { href: `${BASE}/electricity`, label: 'Electricity', active: kind === 'electricity' || kind === 'state' }, { href: `${BASE}/about`, label: 'About the data', active: kind === 'about' }]} />
     <main id="main-content" className="dk-container main">{children}</main><SiteFooter current="energy-prices" /></>;
@@ -459,6 +459,7 @@ function About({ page }) {
       <li><a href="https://www.eia.gov/electricity/data/eia861m/">EIA-861M</a>: residential revenue, sales and customers for each utility, monthly since 2019. It lists utilities that sell both delivery and power; in retail-choice states most homes buy power from a supplier EIA does not name.</li>
       <li><a href="https://www.bls.gov/cpi/">BLS Consumer Price Index</a> and <a href="https://www.bls.gov/cpi/factsheets/average-prices.htm">average prices</a>: monthly, by region, and gasoline and diesel for 18 metro areas.</li>
     </ul>
+    <p>The project is open source and contributions are welcome: <a href="https://github.com/kadoa-org/energy-prices">github.com/kadoa-org/energy-prices</a>.</p>
     <h2>How to read it</h2>
     <ul>
       <li>Prices are in dollars of the day, not adjusted for inflation.</li>
