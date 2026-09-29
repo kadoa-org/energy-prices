@@ -66,7 +66,9 @@ const fuelData = [];
 for (const fuel of FUELS) {
   const byGeo = new Map();
   for (const [product, grade] of fuel.products) {
-    for (const d of defs.filter((x) => x.product === product && x.measure === fuel.measure)) {
+    // Fuel pages are EIA's weekly survey. The state heating surveys Kadoa collects (source state-heating-*) share the
+    // product and measure but use their own regions and methods, so they stay out until they get their own view.
+    for (const d of defs.filter((x) => x.source === 'eia-pet' && x.product === product && x.measure === fuel.measure)) {
       const key = `${d.geoType}:${d.geoCode}`;
       const loc = byGeo.get(key) ?? { type: d.geoType, geoCode: d.geoCode, name: d.geoName, grades: [] };
       loc.grades.push({ grade, id: d.id, summary: weeklySummary(points.get(d.id)) });
