@@ -34,9 +34,12 @@ const dataDir = join(snapshot, 'data');
 const homeBody = await readFile(join(dataDir, 'home.json'));
 const home = JSON.parse(homeBody);
 // The id carries the export time, so a retry with the same data resumes into the same folder, and a hash of home.json,
-// so a rebuild that changes the pages lands in a fresh folder instead of behind a stale cache.
+// and of routes.json, so a rebuild that changes the pages lands in a fresh folder instead of behind a stale cache.
 const sha256 = (body) => createHash('sha256').update(body).digest('hex');
-const runId = `${home.common.generatedAt.slice(0, 19).replaceAll(':', '-')}-${sha256(homeBody).slice(0, 8)}`;
+// routes.json joins the hash because a build that adds or removes a page leaves home.json unchanged, and reusing the
+// folder would serve the old, edge-cached route list.
+const routesBody = await readFile(join(dataDir, 'routes.json'));
+const runId = `${home.common.generatedAt.slice(0, 19).replaceAll(':', '-')}-${sha256(Buffer.concat([homeBody, routesBody])).slice(0, 8)}`;
 const base = `${PREFIX}/data/${runId}`;
 const types = { '.json': 'application/json', '.csv': 'text/csv', '.gz': 'application/gzip', '.png': 'image/png' };
 const storageUrl = (path) => `https://${HOST}/${ZONE}/${path}`;
