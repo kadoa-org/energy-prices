@@ -16,16 +16,22 @@ let dataPath = '/energy-prices/data'; let load;
 if (process.env.DATA_SOURCE !== 'cdn' && existsSync(join(local, 'routes.json'))) {
   load = async (name) => JSON.parse(await readFile(join(local, `${name}.json`), 'utf8'));
 } else {
-  // The pointer is read from Bunny storage with a read-only password when available (never cached), otherwise from
-  // the CDN edge. Data files come from the CDN either way; run folders are immutable so caching cannot mix runs.
-  const storageKey = process.env.BUNNY_STORAGE_READONLY_KEY;
-  const pointerUrl = storageKey
-    ? `https://${process.env.BUNNY_STORAGE_HOST || 'ny.storage.bunnycdn.com'}/${process.env.BUNNY_STORAGE_ZONE || 'kadoa-datasets'}/energy-prices/latest.json`
-    : `${CDN}/energy-prices/latest.json?v=${Date.now()}`;
-  const res = await fetch(pointerUrl, { headers: storageKey ? { AccessKey: storageKey } : { 'Cache-Control': 'no-cache' } });
-  if (!res.ok) throw new Error(`Cannot read data pointer (${storageKey ? 'storage' : 'CDN'}): HTTP ${res.status}`);
-  const pointer = await res.json(); dataPath = `${CDN}${pointer.base}`;
-  console.log(`Building from published run ${pointer.runId} (${pointer.lastWeek}) via ${storageKey ? 'storage' : 'CDN'} pointer`);
+  // The run to build comes from data-run.json in the repository when present: publishData writes it and the rebuild
+  // commit carries it, so the build never depends on the CDN edge serving a fresh latest.json (the pull zone caches
+  // it). Without it, the pointer is read from Bunny storage with a read-only key when set, otherwise from the edge.
+  let pointer;
+  const pinned = join(root, 'data-run.json');
+  if (existsSync(pinned)) pointer = JSON.parse(await readFile(pinned, 'utf8'));
+  else {
+    const storageKey = process.env.BUNNY_STORAGE_READONLY_KEY;
+    const pointerUrl = storageKey
+      ? `https://${process.env.BUNNY_STORAGE_HOST || 'ny.storage.bunnycdn.com'}/${process.env.BUNNY_STORAGE_ZONE || 'kadoa-datasets'}/energy-prices/latest.json`
+      : `${CDN}/energy-prices/latest.json?v=${Date.now()}`;
+    const res = await fetch(pointerUrl, { headers: storageKey ? { AccessKey: storageKey } : { 'Cache-Control': 'no-cache' } });
+    if (!res.ok) throw new Error(`Cannot read data pointer (${storageKey ? 'storage' : 'CDN'}): HTTP ${res.status}`);
+    pointer = await res.json();
+  } dataPath = `${CDN}${pointer.base}`;
+  console.log(`Building from published run ${pointer.runId} (${pointer.lastWeek})`);
   load = async (name) => { const r = await fetch(`${dataPath}/${name}.json`); if (!r.ok) throw new Error(`Cannot read ${name}: HTTP ${r.status}`); return r.json(); };
 }
 const routes = await load('routes');

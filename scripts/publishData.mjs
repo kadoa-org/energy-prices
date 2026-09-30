@@ -4,7 +4,7 @@
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
-import { readdir, readFile } from 'node:fs/promises';
+import { readdir, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, relative, resolve } from 'node:path';
 
@@ -88,6 +88,9 @@ const check = await fetch(storageUrl(`${PREFIX}/latest.json`), { headers });
 const stored = check.ok ? (await check.json()).runId : null;
 if (stored !== runId) throw new Error(`Storage pointer reads ${stored}, expected ${runId}`);
 console.log('Storage pointer verified');
+// The same pointer goes into the repository; committing it is what rebuilds the site from this run.
+await writeFile(join(root, 'data-run.json'), `${JSON.stringify(pointer, null, 2)}\n`);
+console.log('Wrote data-run.json; commit and push it to rebuild the site');
 if (process.env.BUNNY_ACCOUNT_API_KEY) {
   const purge = await fetch(`https://api.bunny.net/purge?url=${encodeURIComponent(`${CDN}/${PREFIX}/latest.json`)}&async=false`, { method: 'POST', headers: { AccessKey: process.env.BUNNY_ACCOUNT_API_KEY } });
   console.log(`Purged CDN pointer copy: HTTP ${purge.status}`);

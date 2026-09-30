@@ -283,4 +283,5 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,su
 .tile--o1{background:#fdbe85;color:#0b0c0c}.tile--o2{background:#f16913;color:#fff}.tile--o3{background:#a63603;color:#fff}
 .tile--p1{background:#efedf5;color:#0b0c0c}.tile--p2{background:#cbc9e2;color:#0b0c0c}.tile--p3{background:#9e9ac8;color:#0b0c0c}.tile--p4{background:#756bb1;color:#fff}.tile--p5{background:#54278f;color:#fff}
 .tilemap__controls{margin:0 0 8px}
+.tilemap__key{color:var(--dk-muted)}.tilemap__key b{font-weight:400;font-size:12px;color:var(--dk-ink)}
 @media (max-width:640px){.tilemap__grid{gap:2px}.tile a{padding:3px;aspect-ratio:1}.tile__line{display:none}.tile__code{font-size:9px}.tile__pct{font-size:10px}}
