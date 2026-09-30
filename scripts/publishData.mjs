@@ -38,7 +38,7 @@ const home = JSON.parse(homeBody);
 const sha256 = (body) => createHash('sha256').update(body).digest('hex');
 const runId = `${home.common.generatedAt.slice(0, 19).replaceAll(':', '-')}-${sha256(homeBody).slice(0, 8)}`;
 const base = `${PREFIX}/data/${runId}`;
-const types = { '.json': 'application/json', '.csv': 'text/csv', '.gz': 'application/gzip' };
+const types = { '.json': 'application/json', '.csv': 'text/csv', '.gz': 'application/gzip', '.png': 'image/png' };
 const storageUrl = (path) => `https://${HOST}/${ZONE}/${path}`;
 const headers = { AccessKey: KEY };
 

@@ -1,4 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { FilterSelect } from './Figures';
+import { cents, monthLabel } from './model.mjs';
 
 // One square per state, laid out like the US map, coloured by how far the 12-month average home electricity price has
 // moved since 2019, with inflation over the same period as the dividing line. Each tile links to its state page.
@@ -7,7 +9,7 @@ import React from 'react';
 // Connecticut and Rhode Island, New York over Pennsylvania, New Jersey on the coast over Delaware. Wisconsin is north
 // of Illinois, Illinois west of Indiana, Michigan over Indiana and Ohio with the Great Lakes gap. Nevada sits above
 // Utah, the usual tile-map compromise for the West.
-const GRID = {
+export const GRID = {
   AK: [0, 0], ME: [10, 0],
   VT: [9, 1], NH: [10, 1],
   WA: [1, 2], ID: [2, 2], MT: [3, 2], ND: [4, 2], MN: [5, 2], WI: [6, 2], MI: [7, 2], NY: [9, 2], MA: [10, 2],
@@ -18,9 +20,9 @@ const GRID = {
   HI: [0, 7], TX: [4, 7], FL: [8, 7],
 };
 
-// Bins on the rounded percent a tile prints, so two tiles showing the same number never differ in colour. The two
-// blues are at or below inflation, the three oranges above it.
-function bins(cpi) {
+// Change bins on the rounded percent a tile prints, so two tiles showing the same number never differ in colour: two
+// blues at or below inflation, three oranges above it.
+export function changeBins(cpi) {
   const c = Math.round(cpi);
   return [
     { max: 19, cls: 'tile--b2', label: 'Under 20%' },
@@ -30,35 +32,55 @@ function bins(cpi) {
     { max: Infinity, cls: 'tile--o3', label: 'Over 60%' },
   ];
 }
+// Price bins in cents a kWh on the one-decimal price a tile prints, light to dark as the price rises. A separate hue
+// from the change view, so switching views never suggests blue still means "below inflation".
+export const PRICE_BINS = [
+  { max: 13.95, cls: 'tile--p1', label: 'Under 14¢' },
+  { max: 17.95, cls: 'tile--p2', label: '14¢ to 18¢' },
+  { max: 21.95, cls: 'tile--p3', label: '18¢ to 22¢' },
+  { max: 27.95, cls: 'tile--p4', label: '22¢ to 28¢' },
+  { max: Infinity, cls: 'tile--p5', label: '28¢ or more' },
+];
+export const binFor = (bins, v, rounding) => bins.find((b) => rounding(v) <= b.max);
+const round1 = (v) => Math.round(v * 10) / 10;
+const VIEWS = [['change', 'Change since 2019'], ['price', 'Price now']];
 
-export default function TileMap({ states, cpi, usChange, href }) {
+export default function TileMap({ states, cpi, usChange, usPrice, month, href }) {
+  const [view, setView] = useState('change');
   const byCode = Object.fromEntries(states.filter((s) => s.code).map((s) => [s.code, s]));
   const placed = Object.entries(GRID).filter(([code]) => byCode[code]);
   if (placed.length < 45) return null;
-  const scale = bins(cpi.change);
-  const binOf = (v) => scale.find((b) => Math.round(v) <= b.max);
-  const all = placed.flatMap(([code]) => byCode[code].trend.map((p) => p[1]));
-  const lo = Math.min(0, ...all), hi = Math.max(...all);
+  const isPrice = view === 'price';
+  const scale = isPrice ? PRICE_BINS : changeBins(cpi.change);
+  const binOf = (v) => (isPrice ? binFor(PRICE_BINS, v, round1) : binFor(scale, v, Math.round));
+  // Change lines share one scale in percent, price lines one scale in cents, so heights compare across tiles.
+  const at = isPrice ? (p) => p[2] * 100 : (p) => p[1];
+  const all = placed.flatMap(([code]) => byCode[code].trend.map(at));
+  const lo = isPrice ? Math.min(...all) : Math.min(0, ...all), hi = Math.max(...all);
   const faster = placed.filter(([code]) => Math.round(byCode[code].priceSince2019) > Math.round(cpi.change)).length;
+  const byPrice = [...placed].map(([code]) => byCode[code]).sort((a, b) => b.price12 - a.price12);
   return (
     <div className="tilemap">
-      <p className="tilemap__intro">
-        Change in the 12-month average price since 2019. The US average rose {Math.round(usChange)}%, all prices {Math.round(cpi.change)}%
-        {cpi.months < 12 ? ' (BLS published no index for October 2025)' : ''}. {faster} of {placed.length} rose faster than inflation.
+      <div className="tilemap__controls"><FilterSelect label="Show" value={view} options={VIEWS} onChange={setView} /></div>
+      <p className="dk-hint table-intro tilemap__intro">
+        {isPrice
+          ? <>Average price for homes over the 12 months to {monthLabel(month)}. The US average is {cents(usPrice)} a kWh; {byPrice[0].name} pays the most at {cents(byPrice[0].price12)} and {byPrice.at(-1).name} the least at {cents(byPrice.at(-1).price12)}.</>
+          : <>Change in the 12-month average price since 2019. The US average rose {Math.round(usChange)}%, all prices {Math.round(cpi.change)}%. {faster} of {placed.length} rose faster than inflation.</>}
       </p>
       <ul className="tilemap__legend" aria-hidden="true">
         {scale.map((b) => <li key={b.label}><span className={`tilemap__swatch ${b.cls}`} />{b.label}</li>)}
       </ul>
       <ol className="tilemap__grid">
         {placed.map(([code, [col, row]]) => {
-          const s = byCode[code], v = s.priceSince2019;
-          // Shared scale for every line, so their heights compare across tiles.
-          const pts = s.trend.map((p, i) => `${((i / (s.trend.length - 1)) * 100).toFixed(1)},${(30 - ((p[1] - lo) / (hi - lo)) * 28).toFixed(1)}`).join(' ');
+          const s = byCode[code], v = isPrice ? s.price12 : s.priceSince2019;
+          const pts = s.trend.map((p, i) => `${((i / (s.trend.length - 1)) * 100).toFixed(1)},${(30 - ((at(p) - lo) / (hi - lo)) * 28).toFixed(1)}`).join(' ');
+          const label = isPrice ? cents(v) : `+${Math.round(v)}%`;
           return (
             <li key={code} className={`tile ${binOf(v).cls}`} style={{ gridColumn: col + 1, gridRow: row + 1 }}>
-              <a href={href(s.slug)} aria-label={`${s.name}: up ${Math.round(v)}% since 2019`}>
+              <a href={href(s.slug)} aria-label={isPrice ? `${s.name}: ${cents(v)} a kWh` : `${s.name}: up ${Math.round(v)}% since 2019`}>
                 <span className="tile__code">{code}</span>
-                <span className="tile__pct">+{Math.round(v)}%</span>
+                <span className="tile__pct">{label}</span>
+                {!isPrice && <span className="tile__price">{cents(s.price12)}</span>}
                 <svg className="tile__line" viewBox="0 0 100 32" preserveAspectRatio="none" aria-hidden="true"><polyline points={pts} /></svg>
               </a>
             </li>

@@ -64,6 +64,12 @@ export function Tabs({ tabs, initial = 0 }) {
   // tabs never pulls the content below upward. A longer panel grows instead of scrolling: GOV.UK advises against
   // scroll areas inside the page, and long lists use ShowMore to stay short.
   const [lockHeight, setLockHeight] = useState(null);
+  // A tab with a `hash` opens from the address (…/electricity#map), so a shared link lands on that view.
+  useLayoutEffect(() => {
+    const want = window.location.hash.slice(1);
+    const at = want ? tabs.findIndex((t) => t.hash === want) : -1;
+    if (at >= 0) { setActive(at); refs.current[at]?.scrollIntoView({ block: 'start' }); }
+  }, []);
   useLayoutEffect(() => {
     const measure = () => {
       const first = panels.current[initial];

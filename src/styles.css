@@ -161,7 +161,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,su
 .chart-legend__item{display:inline-flex;align-items:center;gap:8px}.chart-legend__swatch{display:inline-block;width:28px;height:3px;background:var(--chart-series-ink)}
 .chart-legend__swatch--gap{height:0;border-top:2px dotted var(--gov-border);background:none}
 
-@media (max-width:640px){.chart-panel-card{padding:15px}.govuk-tabs__tab{font-size:16px;padding:10px 8px}.govuk-tabs__list-item--selected .govuk-tabs__tab{padding:14px 7px 16px}.govuk-tabs__panel{padding:12px;min-height:400px}.govuk-tabs__long{display:none}.govuk-tabs__short{display:inline}}
+@media (max-width:640px){.tile__price{display:none}.chart-panel-card{padding:15px}.govuk-tabs__tab{font-size:16px;padding:10px 8px}.govuk-tabs__list-item--selected .govuk-tabs__tab{padding:14px 7px 16px}.govuk-tabs__panel{padding:12px;min-height:400px}.govuk-tabs__long{display:none}.govuk-tabs__short{display:inline}}
 .table-intro{margin:0 0 15px}.download-intro{margin:0 0 20px;font-size:19px;line-height:25px}
 .download-row{display:flex;flex-wrap:wrap;gap:15px}.section-download{margin:20px 0 0;font-size:16px;line-height:24px}.section-download .dk-btn{margin-left:10px}
 
@@ -266,7 +266,8 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,su
 
 /* State tile map (TileMap.jsx). Blues at or below inflation, oranges above; the tones are the chart's, with the
    darker ones carrying white text. On a phone the tiles drop the line and the code, keeping the percent readable. */
-.tilemap__intro{margin:0 0 12px;font-size:16px;line-height:24px}
+.tilemap__intro{margin:0 0 12px}
+.tilemap__controls .filter-select{margin:0 0 15px}
 .tilemap__legend{display:flex;flex-wrap:wrap;gap:6px 16px;list-style:none;margin:0 0 16px;padding:0;font-size:14px}
 .tilemap__legend li{display:inline-flex;align-items:center;gap:6px}
 .tilemap__swatch{width:18px;height:12px;display:inline-block}
@@ -275,8 +276,11 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,su
 .tile a:hover,.tile a:focus-visible{outline:3px solid var(--dk-focus,#ffdd00);outline-offset:0}
 .tile__code{font-size:11px;font-weight:600;opacity:.85}
 .tile__pct{font-size:clamp(11px,1.6vw,17px);font-weight:700;font-variant-numeric:tabular-nums}
-.tile__line{margin-top:auto;width:100%;height:24px}
+.tile__price{font-size:10px;opacity:.7;font-variant-numeric:tabular-nums;margin-top:1px}
+.tile__line{margin-top:auto;width:100%;height:18px}
 .tile__line polyline{fill:none;stroke:currentColor;stroke-opacity:.75;stroke-width:1.6;vector-effect:non-scaling-stroke}
 .tile--b2{background:#9ecae1;color:#0b0c0c}.tile--b1{background:#deebf7;color:#0b0c0c}
 .tile--o1{background:#fdbe85;color:#0b0c0c}.tile--o2{background:#f16913;color:#fff}.tile--o3{background:#a63603;color:#fff}
+.tile--p1{background:#efedf5;color:#0b0c0c}.tile--p2{background:#cbc9e2;color:#0b0c0c}.tile--p3{background:#9e9ac8;color:#0b0c0c}.tile--p4{background:#756bb1;color:#fff}.tile--p5{background:#54278f;color:#fff}
+.tilemap__controls{margin:0 0 8px}
 @media (max-width:640px){.tilemap__grid{gap:2px}.tile a{padding:3px;aspect-ratio:1}.tile__line{display:none}.tile__code{font-size:9px}.tile__pct{font-size:10px}}

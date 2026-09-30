@@ -29,7 +29,7 @@ export function Shell({ page, children }) {
   return <><a className="skip-link" href="#main-content">Skip to content</a>
     <SiteHeader brand="⚡ US Energy Price Monitor" brandHref={HOME} brandSuffix={<a href="https://www.kadoa.com" target="_blank" rel="noreferrer" className="dk-header-link">by Kadoa</a>} right={<span className="header-right"><LiveBadge>Updated weekly</LiveBadge><GitHubButton repo="kadoa-org/energy-prices" /><Button inverse onClick={() => setSearch(true)} aria-label="Search (Cmd+K)">Search <kbd className="header-kbd">⌘K</kbd></Button></span>} />
     <CommandPalette open={search} onClose={() => setSearch(false)} dataPath={dataPath(page?.common)} />
-    <NavBar items={[{ href: HOME, label: 'Overview', active: kind === 'home' }, { href: `${BASE}/fuel`, label: 'Fuel prices', active: kind === 'fuel' || kind === 'fuels' }, { href: `${BASE}/electricity`, label: 'Electricity', active: kind === 'electricity' || kind === 'state' }, { href: `${BASE}/about`, label: 'About the data', active: kind === 'about' }]} />
+    <NavBar items={[{ href: HOME, label: 'Overview', active: kind === 'home' }, { href: `${BASE}/fuel`, label: 'Fuel prices', active: kind === 'fuel' || kind === 'fuels' }, { href: `${BASE}/electricity`, label: 'Electricity', active: kind === 'electricity' || kind === 'state' || kind === 'electricityMap' }, { href: `${BASE}/about`, label: 'About the data', active: kind === 'about' }]} />
     <main id="main-content" className="dk-container main">{children}</main><SiteFooter current="energy-prices" /></>;
 }
 export function Loading({ error = false }) {
@@ -146,7 +146,7 @@ function StatesCard({ states, us, month, common, full = false, usTrend, cpi, usS
     description="Average price for homes over the last 12 months, in cents a kilowatt-hour."
     date={`12 months to ${monthLabel(month)}`}
     tabs={[
-      cpi && usSince2019 != null && { label: 'Map', content: <TileMap states={states} cpi={cpi} usChange={usSince2019} href={stateUrl} /> },
+      cpi && usSince2019 != null && { label: 'Map', hash: 'map', content: <><TileMap states={states} cpi={cpi} usChange={usSince2019} usPrice={us.price12} month={month} href={stateUrl} /><p className="tilemap__more"><a href={`${BASE}/electricity/map`}>Full-size map</a></p></> },
       { label: 'Chart', content: <ShowMore total={ranked.length} initial={15} noun="states">{(n) => <ValueRanking rows={ranked.slice(0, n).map((s) => ({ name: s.name, value: s.price12, href: stateUrl(s.slug) }))} average={us.price12} averageLabel="US average" format={cents} />}</ShowMore> },
       usTrend && { label: 'Since 2019', content: <StateTrends states={states} usTrend={usTrend} /> },
       { label: 'Tabular data', short: 'Tabular', content: <ShowMore total={sorted.length} initial={15} noun="states">{(n) => <DataTable rows={sorted.slice(0, n)} columns={columns} rowKey={(r) => r.slug} sort={sort} onSort={(key) => setSort((s) => ({ key, dir: s.key === key && s.dir === 'desc' ? 'asc' : 'desc' }))} />}</ShowMore> },
@@ -474,7 +474,19 @@ function About({ page }) {
   </article>;
 }
 
+// The state tile map on its own page, so a link to it (HN, Reddit, a newsletter) gets its own title and preview card.
+function ElectricityMap({ page }) {
+  return <>
+    <Breadcrumbs items={[{ label: 'Electricity', href: `${BASE}/electricity` }, { label: 'Map' }]} />
+    <div className="title-block"><h1 className="dk-h1">Home electricity prices by state since 2019</h1><p className="lede">What homes pay for electricity in every state, and how far it has risen, from EIA.</p></div>
+    <section className="chart-panel-card map-page" aria-label="Map of electricity prices by state">
+      <TileMap states={page.states} cpi={page.electricityCpi} usChange={page.us.priceSince2019} usPrice={page.us.price12} month={page.us.month} href={stateUrl} />
+      <p className="chart-note">Source: <a href="https://www.eia.gov/electricity/monthly/" target="_blank" rel="noreferrer">EIA Electric Power Monthly</a> and <a href="https://www.bls.gov/cpi/" target="_blank" rel="noreferrer">BLS CPI</a>. The 12-month average price is residential revenue over kilowatt-hours sold. Inflation is CPI-U on the same basis; BLS published no index for October 2025. <a href={`${BASE}/electricity`}>Prices, bills and use by state</a></p>
+    </section>
+  </>;
+}
+
 export default function App({ page }) {
-  const View = { home: Overview, fuels: FuelIndex, fuel: Fuel, electricity: Electricity, state: State, utility: Utility, about: About }[page.kind];
+  const View = { home: Overview, fuels: FuelIndex, fuel: Fuel, electricity: Electricity, electricityMap: ElectricityMap, state: State, utility: Utility, about: About }[page.kind];
   return <Shell page={page}><View page={page} /></Shell>;
 }

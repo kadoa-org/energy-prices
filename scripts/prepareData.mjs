@@ -260,6 +260,8 @@ const usHistory = {
   bill12: rolling(usBill, (d) => round(trailingMean(usBill, d), 2)),
 };
 await page('electricity', `${BASE}/electricity`, { kind: 'electricity', us, usHistory, electricityCpi, states: states.map(({ gas, ...s }) => s), largest, utilityCount: [...utilitiesByState.values()].flat().length });
+// The state tile map as its own page (a shareable link with its own title and preview image).
+await page('electricity/map', `${BASE}/electricity/map`, { kind: 'electricityMap', us: { month: us.month, price12: us.price12, priceSince2019: us.priceSince2019 }, electricityCpi, states: states.map((s) => ({ code: s.code, name: s.name, slug: s.slug, price12: s.price12, priceSince2019: s.priceSince2019, trend: s.trend })) });
 
 // ── Since 2019. BLS average prices for the fuels households buy, as the change since August 2019, before the pandemic
 // moved energy prices; the same base month the food site uses, so the two read together.

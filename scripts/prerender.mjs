@@ -37,7 +37,7 @@ function seo(page, path) {
   const c = page.common; const updated = c.generatedAt.slice(0, 10); const canonical = `${SITE}${path}`;
   const crumbs = [{ name: NAME, url: `${SITE}/energy-prices` }];
   const dataset = (name, description, extra) => ({ '@context': 'https://schema.org', '@type': 'Dataset', name, description, url: canonical, spatialCoverage: 'United States', license: 'https://www.usa.gov/government-works', creator: { '@type': 'Organization', name: 'Kadoa', url: SITE }, dateModified: updated, ...extra });
-  let title, description, ld;
+  let title, description, ld, image = null;
   if (page.kind === 'home') {
     const h = page.headlines;
     title = 'Energy Prices Today: US Gas, Diesel and Electricity Prices';
@@ -64,6 +64,12 @@ function seo(page, path) {
     description = `Residential electricity prices by state: US average ${cents(page.us.price12)} a kWh and ${money(page.us.bill12, 0)} a month over the 12 months to ${monthLabel(page.us.month)}, with each state's price, bill, use and change since 2019, from EIA.`;
     crumbs.push({ name: 'Electricity', url: canonical });
     ld = [{ '@context': 'https://schema.org', '@type': 'ItemList', name: title, url: canonical, numberOfItems: page.states.length, itemListElement: page.states.map((s, i) => ({ '@type': 'ListItem', position: i + 1, name: `Electricity prices in ${s.name}`, url: `${SITE}/energy-prices/electricity/${s.slug}` })) }];
+  } else if (page.kind === 'electricityMap') {
+    title = 'Electricity Prices by State Map: Change Since 2019 and Price per kWh';
+    description = `Map of home electricity prices by US state: the US average rose ${Math.round(page.us.priceSince2019)}% since 2019 to ${cents(page.us.price12)} a kWh over the 12 months to ${monthLabel(page.us.month)}, against ${Math.round(page.electricityCpi.change)}% inflation. Each state's change and price, from EIA.`;
+    crumbs.push({ name: 'Electricity', url: `${SITE}/energy-prices/electricity` }, { name: 'Map', url: canonical });
+    ld = [dataset('Residential electricity prices by US state since 2019', description, { temporalCoverage: `2019-01/${page.us.month.slice(0, 7)}`, spatialCoverage: 'United States', isBasedOn: 'https://www.eia.gov/electricity/' })];
+    image = `${absolute(dataPath)}/og-electricity-map.png`;
   } else if (page.kind === 'state') {
     const s = page.state;
     title = `Electricity Prices in ${s.name}: Cost per kWh and Average Bill`;
@@ -83,7 +89,7 @@ function seo(page, path) {
     ld = [{ '@context': 'https://schema.org', '@type': 'WebPage', name: title, url: canonical, description, dateModified: updated }];
   }
   if (crumbs.length > 1) ld.push({ '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: crumbs.map((cr, i) => ({ '@type': 'ListItem', position: i + 1, name: cr.name, item: cr.url })) });
-  return { title, description, canonical, ld };
+  return { title, description, canonical, ld, image };
 }
 const server = await createServer({ root, server: { middlewareMode: true }, appType: 'custom' });
 try {
@@ -92,8 +98,8 @@ try {
   for (const route of routes) {
     const page = await load(route.key); page.common = { ...page.common, dataPath };
     const body = render(page);
-    const { title, description, canonical, ld } = seo(page, route.path);
-    const head = `<meta name="data-base" content="${esc(dataPath)}"/><meta property="og:type" content="website"/><meta property="og:site_name" content="${NAME}"/><meta property="og:title" content="${esc(title)}"/><meta property="og:description" content="${esc(description)}"/><meta property="og:url" content="${canonical}"/><meta name="twitter:card" content="summary"/><meta name="robots" content="index,follow,max-image-preview:large"/>${ld.map((o) => `<script type="application/ld+json">${JSON.stringify(o).replaceAll('<', '\\u003c')}</script>`).join('')}`;
+    const { title, description, canonical, ld, image } = seo(page, route.path);
+    const head = `<meta name="data-base" content="${esc(dataPath)}"/><meta property="og:type" content="website"/><meta property="og:site_name" content="${NAME}"/><meta property="og:title" content="${esc(title)}"/><meta property="og:description" content="${esc(description)}"/><meta property="og:url" content="${canonical}"/>${image ? `<meta property="og:image" content="${esc(image)}"/><meta property="og:image:width" content="1200"/><meta property="og:image:height" content="630"/><meta name="twitter:card" content="summary_large_image"/><meta name="twitter:image" content="${esc(image)}"/>` : '<meta name="twitter:card" content="summary"/>'}<meta name="robots" content="index,follow,max-image-preview:large"/>${ld.map((o) => `<script type="application/ld+json">${JSON.stringify(o).replaceAll('<', '\\u003c')}</script>`).join('')}`;
     const html = template.replace(/<title>.*?<\/title>/, `<title>${esc(`${title} | ${NAME}`)}</title>`).replace(/<meta name="description" content="[^"]*"\s*\/>/, `<meta name="description" content="${esc(description)}"/>`).replace(/<link rel="canonical" href="[^"]*"\s*\/>/, `<link rel="canonical" href="${canonical}"/>`).replace('</head>', `${head}</head>`).replace('<div id="root"></div>', `<div id="root">${body}</div>`);
     const dir = join(dist, route.path.replace(/^\/energy-prices\/?/, '')); await mkdir(dir, { recursive: true }); await writeFile(join(dir, 'index.html'), html); if (route.key !== 'home') await writeFile(dir + '.html', html);
     lastmod[route.path] = page.common.generatedAt.slice(0, 10);

@@ -10,7 +10,8 @@
     "build": "vite build && bun scripts/prerender.mjs",
     "preview": "vite preview --host 127.0.0.1 --port 5190",
     "test": "bun test tests",
-    "publish": "bun run data && bun scripts/publishData.mjs"
+    "publish": "bun run data && bun run og && bun scripts/publishData.mjs",
+    "og": "bun scripts/ogMap.mjs"
   },
   "dependencies": {
     "chart.js": "^4.5.1",
