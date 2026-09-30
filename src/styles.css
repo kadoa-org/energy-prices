@@ -271,7 +271,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,su
 .tilemap__legend li{display:inline-flex;align-items:center;gap:6px}
 .tilemap__swatch{width:18px;height:12px;display:inline-block}
 .tilemap__grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:4px;list-style:none;margin:0;padding:0}
-.tile a{display:flex;flex-direction:column;aspect-ratio:80/104;padding:6px;color:inherit;text-decoration:none;box-sizing:border-box}
+.tile a{display:flex;flex-direction:column;aspect-ratio:80/92;padding:6px;color:inherit;text-decoration:none;box-sizing:border-box}
 .tile a:hover,.tile a:focus-visible{outline:3px solid var(--dk-focus,#ffdd00);outline-offset:0}
 .tile__code{font-size:11px;font-weight:600;opacity:.85}
 .tile__pct{font-size:clamp(11px,1.6vw,17px);font-weight:700;font-variant-numeric:tabular-nums}
