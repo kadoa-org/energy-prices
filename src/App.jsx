@@ -477,7 +477,7 @@ function About({ page }) {
 function ElectricityMap({ page }) {
   return <>
     <Breadcrumbs items={[{ label: 'Electricity', href: `${BASE}/electricity` }, { label: 'Map' }]} />
-    <div className="title-block"><h1 className="dk-h1">Home electricity prices by state since 2019</h1><p className="lede">What homes pay for electricity in every state, and how far it has risen, from EIA.</p></div>
+    <div className="title-block"><h1 className="dk-h1">Home electricity prices by state since 2019</h1><p className="lede">Change in the average home price per kilowatt-hour, 12 months to {monthLabel(page.us.month)} against 2019. The US average rose {Math.round(page.us.priceSince2019)}%, against {Math.round(page.electricityCpi.change)}% inflation.</p></div>
     <section className="chart-panel-card map-page" aria-label="Map of electricity prices by state">
       <TileMap states={page.states} cpi={page.electricityCpi} usChange={page.us.priceSince2019} usPrice={page.us.price12} month={page.us.month} href={stateUrl} />
     </section>
