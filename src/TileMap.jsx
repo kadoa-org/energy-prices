@@ -2,19 +2,20 @@ import React from 'react';
 
 // One square per state, laid out like the US map, coloured by how far the 12-month average home electricity price has
 // moved since 2019, with inflation over the same period as the dividing line. Each tile links to its state page.
-// Tile grid, 12 columns by 7 rows, checked against a state map. Vermont, New Hampshire and Maine share the top row,
-// level with the northern border states below them rather than towering over them; Massachusetts sits over
+// Tile grid, 12 columns by 8 rows, checked against a state map. Maine, the northernmost state in the East, stands
+// alone above New Hampshire, with Vermont beside New Hampshire; Massachusetts sits over
 // Connecticut and Rhode Island, New York over Pennsylvania, New Jersey on the coast over Delaware. Wisconsin is north
 // of Illinois, Illinois west of Indiana, Michigan over Indiana and Ohio with the Great Lakes gap. Nevada sits above
 // Utah, the usual tile-map compromise for the West.
 const GRID = {
-  AK: [0, 0], VT: [9, 0], NH: [10, 0], ME: [11, 0],
-  WA: [1, 1], ID: [2, 1], MT: [3, 1], ND: [4, 1], MN: [5, 1], WI: [6, 1], MI: [7, 1], NY: [9, 1], MA: [10, 1],
-  OR: [1, 2], NV: [2, 2], WY: [3, 2], SD: [4, 2], IA: [5, 2], IL: [6, 2], IN: [7, 2], OH: [8, 2], PA: [9, 2], CT: [10, 2], RI: [11, 2],
-  CA: [1, 3], UT: [2, 3], CO: [3, 3], NE: [4, 3], MO: [5, 3], KY: [6, 3], WV: [7, 3], VA: [8, 3], MD: [9, 3], NJ: [10, 3],
-  AZ: [2, 4], NM: [3, 4], KS: [4, 4], AR: [5, 4], TN: [6, 4], NC: [7, 4], SC: [8, 4], DC: [9, 4], DE: [10, 4],
-  OK: [4, 5], LA: [5, 5], MS: [6, 5], AL: [7, 5], GA: [8, 5],
-  HI: [0, 6], TX: [4, 6], FL: [8, 6],
+  AK: [0, 0], ME: [10, 0],
+  VT: [9, 1], NH: [10, 1],
+  WA: [1, 2], ID: [2, 2], MT: [3, 2], ND: [4, 2], MN: [5, 2], WI: [6, 2], MI: [7, 2], NY: [9, 2], MA: [10, 2],
+  OR: [1, 3], NV: [2, 3], WY: [3, 3], SD: [4, 3], IA: [5, 3], IL: [6, 3], IN: [7, 3], OH: [8, 3], PA: [9, 3], CT: [10, 3], RI: [11, 3],
+  CA: [1, 4], UT: [2, 4], CO: [3, 4], NE: [4, 4], MO: [5, 4], KY: [6, 4], WV: [7, 4], VA: [8, 4], MD: [9, 4], NJ: [10, 4],
+  AZ: [2, 5], NM: [3, 5], KS: [4, 5], AR: [5, 5], TN: [6, 5], NC: [7, 5], SC: [8, 5], DC: [9, 5], DE: [10, 5],
+  OK: [4, 6], LA: [5, 6], MS: [6, 6], AL: [7, 6], GA: [8, 6],
+  HI: [0, 7], TX: [4, 7], FL: [8, 7],
 };
 
 // Bins on the rounded percent a tile prints, so two tiles showing the same number never differ in colour. The two
