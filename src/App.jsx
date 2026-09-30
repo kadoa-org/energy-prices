@@ -251,7 +251,7 @@ function Fuel({ page }) {
   return <>
     <Breadcrumbs items={[{ label: 'Fuel prices', href: `${BASE}/fuel` }, isUS ? { label: fuel.name } : { label: fuel.name, href: fuelUrl(fuel.slug) }, !isUS && { label: location.name }].filter(Boolean)} />
     <FuelNav current={fuel.slug} />
-    <div className="hero detail-hero"><div><h1 className="dk-h1">{isUS ? fuel.title : `${fuel.title} in ${location.name}`}</h1><p className="lede">{fuel.description}</p></div><Download file={`fuel-${fuel.slug}.csv.gz`} common={common} /></div>
+    <div className="hero detail-hero"><div><h1 className="dk-h1">{isUS ? fuel.title : `${fuel.title} in ${location.name}`}</h1><p className="lede">{fuel.description}</p></div></div>
     <KeyFigures
       description={fuel.spot ? `${lines[0].grade} spot price, ${unit}.` : `${place}${fuel.grades.length > 1 ? `, ${gradeWord(lines[0].grade)}` : ''}, ${unit}.`}
       context={isUS ? undefined : `${location.name}: ${format(h.value)} ${unit}, against a US average of ${format(usSummary.value)}.`}
@@ -389,7 +389,7 @@ function State({ page }) {
   const file = `electricity-${s.slug}.csv.gz`;
   return <>
     <p className="back-link"><a href={`${BASE}/electricity`}>All states</a></p>
-    <div className="hero detail-hero"><div><h1 className="dk-h1">Electricity prices in {s.name}</h1><p className="lede">What homes in {s.name} pay for electricity, from EIA.</p></div><Download file={file} common={common} /></div>
+    <div className="hero detail-hero"><div><h1 className="dk-h1">Electricity prices in {s.name}</h1><p className="lede">What homes in {s.name} pay for electricity, from EIA.</p></div></div>
     <KeyFigures
       context={`Over the 12 months to ${monthLabel(s.month)}, ${s.name} homes paid ${cents(s.price12)} a kWh, against a US average of ${cents(us.price12)}.`}
       items={[
@@ -423,7 +423,7 @@ function Utility({ page }) {
   const choice = page.coverage != null && page.coverage < CHOICE_COVERAGE;
   return <>
     <p className="back-link"><a href={stateUrl(st.slug)}>{st.name}</a></p>
-    <div className="hero detail-hero"><div><h1 className="dk-h1">{u.name} electricity rates</h1><p className="lede">What homes pay {u.name} for electricity, from EIA.</p><p className="dk-hint">{OWNERSHIP[u.ownership] ?? u.ownership} utility, {number(u.customers)} homes in {st.name}. EIA lists it as {u.eiaName}.</p></div><Download file={file} common={common} /></div>
+    <div className="hero detail-hero"><div><h1 className="dk-h1">{u.name} electricity rates</h1><p className="lede">What homes pay {u.name} for electricity, from EIA.</p><p className="dk-hint">{OWNERSHIP[u.ownership] ?? u.ownership} utility, {number(u.customers)} homes in {st.name}. EIA lists it as {u.eiaName}.</p></div></div>
     <KeyFigures
       context={u.price12 != null && st.price12 != null ? `Over the 12 months to ${monthLabel(u.month)}, ${u.name} homes paid ${cents(u.price12)} a kWh, against ${cents(st.price12)} across ${st.name}.` : undefined}
       items={[
