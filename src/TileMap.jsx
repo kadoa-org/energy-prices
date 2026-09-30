@@ -69,7 +69,6 @@ export default function TileMap({ states, cpi, usChange, usPrice, month, href })
       </p>
       <ul className="tilemap__legend" aria-hidden="true">
         {scale.map((b) => <li key={b.label}><span className={`tilemap__swatch ${b.cls}`} />{b.label}</li>)}
-        {!isPrice && <li className="tilemap__key">Small figure: price a kWh now</li>}
       </ul>
       <ol className="tilemap__grid">
         {placed.map(([code, [col, row]]) => {
