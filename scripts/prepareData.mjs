@@ -168,6 +168,18 @@ function stateFigures(code) {
   };
 }
 const us = stateFigures('US');
+// Inflation on the electricity figures' own basis: the 2019 average of CPI-U all items against the average of the 12
+// months to the latest electricity month. BLS published no October 2025 index, so a window may hold 11 months; fewer
+// than 11 means the comparison is not made rather than made on a thin base.
+function cpiSinceFor(end) {
+  const byMonth = new Map(series('bls-cpi:CUUR0000SA0').map(([d, v]) => [d.slice(0, 7), v]));
+  const window = (last) => Array.from({ length: 12 }, (_, i) => byMonth.get(addMonths(last, -i).slice(0, 7))).filter((v) => typeof v === 'number');
+  const base = window(baseEnd), latest = window(end);
+  if (base.length < 11 || latest.length < 11) return null;
+  const mean = (xs) => xs.reduce((a, v) => a + v, 0) / xs.length;
+  return { change: round(pct(mean(latest), mean(base)), 2), months: latest.length, month: end };
+}
+const electricityCpi = cpiSinceFor(us.month);
 const states = STATE_CODES.filter((c) => c !== 'US').map(stateFigures).map((s) => ({ ...s, slug: slugify(s.name) })).sort((a, b) => a.name.localeCompare(b.name));
 // ── Utilities (EIA-861M): the same twelve-month figures for each utility with 10,000 or more homes, per state it serves.
 const utilityGroups = new Map();
@@ -247,7 +259,7 @@ const usHistory = {
   bill: usBill,
   bill12: rolling(usBill, (d) => round(trailingMean(usBill, d), 2)),
 };
-await page('electricity', `${BASE}/electricity`, { kind: 'electricity', us, usHistory, states: states.map(({ gas, ...s }) => s), largest, utilityCount: [...utilitiesByState.values()].flat().length });
+await page('electricity', `${BASE}/electricity`, { kind: 'electricity', us, usHistory, electricityCpi, states: states.map(({ gas, ...s }) => s), largest, utilityCount: [...utilitiesByState.values()].flat().length });
 
 // ── Since 2019. BLS average prices for the fuels households buy, as the change since August 2019, before the pandemic
 // moved energy prices; the same base month the food site uses, so the two read together.
@@ -278,6 +290,7 @@ const regionalPump = defs.filter((d) => d.product === 'gasoline_regular' && ['us
   return { area: d.geoName, geoCode: d.geoCode, gasoline: weeklySummary(points.get(d.id)), diesel: dieselId ? weeklySummary(points.get(dieselId)) : null };
 });
 const energyCpi = monthlySummary(series('bls-cpi:CUUR0000SA0E'));
+
 const allCpi = monthlySummary(series('bls-cpi:CUUR0000SA0'));
 const weekly2y = (id) => points.get(id).filter((p) => p[0] >= '2019-08-01');
 await page('home', BASE, {
@@ -285,8 +298,10 @@ await page('home', BASE, {
   headlines: { gasoline: fuelHeadlines.gasoline, diesel: fuelHeadlines.diesel, electricity: { ...us.price, price12: us.price12, price12Change: us.price12Change }, bill: { value: us.bill12, change: us.bill12Change }, energyCpi: { month: energyCpi.date, change: energyCpi.yearChange, allItems: allCpi.yearChange } },
   staples: { from: FROM.slice(0, 7), month: staples[0].points.at(-1)[0], items: staples, ranking, cpi: allItems, regions },
   pump: { rows: regionalPump, gasoline: weekly2y('eia-pet:EMM_EPMR_PTE_NUS_DPG.W'), diesel: weekly2y('eia-pet:EMD_EPD2D_PTE_NUS_DPG.W') },
-  states: states.map((s) => ({ name: s.name, slug: s.slug, price12: s.price12, price12Change: s.price12Change, priceSince2019: s.priceSince2019, trend: s.trend })),
+  states: states.map((s) => ({ code: s.code, name: s.name, slug: s.slug, price12: s.price12, price12Change: s.price12Change, priceSince2019: s.priceSince2019, trend: s.trend })),
   usTrend: us.trend,
+  usSince2019: us.priceSince2019,
+  electricityCpi,
 });
 await page('about', `${BASE}/about`, { kind: 'about', counts: { series: manifest.series, rows: manifest.rows, states: states.length } });
 

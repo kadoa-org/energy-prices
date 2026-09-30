@@ -263,3 +263,20 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,su
 .compare-group__title{font-size:19px;margin:0 0 8px}
 .compare-group .dk-table{table-layout:fixed;width:100%}
 .related-link{margin:0 0 28px;font-size:16px}
+
+/* State tile map (TileMap.jsx). Blues at or below inflation, oranges above; the tones are the chart's, with the
+   darker ones carrying white text. On a phone the tiles drop the line and the code, keeping the percent readable. */
+.tilemap__intro{margin:0 0 12px;font-size:16px;line-height:24px}
+.tilemap__legend{display:flex;flex-wrap:wrap;gap:6px 16px;list-style:none;margin:0 0 16px;padding:0;font-size:14px}
+.tilemap__legend li{display:inline-flex;align-items:center;gap:6px}
+.tilemap__swatch{width:18px;height:12px;display:inline-block}
+.tilemap__grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:4px;list-style:none;margin:0;padding:0}
+.tile a{display:flex;flex-direction:column;aspect-ratio:80/104;padding:6px;color:inherit;text-decoration:none;box-sizing:border-box}
+.tile a:hover,.tile a:focus-visible{outline:3px solid var(--dk-focus,#ffdd00);outline-offset:0}
+.tile__code{font-size:11px;font-weight:600;opacity:.85}
+.tile__pct{font-size:clamp(11px,1.6vw,17px);font-weight:700;font-variant-numeric:tabular-nums}
+.tile__line{margin-top:auto;width:100%;height:24px}
+.tile__line polyline{fill:none;stroke:currentColor;stroke-opacity:.75;stroke-width:1.6;vector-effect:non-scaling-stroke}
+.tile--b2{background:#9ecae1;color:#0b0c0c}.tile--b1{background:#deebf7;color:#0b0c0c}
+.tile--o1{background:#fdbe85;color:#0b0c0c}.tile--o2{background:#f16913;color:#fff}.tile--o3{background:#a63603;color:#fff}
+@media (max-width:640px){.tilemap__grid{gap:2px}.tile a{padding:3px;aspect-ratio:1}.tile__line{display:none}.tile__code{font-size:9px}.tile__pct{font-size:10px}}

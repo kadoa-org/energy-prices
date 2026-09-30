@@ -3,6 +3,7 @@ import { Button, DataTable, GitHubButton, LiveBadge, NavBar, Section, SiteFooter
 import { ChangeTag, ChartCard, FilterSelect, KeyFigures, SectionHeading, ShowMore } from './Figures';
 import LineChart, { SERIES_COLOURS } from './LineChart';
 import CommandPalette from './CommandPalette';
+import TileMap from './TileMap';
 import { StapleChart, StapleRanking, ValueRanking, monthTime, stapleScales } from './StaplesChart';
 import { BASE, HOME, addDays, addMonths, cents, dataPath, dateLabel, money, monthLabel, number, pctLabel } from './model.mjs';
 import { priceText } from './format.mjs';
@@ -124,7 +125,7 @@ function StateTrends({ states, usTrend }) {
     </ul>
   </>;
 }
-function StatesCard({ states, us, month, common, full = false, usTrend }) {
+function StatesCard({ states, us, month, common, full = false, usTrend, cpi, usSince2019 }) {
   const [sort, setSort] = useState({ key: 'price12', dir: 'desc' });
   const ranked = [...states].sort((a, b) => b.price12 - a.price12);
   const value = (r, k) => (k === 'name' ? r.name : r[k] ?? -Infinity);
@@ -145,6 +146,7 @@ function StatesCard({ states, us, month, common, full = false, usTrend }) {
     description="Average price for homes over the last 12 months, in cents a kilowatt-hour."
     date={`12 months to ${monthLabel(month)}`}
     tabs={[
+      cpi && usSince2019 != null && { label: 'Map', content: <TileMap states={states} cpi={cpi} usChange={usSince2019} href={stateUrl} /> },
       { label: 'Chart', content: <ShowMore total={ranked.length} initial={15} noun="states">{(n) => <ValueRanking rows={ranked.slice(0, n).map((s) => ({ name: s.name, value: s.price12, href: stateUrl(s.slug) }))} average={us.price12} averageLabel="US average" format={cents} />}</ShowMore> },
       usTrend && { label: 'Since 2019', content: <StateTrends states={states} usTrend={usTrend} /> },
       { label: 'Tabular data', short: 'Tabular', content: <ShowMore total={sorted.length} initial={15} noun="states">{(n) => <DataTable rows={sorted.slice(0, n)} columns={columns} rowKey={(r) => r.slug} sort={sort} onSort={(key) => setSort((s) => ({ key, dir: s.key === key && s.dir === 'desc' ? 'asc' : 'desc' }))} />}</ShowMore> },
@@ -159,7 +161,7 @@ function Overview({ page }) {
     <Headlines h={page.headlines} />
     <SinceBase staples={page.staples} common={page.common} />
     <Pump pump={page.pump} common={page.common} />
-    <StatesCard states={page.states} us={{ price12: page.headlines.electricity.price12 }} month={page.headlines.electricity.date} common={page.common} usTrend={page.usTrend} />
+    <StatesCard states={page.states} us={{ price12: page.headlines.electricity.price12 }} month={page.headlines.electricity.date} common={page.common} usTrend={page.usTrend} cpi={page.electricityCpi} usSince2019={page.usSince2019} />
   </>;
 }
 
@@ -322,7 +324,7 @@ function Electricity({ page }) {
       <HistoryCard id="us-price-title" title="US electricity price" description="Average residential price a kilowatt-hour, by month, with the 12-month average." end={page.us.month} state={page.usHistory.price} stateName="Monthly" us={page.usHistory.price12} compareLabel="12-month average" format={(v) => `${v.toFixed(2)}¢`} axis={(v) => `${v}¢`} yTitle="Cents a kWh" columns="Cents a kWh" file="energy-prices.csv.gz" common={page.common} note={<>Source: <a href="https://www.eia.gov/electricity/monthly/" target="_blank" rel="noreferrer">EIA Electric Power Monthly</a>. Revenue over kilowatt-hours sold, including fixed charges.</>} downloadText="Every series on this site, including monthly US and state electricity figures, as a gzipped CSV." />
       <HistoryCard id="us-bill-title" title="Average monthly electricity bill" description="What an average home pays a month, with the 12-month average." end={page.us.month} state={page.usHistory.bill} stateName="Monthly" us={page.usHistory.bill12} compareLabel="12-month average" format={(v) => money(v, 0)} yTitle="Dollars a month" columns="Bill" file="energy-prices.csv.gz" common={page.common} note={<>Source: <a href="https://www.eia.gov/electricity/monthly/" target="_blank" rel="noreferrer">EIA Electric Power Monthly</a>.</>} downloadText="Every series on this site, including monthly US and state electricity figures, as a gzipped CSV." />
     </>}
-    <StatesCard states={page.states} us={page.us} month={page.us.month} common={page.common} full usTrend={page.us.trend} />
+    <StatesCard states={page.states} us={page.us} month={page.us.month} common={page.common} full usTrend={page.us.trend} cpi={page.electricityCpi} usSince2019={page.us.priceSince2019} />
     <UtilitiesTable title="Prices at the largest utilities" hint={`The ${page.largest.length} utilities serving 250,000 homes or more, of ${number(page.utilityCount)} tracked. Past 12 months.`} utilities={page.largest} showState />
   </>;
 }
