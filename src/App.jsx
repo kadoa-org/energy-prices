@@ -453,22 +453,10 @@ function About({ page }) {
     <p className="lede">Every figure on this site comes from two US government agencies and is public domain.</p>
     <h2>Sources</h2>
     <ul>
-      <li><a href="https://www.eia.gov/petroleum/gasdiesel/">EIA Gasoline and Diesel Fuel Update</a>: weekly pump prices, every Monday.</li>
-      <li><a href="https://www.eia.gov/petroleum/heatingoilpropane/">EIA Heating Oil and Propane Update</a>: weekly home heating prices, October to March.</li>
-      <li><a href="https://www.eia.gov/electricity/monthly/">EIA Electric Power Monthly</a>: residential revenue, sales and customers by state, about two months behind.</li>
-      <li><a href="https://www.eia.gov/naturalgas/monthly/">EIA Natural Gas Monthly</a>: residential gas prices by state.</li>
-      <li><a href="https://www.eia.gov/electricity/data/eia861m/">EIA-861M</a>: residential revenue, sales and customers for each utility, monthly since 2019. It lists utilities that sell both delivery and power; in retail-choice states most homes buy power from a supplier EIA does not name.</li>
-      <li><a href="https://www.bls.gov/cpi/">BLS Consumer Price Index</a> and <a href="https://www.bls.gov/cpi/factsheets/average-prices.htm">average prices</a>: monthly, by region, and gasoline and diesel for 18 metro areas.</li>
+      <li>US Energy Information Administration (EIA): weekly fuel prices, and monthly electricity and natural gas prices by state and utility.</li>
+      <li>US Bureau of Labor Statistics (BLS): average prices and the Consumer Price Index.</li>
     </ul>
     <p>The project is open source and contributions are welcome: <a href="https://github.com/kadoa-org/energy-prices">github.com/kadoa-org/energy-prices</a>.</p>
-    <h2>How to read it</h2>
-    <ul>
-      <li>Prices are in dollars of the day, not adjusted for inflation.</li>
-      <li>A weekly change compares the latest week with the week before and the week nearest a year earlier.</li>
-      <li>Electricity figures cover the past 12 months. A single month would mostly show the weather. "Since 2019" compares them with the 2019 average.</li>
-      <li>The average price is revenue over kilowatt-hours sold, so it includes fixed charges. The average bill is revenue over customers.</li>
-      <li>Red means a price went up, green that it went down.</li>
-    </ul>
     <p className="dk-hint">{number(page.counts.series)} series and {number(page.counts.rows)} figures, updated weekly, last on {dateLabel(page.common.generatedAt.slice(0, 10))}. Built by <a href="https://www.kadoa.com">Kadoa</a>.</p>
   </article>;
 }
