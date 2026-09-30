@@ -80,7 +80,6 @@ export default function TileMap({ states, cpi, usChange, usPrice, month, href })
               <a href={href(s.slug)} aria-label={isPrice ? `${s.name}: ${cents(v)} a kWh` : `${s.name}: up ${Math.round(v)}% since 2019`}>
                 <span className="tile__code">{code}</span>
                 <span className="tile__pct">{label}</span>
-                {!isPrice && <span className="tile__price">{cents(s.price12)}</span>}
                 <svg className="tile__line" viewBox="0 0 100 32" preserveAspectRatio="none" aria-hidden="true"><polyline points={pts} /></svg>
               </a>
             </li>
@@ -95,7 +94,6 @@ export default function TileMap({ states, cpi, usChange, usPrice, month, href })
             <span className={`tilemap__swatch ${binOf(isPrice ? s.price12 : s.priceSince2019).cls}`} aria-hidden="true" />
             <a href={href(s.slug)}>{s.name}</a>
             <span className="tilemap__list-value">{isPrice ? cents(s.price12) : `+${Math.round(s.priceSince2019)}%`}</span>
-            {!isPrice && <span className="tilemap__list-price">{cents(s.price12)}</span>}
           </li>
         ))}
       </ol>
