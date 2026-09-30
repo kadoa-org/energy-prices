@@ -161,7 +161,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,su
 .chart-legend__item{display:inline-flex;align-items:center;gap:8px}.chart-legend__swatch{display:inline-block;width:28px;height:3px;background:var(--chart-series-ink)}
 .chart-legend__swatch--gap{height:0;border-top:2px dotted var(--gov-border);background:none}
 
-@media (max-width:640px){.tile__price{display:none}.chart-panel-card{padding:15px}.govuk-tabs__tab{font-size:16px;padding:10px 8px}.govuk-tabs__list-item--selected .govuk-tabs__tab{padding:14px 7px 16px}.govuk-tabs__panel{padding:12px;min-height:400px}.govuk-tabs__long{display:none}.govuk-tabs__short{display:inline}}
+@media (max-width:640px){.chart-panel-card{padding:15px}.govuk-tabs__tab{font-size:16px;padding:10px 8px}.govuk-tabs__list-item--selected .govuk-tabs__tab{padding:14px 7px 16px}.govuk-tabs__panel{padding:12px;min-height:400px}.govuk-tabs__long{display:none}.govuk-tabs__short{display:inline}}
 .table-intro{margin:0 0 15px}.download-intro{margin:0 0 20px;font-size:19px;line-height:25px}
 .download-row{display:flex;flex-wrap:wrap;gap:15px}.section-download{margin:20px 0 0;font-size:16px;line-height:24px}.section-download .dk-btn{margin-left:10px}
 
@@ -284,4 +284,15 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,su
 .tile--p1{background:#efedf5;color:#0b0c0c}.tile--p2{background:#cbc9e2;color:#0b0c0c}.tile--p3{background:#9e9ac8;color:#0b0c0c}.tile--p4{background:#756bb1;color:#fff}.tile--p5{background:#54278f;color:#fff}
 .tilemap__controls{margin:0 0 8px}
 
-@media (max-width:640px){.tilemap__grid{gap:2px}.tile a{padding:3px;aspect-ratio:1}.tile__line{display:none}.tile__code{font-size:9px}.tile__pct{font-size:10px}}
+.tilemap__list{display:none;list-style:none;margin:20px 0 0;padding:0;border-top:1px solid var(--gov-border,#b1b4b6)}
+.tilemap__list li{display:grid;grid-template-columns:14px 1fr auto auto;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--gov-border,#b1b4b6);font-size:16px}
+.tilemap__list .tilemap__swatch{width:14px;height:14px}
+.tilemap__list-value{font-weight:700;font-variant-numeric:tabular-nums;text-align:right}
+.tilemap__list-price{color:var(--dk-muted);font-size:14px;font-variant-numeric:tabular-nums;min-width:3.4em;text-align:right}
+@media (max-width:640px){
+  .tilemap__grid{gap:2px}
+  .tile a{padding:0;aspect-ratio:1;align-items:center;justify-content:center}
+  .tile__pct,.tile__price,.tile__line{display:none}
+  .tile__code{font-size:10px;font-weight:700;opacity:1}
+  .tilemap__list{display:block}
+}
