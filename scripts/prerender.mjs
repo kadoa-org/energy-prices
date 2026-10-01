@@ -88,9 +88,15 @@ function seo(page, path) {
     description = `${u.name} electricity rates: ${cents(u.price12)} a kWh and an average bill of ${money(u.bill12, 0)} a month for ${u.customers.toLocaleString('en-US')} homes in ${st.name}, 12 months to ${monthLabel(u.month)}${u.price12Change != null ? `, ${pctLabel(u.price12Change)} on a year earlier` : ''}. Monthly history since 2019 from EIA, against the ${st.name} average.`;
     crumbs.push({ name: 'Electricity', url: `${SITE}/energy-prices/electricity` }, { name: st.name, url: `${SITE}/energy-prices/electricity/${st.slug}` }, { name: u.name, url: canonical });
     ld = [dataset(`${u.name} residential electricity prices, ${st.name}`, description, { temporalCoverage: `${page.history.price[0][0]}/${u.month}`, spatialCoverage: `${st.name}, United States`, isBasedOn: 'https://www.eia.gov/electricity/data/eia861m/', distribution: [{ '@type': 'DataDownload', encodingFormat: 'text/csv', contentUrl: `${absolute(dataPath)}/downloads/utility-${st.slug}-${u.slug}.csv.gz` }] })];
+  } else if (page.kind === 'rateCases') {
+    const open = page.cases.filter((c) => c.status === 'pending');
+    title = 'Utility Rate Cases: Electric and Gas Rate Increase Requests by State';
+    description = `${open.length} open electric and gas rate cases in ${page.states.map((s) => s.name).join(', ')}: what each utility asked for, the expected decision, and what regulators approved in the past two years.`;
+    crumbs.push({ name: 'Rate cases', url: canonical });
+    ld = [dataset('US utility rate cases', description, { spatialCoverage: 'United States', distribution: [{ '@type': 'DataDownload', encodingFormat: 'text/csv', contentUrl: `${absolute(dataPath)}/downloads/rate-cases.csv.gz` }] })];
   } else {
     title = 'About the Data: Sources and Methods';
-    description = 'Where the energy price data comes from (EIA and BLS), how weekly and twelve-month changes are calculated, and how to download it. Public domain.';
+    description = 'Where the energy price data comes from (EIA, BLS, state utility commissions and energy offices), how changes are calculated, and how to download it.';
     crumbs.push({ name: 'About the data', url: canonical });
     ld = [{ '@context': 'https://schema.org', '@type': 'WebPage', name: title, url: canonical, description, dateModified: updated }];
   }

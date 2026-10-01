@@ -29,7 +29,7 @@ export function Shell({ page, children }) {
   return <><a className="skip-link" href="#main-content">Skip to content</a>
     <SiteHeader brand="⚡ US Energy Price Monitor" brandHref={HOME} brandSuffix={<a href="https://www.kadoa.com" target="_blank" rel="noreferrer" className="dk-header-link">by Kadoa</a>} right={<span className="header-right"><LiveBadge>Updated weekly</LiveBadge><GitHubButton repo="kadoa-org/energy-prices" /><Button inverse onClick={() => setSearch(true)} aria-label="Search (Cmd+K)">Search <kbd className="header-kbd">⌘K</kbd></Button></span>} />
     <CommandPalette open={search} onClose={() => setSearch(false)} dataPath={dataPath(page?.common)} />
-    <NavBar items={[{ href: HOME, label: 'Overview', active: kind === 'home' }, { href: `${BASE}/fuel`, label: 'Fuel prices', active: kind === 'fuel' || kind === 'fuels' }, { href: `${BASE}/electricity`, label: 'Electricity', active: kind === 'electricity' || kind === 'state' || kind === 'electricityMap' }, { href: `${BASE}/about`, label: 'About the data', active: kind === 'about' }]} />
+    <NavBar items={[{ href: HOME, label: 'Overview', active: kind === 'home' }, { href: `${BASE}/fuel`, label: 'Fuel prices', active: kind === 'fuel' || kind === 'fuels' }, { href: `${BASE}/electricity`, label: 'Electricity', active: kind === 'electricity' || kind === 'state' || kind === 'electricityMap' }, { href: `${BASE}/rate-cases`, label: 'Rate cases', active: kind === 'rateCases' }, { href: `${BASE}/about`, label: 'About the data', active: kind === 'about' }]} />
     <main id="main-content" className="dk-container main">{children}</main><SiteFooter current="energy-prices" /></>;
 }
 export function Loading({ error = false }) {
@@ -262,8 +262,9 @@ function Fuel({ page }) {
         { label: '12-month range', value: `${format(h.low[1])} to ${format(h.high[1])}`, note: 'Lowest and highest week' },
       ]}
     />
-    {stale && fuel.seasonal && <p className="dk-inset">EIA surveys {fuel.name.toLowerCase()} from October to March. These are the last figures of the winter of {Number(h.date.slice(0, 4)) - 1} to {h.date.slice(0, 4)}.</p>}
+    {stale && fuel.seasonal && <p className="dk-inset">EIA surveys {fuel.name.toLowerCase()} from October to March. These are the last figures of the winter of {Number(h.date.slice(0, 4)) - 1} to {h.date.slice(0, 4)}.{page.survey && <> {page.survey.publisher} surveys all year: {format(page.survey.summary.value)} {unit} in the week of {dateLabel(page.survey.summary.date)}.</>}</p>}
     {locations.length > 1 && <LocationFilter fuel={fuel} location={location} locations={locations} />}
+    {page.survey && stale && <StateSurvey survey={page.survey} eia={lines[0]} fuel={fuel} location={location} format={format} />}
     <ChartCard
       id="chart-title"
       title={fuel.spot ? `${fuel.title}, ${fuel.grades.join(' and ')}` : `${fuel.title}, ${place}${byGrade ? ', by grade' : ''}`}
@@ -282,11 +283,48 @@ function Fuel({ page }) {
       ]}
       footer={<p className="chart-note">Source: <a href={fuel.slug === 'crude-oil' ? 'https://www.eia.gov/dnav/pet/pet_pri_spt_s1_w.htm' : fuel.seasonal ? 'https://www.eia.gov/petroleum/heatingoilpropane/' : 'https://www.eia.gov/petroleum/gasdiesel/'} target="_blank" rel="noreferrer">US Energy Information Administration</a>.</p>}
     />
+    {page.survey && !stale && <StateSurvey survey={page.survey} eia={lines[0]} fuel={fuel} location={location} format={format} />}
+    {page.surveys && <SurveyTable rows={page.surveys} fuel={fuel} format={format} />}
     {page.related && <p className="related-link">Pump prices follow crude oil: <a href={fuelUrl(page.related.slug)}>{page.related.grade}</a> {format(page.related.summary.value)} {page.related.unit}, <ChangeTag value={page.related.summary.yearChange} size="small" /> on a year ago.</p>}
     {compare.length > 1 && <CompareAreas fuel={fuel} location={location} compare={compare} format={format} />}
     {page.monthly && <MonthlyAreas monthly={page.monthly} fuel={fuel} common={common} />}
   </>;
 }
+// A state's own weekly survey beside EIA's. EIA stops in March; the state keeps going, so the summer is only here.
+function StateSurvey({ survey, eia, fuel, location, format }) {
+  const from = addDays(survey.summary.date, -400);
+  const series = [{ label: survey.publisher, points: survey.points, colour: SERIES_COLOURS[0] }, { label: 'EIA', points: eia.points, colour: SERIES_COLOURS[1] }];
+  const columns = [
+    { key: 'region', header: 'Region', render: (r) => r.region },
+    { key: 'price', header: `Price ${fuel.unit}`, align: 'right', render: (r) => format(r.price) },
+    { key: 'weekChange', header: 'Past week', align: 'right', render: (r) => <Change value={r.weekChange} /> },
+  ];
+  return <ChartCard
+    id="survey-title"
+    title={`${fuel.name} in ${location.name}, all year`}
+    description={`${survey.publisher} surveys every week of the year. EIA surveys from October to March.`}
+    date={`Up to and including the week of ${dateLabel(survey.summary.date)}`}
+    tabs={[
+      { label: 'Chart', content: <LineChart series={series} from={from} to={survey.summary.date} format={format} yTitle={`Price ${fuel.unit}`} gapDays={21} label={`${fuel.name} in ${location.name}: ${format(survey.summary.value)} ${fuel.unit} in the week of ${dateLabel(survey.summary.date)}, from ${survey.publisher}.`} /> },
+      survey.regions.length > 0 && { label: 'By region', short: 'Regions', content: <DataTable rows={survey.regions} columns={columns} rowKey={(r) => r.id} /> },
+    ]}
+    footer={<p className="chart-note">Source: {survey.publisher}, collected with Kadoa. EIA figures from the US Energy Information Administration.</p>}
+  />;
+}
+function SurveyTable({ rows, fuel, format }) {
+  const columns = [
+    { key: 'region', header: 'Area', render: (r) => <>{r.statewide ? STATE_NAMES[r.state] ?? r.state : r.region}<span className="cell-note">{r.statewide ? 'Statewide' : STATE_NAMES[r.state] ?? r.state}</span></> },
+    { key: 'price', header: `Price ${fuel.unit}`, align: 'right', render: (r) => format(r.price) },
+    { key: 'weekChange', header: 'Past week', align: 'right', render: (r) => <Change value={r.weekChange} /> },
+    { key: 'publisher', header: 'Survey', hideBelow: 'sm', render: (r) => r.publisher },
+  ];
+  return <Section title="State surveys, all year" hint={`${[...new Set(rows.map((r) => r.publisher))].length} states survey ${fuel.name.toLowerCase()} every week, including summer. Week of ${dateLabel(rows[0].date)}.`}>
+    <DataTable rows={rows} columns={columns} rowKey={(r) => r.id} />
+    <p className="chart-note">Source: state energy offices, collected with Kadoa.</p>
+  </Section>;
+}
+const STATE_NAMES = { CT: 'Connecticut', MA: 'Massachusetts', ME: 'Maine', NY: 'New York' };
+
 // BLS monthly averages for the metro areas and census divisions EIA's weekly survey leaves out.
 function MonthlyAreas({ monthly, fuel, common }) {
   const [sort, setSort] = useState({ key: 'price', dir: 'desc' });
@@ -412,6 +450,7 @@ function State({ page }) {
     <HistoryCard id="bill-title" title="Average monthly bill" description="What an average home pays a month. Bills peak in summer and winter." end={s.month} state={history.bill} stateName={s.name} us={usHistory.bill} format={(v) => money(v, 0)} yTitle="Dollars a month" columns="Bill" file={file} common={common} note={<>{source} EIA's own method for its average bill table.</>} />
     {history.gas.length > 0 && <HistoryCard id="gas-title" title="Natural gas price" description="Average residential price a thousand cubic feet, by month. Summer prices are high because fixed charges are spread over little gas." end={history.gas.at(-1)[0]} state={history.gas} stateName={s.name} us={usHistory.gas} format={(v) => money(v)} yTitle="Dollars a Mcf" columns="Price a Mcf" file={file} common={common} note={<>Source: <a href="https://www.eia.gov/naturalgas/monthly/" target="_blank" rel="noreferrer">EIA Natural Gas Monthly</a>.</>} />}
     {page.utilities?.length > 0 && <UtilitiesTable title={`Utilities in ${s.name}`} hint={`Past 12 months, utilities with 10,000 homes or more. ${coverageNote(page.coverage, s.name)}`} utilities={page.utilities} stateSlug={s.slug} />}
+    {page.rateCases?.length > 0 && <><RateCaseTables cases={page.rateCases} where={` in ${s.name}`} /><p className="chart-note related-link"><a href={`${BASE}/rate-cases`}>Rate cases in other states</a></p></>}
     {page.heating.length > 0 && <p className="dk-hint">Heating fuels in {s.name}: {page.heating.map((f, i) => <React.Fragment key={f.slug}>{i ? ', ' : ''}<a href={`${fuelUrl(f.slug)}?area=${s.code}`}>{f.name.toLowerCase()}</a></React.Fragment>)}.</p>}
   </>;
 }
@@ -447,14 +486,70 @@ function Utility({ page }) {
     <HistoryCard id="bill-title" title="Average monthly bill" description="What an average home pays a month." end={u.month} state={history.bill} stateName={u.name} us={stateHistory.bill} compareLabel={`${st.name} average`} format={(v) => money(v, 0)} yTitle="Dollars a month" columns="Bill" file={file} common={common} note={source} downloadText={`Monthly residential revenue, sales and customers for ${u.name} in ${st.name}, as a gzipped CSV.`} />
   </>;
 }
+// ── Rate cases
+const SERVICE = { electric: 'Electricity', gas: 'Gas', steam: 'Steam' };
+const STATUS = { pending: 'Open', decided: 'Decided', settled: 'Settled', withdrawn: 'Withdrawn' };
+const millions = (v) => (v >= 1000 ? `$${Number((v / 1000).toFixed(2))} billion` : `$${v >= 10 ? Math.round(v) : Number(v.toFixed(1))} million`);
+const asked = (c) => [c.requested != null && millions(c.requested), c.requestedPct != null && `${Number(c.requestedPct.toFixed(1))}%`].filter(Boolean).join(', ') || '–';
+function CaseTable({ cases, open, showState }) {
+  const columns = [
+    { key: 'utility', header: 'Utility', render: (c) => <>{c.url ? <a className="cell-link" href={c.url} target="_blank" rel="noreferrer">{c.utility}</a> : c.utility}<span className="cell-note">{showState ? `${c.state}, ` : ''}{SERVICE[c.service].toLowerCase()}, {c.caseId}</span></> },
+    open
+      ? { key: 'filed', header: 'Filed', hideBelow: 'sm', render: (c) => (c.filed ? dateLabel(c.filed) : '–') }
+      : { key: 'decided', header: 'Decided', render: (c) => (c.decided ? dateLabel(c.decided) : '–') },
+    { key: 'asked', header: 'Asked for', align: 'right', render: asked },
+    open
+      ? { key: 'expected', header: 'Decision due', hideBelow: 'sm', render: (c) => c.expected ?? '–' }
+      : { key: 'approved', header: 'Approved', align: 'right', render: (c) => (c.approved != null ? millions(c.approved) : '–') },
+  ];
+  return <DataTable rows={cases} columns={columns} rowKey={(c) => `${c.state}-${c.caseId}-${c.service}`} empty="No cases." />;
+}
+function RateCaseTables({ cases, showState, where = '' }) {
+  const open = cases.filter((c) => c.status === 'pending');
+  const done = cases.filter((c) => c.status === 'decided' || c.status === 'settled');
+  return <>
+    {open.length > 0 && <Section title={`Open rate cases${where}`} hint="Increases a utility has asked for, as filed. The regulator usually approves less."><CaseTable cases={open} open showState={showState} /></Section>}
+    {done.length > 0 && <Section title={`Rate cases decided${where}, past two years`} hint="Approved is the first year's increase, where the regulator states it."><CaseTable cases={done} showState={showState} /></Section>}
+  </>;
+}
+function RateCases({ page }) {
+  const initial = typeof window === 'undefined' ? 'all' : new URLSearchParams(window.location.search).get('state') ?? 'all';
+  const [state, setState] = useState(page.states.some((s) => s.code === initial) ? initial : 'all');
+  const [service, setService] = useState('all');
+  const pick = (v) => { setState(v); try { const u = new URL(window.location.href); v === 'all' ? u.searchParams.delete('state') : u.searchParams.set('state', v); window.history.replaceState(null, '', u); } catch {} };
+  const cases = page.cases.filter((c) => (state === 'all' || c.state === state) && (service === 'all' || c.service === service));
+  const open = page.cases.filter((c) => c.status === 'pending');
+  const biggest = [...open].filter((c) => c.requested != null).sort((a, b) => b.requested - a.requested)[0];
+  return <>
+    <div className="title-block"><h1 className="dk-h1">Utility rate cases</h1><p className="lede">Utilities need a state regulator's approval to raise rates. Open cases and recent decisions, from each regulator's own pages.</p></div>
+    <KeyFigures
+      items={[
+        { label: 'Open cases', value: number(open.length), note: `In ${page.states.length} states` },
+        biggest && { label: 'Largest open request', value: millions(biggest.requested), note: `${biggest.utility}, ${biggest.state}` },
+        { label: 'Decided', value: number(page.cases.length - open.length), note: 'In the past two years' },
+        { label: 'States', value: page.states.map((s) => s.code).join(', '), note: 'Checked weekly' },
+      ]}
+    />
+    <div className="chart-filters case-filters">
+      <FilterSelect label="State" value={state} options={[['all', 'All states'], ...page.states.map((s) => [s.code, s.name])]} onChange={pick} />
+      <FilterSelect label="Service" value={service} options={[['all', 'Electricity and gas'], ['electric', 'Electricity'], ['gas', 'Gas']]} onChange={setService} />
+    </div>
+    <RateCaseTables cases={cases} showState={state === 'all'} />
+    {cases.length === 0 && <p className="dk-hint">No cases match these filters.</p>}
+    <p className="chart-note">Source: state utility commissions, collected with Kadoa. A figure is shown only where the commission's page prints it. <a href={`${dataPath(page.common)}/downloads/rate-cases.csv.gz`} download>Download CSV (gzip)</a></p>
+  </>;
+}
+
 function About({ page }) {
   return <article className="prose">
     <h1 className="dk-h1">About the data</h1>
-    <p className="lede">Every figure on this site comes from two US government agencies and is public domain.</p>
+    <p className="lede">Every figure on this site comes from US federal and state government sources.</p>
     <h2>Sources</h2>
     <ul>
       <li>US Energy Information Administration (EIA): weekly fuel prices, and monthly electricity and natural gas prices by state and utility.</li>
       <li>US Bureau of Labor Statistics (BLS): average prices and the Consumer Price Index.</li>
+      <li>State utility commissions: rate cases, collected with Kadoa.</li>
+      <li>State energy offices in Connecticut, Maine, Massachusetts and New York: weekly heating oil and propane surveys, collected with Kadoa.</li>
     </ul>
     <p>The project is open source and contributions are welcome: <a href="https://github.com/kadoa-org/energy-prices">github.com/kadoa-org/energy-prices</a>.</p>
     <p className="dk-hint">{number(page.counts.series)} series and {number(page.counts.rows)} figures, updated weekly, last on {dateLabel(page.common.generatedAt.slice(0, 10))}. Built by <a href="https://www.kadoa.com">Kadoa</a>.</p>
@@ -473,6 +568,6 @@ function ElectricityMap({ page }) {
 }
 
 export default function App({ page }) {
-  const View = { home: Overview, fuels: FuelIndex, fuel: Fuel, electricity: Electricity, electricityMap: ElectricityMap, state: State, utility: Utility, about: About }[page.kind];
+  const View = { home: Overview, fuels: FuelIndex, fuel: Fuel, electricity: Electricity, electricityMap: ElectricityMap, rateCases: RateCases, state: State, utility: Utility, about: About }[page.kind];
   return <Shell page={page}><View page={page} /></Shell>;
 }

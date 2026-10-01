@@ -7,7 +7,7 @@ export const SITE = 'https://www.kadoa.com';
 export function pageKey(pathname) {
   const rest = pathname.replace(/\/+$/, '').replace(/^\/energy-prices/, '').replace(/^\//, '');
   if (!rest) return 'home';
-  if (/^(about|electricity|fuel)$/.test(rest)) return rest;
+  if (/^(about|electricity|fuel|rate-cases)$/.test(rest)) return rest;
   if (/^fuel\/[a-z0-9-]+(\/[a-z0-9-]+)?$/.test(rest) || /^electricity\/[a-z0-9-]+(\/[a-z0-9-]+)?$/.test(rest)) return rest;
   return null;
 }

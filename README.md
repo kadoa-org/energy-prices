@@ -15,7 +15,7 @@ The US government publishes what Americans pay for gasoline, diesel, heating fue
 
 ## Data
 
-**Sources.** EIA's weekly petroleum surveys, Electric Power Monthly, Natural Gas Monthly and monthly utility survey (EIA-861M), and BLS average prices and the Consumer Price Index. All public domain.
+**Sources.** EIA's weekly petroleum surveys, Electric Power Monthly, Natural Gas Monthly and monthly utility survey (EIA-861M), BLS average prices and the Consumer Price Index, state utility commission rate cases, and the weekly heating fuel surveys of four state energy offices (the last two collected with [Kadoa](https://www.kadoa.com)).
 
 **Pipelines.** A [Kadoa](https://www.kadoa.com) pipeline collects each release, keeps every figure in SQLite and exports the dataset. The pipeline code is not public yet.
 

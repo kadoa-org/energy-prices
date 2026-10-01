@@ -6,6 +6,7 @@ describe('pageKey', () => {
     expect(pageKey('/energy-prices')).toBe('home');
     expect(pageKey('/energy-prices/')).toBe('home');
     expect(pageKey('/energy-prices/fuel')).toBe('fuel');
+    expect(pageKey('/energy-prices/rate-cases')).toBe('rate-cases');
     expect(pageKey('/energy-prices/fuel/gasoline')).toBe('fuel/gasoline');
     expect(pageKey('/energy-prices/fuel/gasoline/texas')).toBe('fuel/gasoline/texas');
     expect(pageKey('/energy-prices/electricity/new-york/')).toBe('electricity/new-york');

@@ -43,6 +43,20 @@ const csvRows = (ids) => ids.flatMap((id) => { const d = byId.get(id); return po
 
 const lastWeek = defs.filter((d) => d.frequency === 'W').map((d) => points.get(d.id).at(-1)?.[0]).filter(Boolean).sort().at(-1);
 const lastMonth = series('eia-elec:PRICE.US-RES.M').at(-1)[0];
+// Rate cases, collected with Kadoa from each state commission's case pages. Figures arrive already checked against
+// the commission's own wording; open cases first, then the most recent decisions.
+const STATUS_ORDER = { pending: 0, settled: 1, decided: 1, withdrawn: 2 };
+const rateCases = JSON.parse(await readFile(join(dir, manifest.files.rateCases), 'utf8'))
+  .sort((a, b) => STATUS_ORDER[a.status] - STATUS_ORDER[b.status] || String(b.decision_date ?? b.filed_date ?? '').localeCompare(String(a.decision_date ?? a.filed_date ?? '')));
+// The expected decision is free text from the commission's page. Kept when it names a time ("Q3 2026", "Fall 2026",
+// "mid-March 2027"), dropped when it describes something else, such as NY's "rate year ending April 30, 2027".
+const ORDINAL = { first: 1, second: 2, third: 3, fourth: 4 };
+const expectedDecision = (v) => {
+  if (!v || /rate year/i.test(v)) return null;
+  const t = v.trim().replace(/\.$/, '').replace(/^(the )?(first|second|third|fourth) quarter of (\d{4})$/i, (_, __, q, y) => `Q${ORDINAL[q.toLowerCase()]} ${y}`);
+  return /\d{4}/.test(t) ? t[0].toUpperCase() + t.slice(1) : null;
+};
+const rateCaseRow = (c) => ({ state: c.state, caseId: c.case_id, service: c.service, utility: c.utility, status: c.status, filed: c.filed_date, decided: c.decision_date, expected: expectedDecision(c.expected_decision), requested: c.requested_revenue_musd, requestedPct: c.requested_percent, approved: c.approved_revenue_musd, billImpact: c.residential_bill_impact, url: c.case_url });
 const common = { generatedAt: manifest.generatedAt, sourceRun: manifest.runId, lastWeek, lastMonth, rows: manifest.rows, series: manifest.series };
 
 const FROM_MONTH = '2019-08-01';
@@ -63,6 +77,21 @@ const fuelHeadlines = {};
 const fuelCards = [];
 const searchEntries = [];
 const fuelData = [];
+const dropped = [];
+// State heating surveys, collected with Kadoa. Their weeks match EIA's in winter (the same state offices run EIA's
+// survey), and four states keep surveying all year, region by region. Statewide figures sit beside EIA's on the state
+// page; every region is listed on the US page. A region whose last survey is three weeks older than the newest is
+// left out rather than shown as current.
+const surveyDefs = defs.filter((d) => d.source.startsWith('state-heating-') && d.measure === 'residential_price');
+const surveyLast = surveyDefs.map((d) => points.get(d.id).at(-1)?.[0]).filter(Boolean).sort().at(-1);
+const surveyRows = (product) => surveyDefs.filter((d) => d.product === product && points.get(d.id).at(-1)?.[0] >= addDays(surveyLast, -21)).map((d) => {
+  const s = weeklySummary(points.get(d.id));
+  return { id: d.id, state: d.state, statewide: d.geoType === 'state', region: d.geoType === 'state' ? 'Statewide' : d.geoName.replace(/, [A-Z]{2}$/, ''), publisher: d.sourceSeries.split('/')[0], price: s.value, date: s.date, weekChange: round(s.weekChange, 2) };
+}).sort((a, b) => a.state.localeCompare(b.state) || b.statewide - a.statewide || a.region.localeCompare(b.region));
+const stateSurvey = (rows, code) => {
+  const mine = rows.filter((r) => r.state === code); const statewide = mine.find((r) => r.statewide);
+  return statewide ? { publisher: statewide.publisher, summary: weeklySummary(points.get(statewide.id)), points: points.get(statewide.id), regions: mine.filter((r) => !r.statewide) } : null;
+};
 for (const fuel of FUELS) {
   const byGeo = new Map();
   for (const [product, grade] of fuel.products) {
@@ -75,6 +104,10 @@ for (const fuel of FUELS) {
       byGeo.set(key, loc);
     }
   }
+  // EIA keeps discontinued series in its bulk file (Illinois heating oil ends in 1991). An area whose last survey is two
+  // years older than the US average's is not a current price and is left out.
+  const usLast = [...byGeo.values()].find((l) => l.type === 'us')?.grades[0].summary.date;
+  for (const [k, l] of byGeo) if (usLast && l.grades[0].summary.date < addDays(usLast, -730)) { dropped.push(`${fuel.slug}/${l.name} (last ${l.grades[0].summary.date})`); byGeo.delete(k); }
   const locations = [...byGeo.values()].sort((a, b) => AREA_ORDER[a.type] - AREA_ORDER[b.type] || a.name.localeCompare(b.name));
   const used = new Set();
   for (const l of locations) {
@@ -100,18 +133,19 @@ for (const fuel of FUELS) {
       return { id: d.id, area: d.geoName, areaType: d.geoType, price: last[1], yearChange: round(pct(last[1], yearAgo?.[1]), 2), since2019: round(pct(last[1], base?.[1]), 2) };
     }),
   } : null;
-  await writeFile(join(out, `downloads/fuel-${fuel.slug}.csv.gz`), csv(csvRows([...locations.flatMap((l) => l.grades.map((g) => g.id)), ...monthlyDefs.map((d) => d.id)])));
+  const surveys = fuel.seasonal ? surveyRows(fuel.products[0][0]) : [];
+  await writeFile(join(out, `downloads/fuel-${fuel.slug}.csv.gz`), csv(csvRows([...locations.flatMap((l) => l.grades.map((g) => g.id)), ...monthlyDefs.map((d) => d.id), ...surveys.map((r) => r.id)])));
   const fuelMeta = { slug: fuel.slug, name: fuel.name, seo: fuel.seo, title: fuel.title, unit: fuel.unit, description: fuel.description, seasonal: !!fuel.seasonal, spot: fuel.measure === 'spot_price', grades: fuel.products.map(([, g]) => g) };
   const nav = locations.map((l) => ({ slug: l.slug, name: l.name, type: l.type }));
   // The matrix: every location and its latest price per grade, for the Compare areas table.
   const compare = locations.map((l) => ({ slug: l.slug, name: l.name, type: l.type, grades: Object.fromEntries(l.grades.map((g) => [g.grade, { value: g.summary.value, date: g.summary.date, weekChange: round(g.summary.weekChange, 2), yearChange: round(g.summary.yearChange, 2) }])) }));
-  fuelData.push({ fuel, fuelMeta, locations, us, nav, compare, monthly });
+  fuelData.push({ fuel, fuelMeta, locations, us, nav, compare, monthly, surveys });
   const spark = points.get(us.grades[0].id).filter((p) => p[0] > addDays(us.grades[0].summary.date, -365));
   fuelCards.push({ ...fuelMeta, summary: us.grades[0].summary, spark, areas: locations.length });
 }
 // Pump prices follow crude, so the gasoline and diesel pages carry crude's headline for a link.
 const crude = fuelCards.find((c) => c.slug === 'crude-oil');
-for (const { fuel, fuelMeta, locations, us, nav, compare, monthly } of fuelData) {
+for (const { fuel, fuelMeta, locations, us, nav, compare, monthly, surveys } of fuelData) {
   const related = ['gasoline', 'diesel'].includes(fuel.slug) && crude ? { slug: crude.slug, title: crude.title, grade: crude.grades[0], summary: crude.summary, unit: crude.unit } : null;
   for (const l of locations) {
     const key = l.slug ? `fuel/${fuel.slug}/${l.slug}` : `fuel/${fuel.slug}`;
@@ -119,6 +153,7 @@ for (const { fuel, fuelMeta, locations, us, nav, compare, monthly } of fuelData)
       kind: 'fuel', fuel: fuelMeta, location: { slug: l.slug, name: l.name, type: l.type },
       lines: l.grades.map((g) => ({ grade: g.grade, id: g.id, summary: g.summary, points: points.get(g.id) })),
       usSummary: us.grades[0].summary, locations: nav, compare, monthly: l.slug ? null : monthly, related,
+      surveys: l.slug ? null : surveys.length ? surveys : null, survey: l.type === 'state' ? stateSurvey(surveys, l.geoCode) : null,
     });
     const v = l.grades[0].summary.value;
     searchEntries.push({ group: 'Fuels', label: l.slug ? `${fuel.title} in ${l.name}` : `${fuel.title}, US`, hint: `${l.slug ? { padd: "Region", state: "State", city: "City" }[l.type] : "US average"}${fuelMeta.grades.length > 1 ? `, ${fuelMeta.spot ? l.grades[0].grade : l.grades[0].grade.toLowerCase()}` : ""}`, right: `$${v >= 100 ? v.toFixed(0) : v.toFixed(2)}`, href: `${BASE}/${key}` });
@@ -244,6 +279,7 @@ for (const s of states) {
   searchEntries.push({ group: 'Electricity', label: `Electricity in ${s.name}`, hint: `State, ${money(s.bill12, 0)} a month`, right: `${s.price12.toFixed(1)}¢`, href: `${BASE}/electricity/${s.slug}` });
   for (const u of utilities) if (u.price12 != null) searchEntries.push({ group: 'Utilities', label: u.name, hint: `${s.name}, ${money(u.bill12, 0)} a month`, right: `${u.price12.toFixed(1)}¢`, href: `${BASE}/electricity/${s.slug}/${u.slug}` });
   await page(`electricity/${s.slug}`, `${BASE}/electricity/${s.slug}`, {
+    rateCases: rateCases.filter((c) => c.state === code).map(rateCaseRow),
     kind: 'state', state: (({ trend, ...rest }) => rest)(s), us: (({ trend, ...rest }) => rest)(us), rankPrice, rankBill, stateCount: states.length, heating, utilities: utilities.map(utilityRow), coverage,
     history: { price: points.get(elec('residential_price', code)), bill: points.get(derived('bill', code)), use: points.get(derived('use', code)), gas: gasId(code) ? points.get(gasId(code)) : [] },
     usHistory: { price: points.get(elec('residential_price', 'US')), bill: points.get(derived('bill', 'US')), gas: points.get(gasId('US')) },
@@ -309,6 +345,11 @@ await page('home', BASE, {
   electricityCpi,
   electricityCpiTrend,
 });
+const rateCaseStates = [...new Set(rateCases.map((c) => c.state))].map((code) => { const st = states.find((x) => x.code === code); return { code, name: st.name, slug: st.slug }; }).sort((a, b) => a.name.localeCompare(b.name));
+await page('rate-cases', `${BASE}/rate-cases`, { kind: 'rateCases', cases: rateCases.map(rateCaseRow), states: rateCaseStates });
+const caseCsv = ['state,case_id,service,utility,status,filed_date,decision_date,expected_decision,requested_usd_million,requested_percent,approved_usd_million,residential_bill_impact,case_url', ...rateCases.map((c) => [c.state, c.case_id, c.service, c.utility, c.status, c.filed_date, c.decision_date, c.expected_decision, c.requested_revenue_musd, c.requested_percent, c.approved_revenue_musd, c.residential_bill_impact, c.case_url].map((v) => (v == null ? '' : /[",\n]/.test(String(v)) ? `"${String(v).replaceAll('"', '""')}"` : v)).join(','))].join('\n') + '\n';
+await writeFile(join(out, 'downloads/rate-cases.csv.gz'), gzipSync(caseCsv));
+for (const c of rateCases) searchEntries.push({ group: 'Rate cases', label: `${c.utility} ${c.service === 'gas' ? 'gas' : 'electric'} rate case`, hint: `${c.state}, ${c.case_id}, ${c.status}`, href: `${BASE}/rate-cases?state=${c.state}` });
 await page('about', `${BASE}/about`, { kind: 'about', counts: { series: manifest.series, rows: manifest.rows, states: states.length } });
 
 // The search index: every page a reader might type a name for, with the figure that identifies it.
@@ -316,9 +357,11 @@ const pageEntries = [
   { group: 'Pages', label: 'Overview', hint: 'Headlines, since 2019, pump prices, states', href: BASE },
   { group: 'Pages', label: 'Fuel prices', hint: 'Gasoline, diesel, heating oil, propane, crude oil', href: `${BASE}/fuel` },
   { group: 'Pages', label: 'Electricity prices by state', hint: 'Price, bill and use for every state', href: `${BASE}/electricity` },
+  { group: 'Pages', label: 'Utility rate cases', hint: 'Open and recent requests to raise rates', href: `${BASE}/rate-cases` },
   { group: 'Pages', label: 'About the data', hint: 'Sources and methods', href: `${BASE}/about` },
 ];
 await writeFile(join(out, 'search.json'), JSON.stringify([...pageEntries, ...searchEntries]));
 await copyFile(join(dir, manifest.files.csv), join(out, 'downloads/energy-prices.csv.gz'));
 await writeFile(join(out, 'routes.json'), JSON.stringify(pages));
+console.log(JSON.stringify({ discontinued: dropped }));
 console.log(JSON.stringify({ pages: pages.length, lastWeek, lastMonth, sourceRun: manifest.runId }));
