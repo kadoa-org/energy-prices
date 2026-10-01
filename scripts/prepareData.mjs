@@ -322,6 +322,13 @@ const cpiSince = (code) => { const list = series(`bls-cpi:CUUR0000${code}`); con
 const CPI = [['SA0E', 'All energy'], ['SETB01', 'Gasoline'], ['SEHF01', 'Electricity'], ['SEHF02', 'Utility gas'], ['SEHE01', 'Fuel oil'], ['SAF11', 'Food at home']];
 const allItems = cpiSince('SA0');
 const ranking = CPI.map(([code, name]) => ({ name, ...cpiSince(code), staple: code === 'SA0E' })).sort((a, b) => b.change - a.change);
+// Reference lines for the small multiples: all consumer prices (CPI-U, all items) and wages (BLS average hourly
+// earnings of production and nonsupervisory employees), as percent change from the same month as the fuels, so a
+// reader can see whether a price rose faster than prices in general and faster than pay.
+const stapleMonth = staples[0].points.at(-1)[0];
+const referenceLine = (id) => { const list = series(id).filter((p) => p[0] >= FROM && p[0].slice(0, 7) <= stapleMonth); const base = list[0]; if (base[0] !== FROM) throw new Error(`${id} has no ${FROM}`); return list.map(([d, v]) => [d.slice(0, 7), round(pct(v, base[1]), 2)]); };
+const reference = { cpi: referenceLine('bls-cpi:CUUR0000SA0'), wages: referenceLine('bls-ces:CES0500000008') };
+reference.cpiChange = reference.cpi.at(-1)[1]; reference.wagesChange = reference.wages.at(-1)[1];
 const REGIONS = [['0000', 'US average'], ['0100', 'Northeast'], ['0200', 'Midwest'], ['0300', 'South'], ['0400', 'West']];
 const regions = REGIONS.map(([area, name]) => ({ name, items: Object.fromEntries(STAPLES.map(([code, label]) => { const id = `bls-ap:APU${area}${code.slice(7)}`; const list = points.get(id) ?? []; const base = list.find((p) => p[0] === FROM); const last = list.at(-1); return [label, base && last ? { price: last[1], change: round(pct(last[1], base[1]), 2) } : null]; })) }));
 
@@ -337,7 +344,7 @@ const weekly2y = (id) => points.get(id).filter((p) => p[0] >= '2019-08-01');
 await page('home', BASE, {
   kind: 'home',
   headlines: { gasoline: fuelHeadlines.gasoline, diesel: fuelHeadlines.diesel, electricity: { ...us.price, price12: us.price12, price12Change: us.price12Change }, bill: { value: us.bill12, change: us.bill12Change }, energyCpi: { month: energyCpi.date, change: energyCpi.yearChange, allItems: allCpi.yearChange } },
-  staples: { from: FROM.slice(0, 7), month: staples[0].points.at(-1)[0], items: staples, ranking, cpi: allItems, regions },
+  staples: { from: FROM.slice(0, 7), month: stapleMonth, items: staples, ranking, cpi: allItems, reference, regions },
   pump: { rows: regionalPump, gasoline: weekly2y('eia-pet:EMM_EPMR_PTE_NUS_DPG.W'), diesel: weekly2y('eia-pet:EMD_EPD2D_PTE_NUS_DPG.W') },
   states: states.map((s) => ({ code: s.code, name: s.name, slug: s.slug, price12: s.price12, price12Change: s.price12Change, priceSince2019: s.priceSince2019, trend: s.trend })),
   usTrend: us.trend,
