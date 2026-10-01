@@ -4,6 +4,7 @@ import { ChangeTag, ChartCard, FilterSelect, KeyFigures, SectionHeading, ShowMor
 import LineChart, { SERIES_COLOURS } from './LineChart';
 import CommandPalette from './CommandPalette';
 import StateExplorer from './StateExplorer';
+import OilShocks from './OilShocks';
 import { StapleChart, StapleRanking, ValueRanking, monthTime, stapleScales } from './StaplesChart';
 import { BASE, HOME, addDays, addMonths, cents, dataPath, dateLabel, money, monthLabel, number, pctLabel } from './model.mjs';
 import { priceText } from './format.mjs';
@@ -296,6 +297,17 @@ function Fuel({ page }) {
       ]}
       footer={<p className="chart-note">Source: <a href={fuel.slug === 'crude-oil' ? 'https://www.eia.gov/dnav/pet/pet_pri_spt_s1_w.htm' : fuel.seasonal ? 'https://www.eia.gov/petroleum/heatingoilpropane/' : 'https://www.eia.gov/petroleum/gasdiesel/'} target="_blank" rel="noreferrer">US Energy Information Administration</a>.</p>}
     />
+    {page.oilHistory && <ChartCard
+      id="shocks-title"
+      title="More frequent energy shocks this decade"
+      description="Price of crude oil since 1970, dollars a barrel, with the major shocks labelled. Not adjusted for inflation."
+      date={`Up to and including the week of ${dateLabel(page.oilHistory.latest.date)}`}
+      tabs={[
+        { label: 'Chart', content: <OilShocks history={page.oilHistory} /> },
+        { label: 'Shocks', content: <DataTable rows={page.oilHistory.shocks} columns={[{ key: 'name', header: 'Shock', render: (r) => r.name }, { key: 'date', header: 'Week', render: (r) => dateLabel(r.date) }, { key: 'value', header: 'Price a barrel', align: 'right', render: (r) => money(r.value) }]} rowKey={(r) => r.name} /> },
+      ]}
+      footer={<p className="chart-note">Source: <a href="https://www.eia.gov/petroleum/data.php" target="_blank" rel="noreferrer">US Energy Information Administration</a>. Weekly Brent spot from May 1987; before that, the cost of imported crude to US refiners, monthly from 1974 and annual before.</p>}
+    />}
     {page.survey && !stale && <StateSurvey survey={page.survey} eia={lines[0]} fuel={fuel} location={location} format={format} />}
     {page.surveys && <SurveyTable rows={page.surveys} fuel={fuel} format={format} />}
     {page.related && <p className="related-link">Pump prices follow crude oil: <a href={fuelUrl(page.related.slug)}>{page.related.grade}</a> {format(page.related.summary.value)} {page.related.unit}, <ChangeTag value={page.related.summary.yearChange} size="small" /> on a year ago.</p>}

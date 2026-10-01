@@ -321,3 +321,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,su
 @media (max-width:640px){
   .explorer__sidebox{display:none}
 }
+/* Oil shocks chart: SVG drawn at the card's width. */
+.oil-shocks{width:100%;overflow:hidden}.oil-shocks svg{display:block}
+.oil-shocks__tick{font-size:14px;fill:#6b7276}.oil-shocks__note{font-size:14px;fill:#0b0c0c}.oil-shocks__end{font-size:15px;font-weight:700;fill:#0b0c0c}
+@media (max-width:640px){.oil-shocks__tick,.oil-shocks__note{font-size:12px}}

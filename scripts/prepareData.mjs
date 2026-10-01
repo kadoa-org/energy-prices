@@ -145,6 +145,29 @@ for (const fuel of FUELS) {
   const spark = points.get(us.grades[0].id).filter((p) => p[0] > addDays(us.grades[0].summary.date, -365));
   fuelCards.push({ ...fuelMeta, summary: us.grades[0].summary, spark, areas: locations.length });
 }
+// The oil price since 1970 with its shocks labelled, for the crude oil page. EIA's weekly Brent starts in May 1987;
+// before that, EIA's cost of imported crude to US refiners, monthly from 1974 and annual (plotted mid-year) for
+// 1970 to 1973, so the 1973 embargo jump shows. Each shock points at its highest (or for Covid, lowest) point in a fixed window.
+const brentWeekly = points.get('eia-pet:RBRTE.W') ?? [];
+const oilHistory = (() => {
+  const annual = (points.get('eia-pet:R1300____3.A') ?? []).filter(([d]) => d >= '1970-01-01' && d < '1974-01-01').map(([d, v]) => [`${d.slice(0, 4)}-07`, v]);
+  const monthly = (points.get('eia-pet:R1300____3.M') ?? []).filter(([d]) => d >= '1974-01-01' && d < '1987-05-01').map(([d, v]) => [d.slice(0, 7), v]);
+  const last = brentWeekly.at(-1);
+  if (!annual.length || !monthly.length || !last) return null;
+  const pts = [...annual.map(([m, v]) => [`${m}-01`, v]), ...monthly.map(([m, v]) => [`${m}-15`, v]), ...brentWeekly];
+  const pick = (from, to, low = false) => pts.filter(([m]) => m.slice(0, 7) >= from && m.slice(0, 7) <= to).reduce((a, p) => ((low ? p[1] < a[1] : p[1] > a[1]) ? p : a));
+  const shocks = [
+    ['OPEC embargo', pts.find(([m]) => m >= '1974-01-01')],
+    ['Iran revolution', pick('1979-01', '1981-12')],
+    ['First Gulf War', pick('1990-08', '1990-12')],
+    ['Second Gulf War', pick('2003-02', '2003-04')],
+    ['Financial crisis', pick('2008-01', '2008-12')],
+    ['Covid-19 pandemic', pick('2020-03', '2020-06', true)],
+    ['Russia invades Ukraine', pick('2022-01', '2022-12')],
+    ['Iran war', pick('2026-02', '2026-06')],
+  ].map(([name, [d, v]]) => ({ name, date: d, value: v }));
+  return { points: pts, shocks, latest: { date: last[0], value: last[1] } };
+})();
 // Pump prices follow crude, so the gasoline and diesel pages carry crude's headline for a link.
 const crude = fuelCards.find((c) => c.slug === 'crude-oil');
 for (const { fuel, fuelMeta, locations, us, nav, compare, monthly, surveys } of fuelData) {
@@ -156,6 +179,7 @@ for (const { fuel, fuelMeta, locations, us, nav, compare, monthly, surveys } of 
       lines: l.grades.map((g) => ({ grade: g.grade, id: g.id, summary: g.summary, points: points.get(g.id) })),
       cpi: fuel.measure === 'spot_price' ? null : cpiMonthly,
       usSummary: us.grades[0].summary, locations: nav, compare, monthly: l.slug ? null : monthly, related,
+      oilHistory: fuel.slug === 'crude-oil' && !l.slug ? oilHistory : null,
       surveys: l.slug ? null : surveys.length ? surveys : null, survey: l.type === 'state' ? stateSurvey(surveys, l.geoCode) : null,
     });
     const v = l.grades[0].summary.value;
