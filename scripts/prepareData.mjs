@@ -60,6 +60,8 @@ const rateCaseRow = (c) => ({ state: c.state, caseId: c.case_id, service: c.serv
 const common = { generatedAt: manifest.generatedAt, sourceRun: manifest.runId, lastWeek, lastMonth, rows: manifest.rows, series: manifest.series };
 
 const FROM_MONTH = '2019-08-01';
+// All-items CPI by month for the dashed line on a fuel chart: the first price on the chart grown with inflation.
+const cpiMonthly = series('bls-cpi:CUUR0000SA0').filter(([d]) => d >= '1990-01-01').map(([d, v]) => [d.slice(0, 7), v]);
 // ── Fuels. One page per fuel, every area EIA surveys, the US average charted first.
 const AREA_ORDER = { us: 0, padd: 1, state: 2, city: 3 };
 const FUELS = [
@@ -152,6 +154,7 @@ for (const { fuel, fuelMeta, locations, us, nav, compare, monthly, surveys } of 
     await page(key, `${BASE}/${key}`, {
       kind: 'fuel', fuel: fuelMeta, location: { slug: l.slug, name: l.name, type: l.type },
       lines: l.grades.map((g) => ({ grade: g.grade, id: g.id, summary: g.summary, points: points.get(g.id) })),
+      cpi: fuel.measure === 'spot_price' ? null : cpiMonthly,
       usSummary: us.grades[0].summary, locations: nav, compare, monthly: l.slug ? null : monthly, related,
       surveys: l.slug ? null : surveys.length ? surveys : null, survey: l.type === 'state' ? stateSurvey(surveys, l.geoCode) : null,
     });

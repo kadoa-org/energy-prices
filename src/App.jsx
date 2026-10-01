@@ -241,7 +241,19 @@ function Fuel({ page }) {
   const from = range === 'all' ? null : addDays(h.date, -Number(range));
   const stale = h.date < addDays(common.lastWeek, -21);
   const byGrade = fuel.grades.length > 1 || lines.length > 1;
-  const series = lines.map((l, i) => ({ label: byGrade ? l.grade : location.name, points: l.points, colour: SERIES_COLOURS[i] }));
+  // The dashed line: the first price on the chart grown with all consumer prices (CPI-U). A week takes its month's CPI
+  // or the latest month before it (BLS skipped October 2025, and the newest weeks run ahead of the CPI).
+  const inflation = (() => {
+    if (!page.cpi) return null;
+    const cpi = new Map(page.cpi), months = page.cpi.map(([m]) => m);
+    const at = (d) => cpi.get(d.slice(0, 7)) ?? cpi.get(months.filter((m) => m < d.slice(0, 7)).at(-1));
+    // The CPI file starts in 1997, so an "All" chart's line starts at the first week with a CPI month.
+    const pts = lines[0].points.filter(([d]) => (!from || d >= from) && d <= h.date && d.slice(0, 7) >= months[0]);
+    if (pts.length < 2 || !at(pts[0][0])) return null;
+    const [, base] = pts[0], c0 = at(pts[0][0]);
+    return pts.map(([d]) => [d, Number(((base * at(d)) / c0).toFixed(3))]);
+  })();
+  const series = [...lines.map((l, i) => ({ label: byGrade ? l.grade : location.name, points: l.points, colour: SERIES_COLOURS[i] })), inflation && { label: 'With inflation', points: inflation, compare: true }].filter(Boolean);
   // The table has a column per grade, one row per week, newest first.
   const maps = lines.map((l) => new Map(l.points));
   const dates = [...new Set(lines.flatMap((l) => l.points.map((p) => p[0])))].filter((d) => !from || d >= from).sort().reverse();
@@ -268,7 +280,7 @@ function Fuel({ page }) {
     <ChartCard
       id="chart-title"
       title={fuel.spot ? `${fuel.title}, ${fuel.grades.join(' and ')}` : `${fuel.title}, ${place}${byGrade ? ', by grade' : ''}`}
-      description={`Weekly price, ${unit}.`}
+      description={page.cpi ? `Weekly price, ${unit}. The dashed line is the first ${byGrade ? `${lines[0].grade.toLowerCase()} ` : ''}price shown, grown with inflation.` : `Weekly price, ${unit}.`}
       date={`Up to and including the week of ${dateLabel(h.date)}`}
       tabs={[
         { label: 'Chart', content: <>
