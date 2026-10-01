@@ -91,7 +91,7 @@ export default function LineChart({ series, from, to, format, axis = format, yTi
             grid: { color: RULE, drawTicks: false },
             title: { display: !compact && !!xTitle, text: xTitle, color: AXIS_INK, font: { size: 14 }, padding: { top: 10 } },
             ticks: { autoSkip: false, maxRotation: 0, padding: 8, color: AXIS_INK, callback: (v) => tickLabel(v, span) },
-            afterBuildTicks: (ax) => { ax.ticks = monthTicks(start, end, narrow || compact ? 3 : 6).map((value) => ({ value })); },
+            afterBuildTicks: (ax) => { ax.ticks = monthTicks(start, end, narrow || compact ? 4 : 6).map((value) => ({ value })); },
           },
           y: {
             min: y.min, max: y.max,

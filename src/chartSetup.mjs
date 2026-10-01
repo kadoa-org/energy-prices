@@ -44,8 +44,14 @@ export const dayLabel = (t) => { const d = new Date(t); return `${d.getUTCDate()
 export function monthTicks(from, to, max = 6) {
   const span = to - from;
   let stepMonths = span > 3 * 365 * DAY ? 12 : span > 400 * DAY ? 6 : span > 130 * DAY ? 3 : span > 45 * DAY ? 1 : 0;
-  // Seven year labels do not fit a phone-width axis: years step by two or three when there are more than `max`.
-  if (stepMonths === 12) stepMonths = 12 * Math.ceil(span / (365 * DAY) / max);
+  // Over several years the ticks step by a round number of years (1, 2, 5, 10) and sit on multiples of it, so a
+  // 36-year axis reads 1990, 1995, 2000 rather than 1986, 1992, 1998.
+  if (stepMonths === 12) {
+    const years = span / (365.25 * DAY), step = [1, 2, 5, 10, 20].find((n) => Math.floor(years / n) <= max) ?? 20;
+    const ticks = [];
+    for (let yr = Math.ceil(new Date(from).getUTCFullYear() / step) * step; Date.UTC(yr, 0, 1) <= to; yr += step) if (Date.UTC(yr, 0, 1) >= from) ticks.push(Date.UTC(yr, 0, 1));
+    return ticks;
+  }
   const ticks = [];
   if (!stepMonths) {
     for (let t = from; t <= to; t += Math.ceil(span / max / DAY) * DAY) ticks.push(t);

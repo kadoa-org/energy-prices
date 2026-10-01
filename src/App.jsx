@@ -233,7 +233,9 @@ function CompareAreas({ fuel, location, compare, format }) {
 }
 function Fuel({ page }) {
   const { fuel, location, lines, usSummary, compare, locations, common } = page;
-  const [range, setRange] = useState('365');
+  // The range is kept in the address (?range=all) so a link can open the long view.
+  const [range, setRangeState] = useState(() => { try { const r = new URLSearchParams(window.location.search).get('range'); return RANGES.some(([v]) => v === r) ? r : '365'; } catch { return '365'; } });
+  const setRange = (v) => { setRangeState(v); try { const u = new URL(window.location.href); v === '365' ? u.searchParams.delete('range') : u.searchParams.set('range', v); window.history.replaceState(null, '', u); } catch {} };
   const [visible, setVisible] = useState(26);
   const isUS = !location.slug;
   const h = lines[0].summary;
@@ -255,7 +257,11 @@ function Fuel({ page }) {
     const [, base] = pts[0], c0 = at(pts[0][0]);
     return pts.map(([d]) => [d, Number(((base * at(d)) / c0).toFixed(3))]);
   })();
-  const series = [...lines.map((l, i) => ({ label: byGrade ? l.grade : location.name, points: l.points, colour: SERIES_COLOURS[i] })), inflation && { label: 'With inflation', points: inflation, compare: true }].filter(Boolean);
+  // Beyond five years a weekly line is mostly noise at chart width, so the long view plots monthly averages.
+  const monthlyView = range === 'all';
+  const toMonthly = (pts) => { const m = new Map(); for (const [d, v] of pts) { const k = `${d.slice(0, 7)}-15`; const a = m.get(k) ?? []; a.push(v); m.set(k, a); } return [...m].map(([k, a]) => [k, a.reduce((x, y) => x + y, 0) / a.length]); };
+  const shownPoints = (pts) => (monthlyView ? toMonthly(pts) : pts);
+  const series = [...lines.map((l, i) => ({ label: byGrade ? l.grade : location.name, points: shownPoints(l.points), colour: SERIES_COLOURS[i] })), inflation && { label: 'With inflation', points: inflation, compare: true }].filter(Boolean);
   // The table has a column per grade, one row per week, newest first.
   const maps = lines.map((l) => new Map(l.points));
   const dates = [...new Set(lines.flatMap((l) => l.points.map((p) => p[0])))].filter((d) => !from || d >= from).sort().reverse();
@@ -282,12 +288,12 @@ function Fuel({ page }) {
     <ChartCard
       id="chart-title"
       title={fuel.spot ? `${fuel.title}, ${fuel.grades.join(' and ')}` : `${fuel.title}, ${place}${byGrade ? ', by grade' : ''}`}
-      description={page.cpi && range !== '365' ? `Weekly price, ${unit}. The dashed line is the first ${byGrade ? `${lines[0].grade.toLowerCase()} ` : ''}price shown, grown with inflation.` : `Weekly price, ${unit}.`}
+      description={page.cpi && range !== '365' ? `${monthlyView ? 'Monthly average' : 'Weekly price'}, ${unit}. The dashed line is the first ${byGrade ? `${lines[0].grade.toLowerCase()} ` : ''}price shown, grown with inflation.` : `${monthlyView ? 'Monthly average' : 'Weekly price'}, ${unit}.`}
       date={`Up to and including the week of ${dateLabel(h.date)}`}
       tabs={[
         { label: 'Chart', content: <>
           <div className="chart-filters"><FilterSelect value={range} options={RANGES} onChange={(v) => { setRange(v); setVisible(26); }} /></div>
-          <LineChart series={series} from={from} to={h.date} format={format} yTitle={`Price ${unit}`} gapDays={fuel.seasonal ? 21 : 35} label={`${fuel.title}, ${place}: ${lines.map((l) => `${byGrade ? `${l.grade} ` : ''}${format(l.summary.value)}`).join(', ')} ${unit} in the week of ${dateLabel(h.date)}.`} />
+          <LineChart series={series} from={from} to={h.date} format={format} axis={(v) => (Number.isInteger(v) ? `$${v}` : money(v))} monthly={monthlyView} yTitle={`Price ${unit}`} gapDays={monthlyView ? 70 : fuel.seasonal ? 21 : 35} label={`${fuel.title}, ${place}: ${lines.map((l) => `${byGrade ? `${l.grade} ` : ''}${format(l.summary.value)}`).join(', ')} ${unit} in the week of ${dateLabel(h.date)}.`} />
         </> },
         { label: 'Tabular data', short: 'Tabular', content: <>
           <DataTable rows={dates.slice(0, visible)} columns={tableColumns} rowKey={(d) => d} empty="No weeks in this period." />
