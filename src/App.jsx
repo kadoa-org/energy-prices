@@ -244,7 +244,8 @@ function Fuel({ page }) {
   // The dashed line: the first price on the chart grown with all consumer prices (CPI-U). A week takes its month's CPI
   // or the latest month before it (BLS skipped October 2025, and the newest weeks run ahead of the CPI).
   const inflation = (() => {
-    if (!page.cpi) return null;
+    // Over a year inflation barely moves the line, so it is drawn only on the five-year and full views.
+    if (!page.cpi || range === '365') return null;
     const cpi = new Map(page.cpi), months = page.cpi.map(([m]) => m);
     const at = (d) => cpi.get(d.slice(0, 7)) ?? cpi.get(months.filter((m) => m < d.slice(0, 7)).at(-1));
     // The CPI file starts in 1997, so an "All" chart's line starts at the first week with a CPI month.
@@ -280,7 +281,7 @@ function Fuel({ page }) {
     <ChartCard
       id="chart-title"
       title={fuel.spot ? `${fuel.title}, ${fuel.grades.join(' and ')}` : `${fuel.title}, ${place}${byGrade ? ', by grade' : ''}`}
-      description={page.cpi ? `Weekly price, ${unit}. The dashed line is the first ${byGrade ? `${lines[0].grade.toLowerCase()} ` : ''}price shown, grown with inflation.` : `Weekly price, ${unit}.`}
+      description={page.cpi && range !== '365' ? `Weekly price, ${unit}. The dashed line is the first ${byGrade ? `${lines[0].grade.toLowerCase()} ` : ''}price shown, grown with inflation.` : `Weekly price, ${unit}.`}
       date={`Up to and including the week of ${dateLabel(h.date)}`}
       tabs={[
         { label: 'Chart', content: <>
