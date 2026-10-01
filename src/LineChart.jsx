@@ -21,7 +21,7 @@ export const SERIES_COLOURS = ['#154275', '#c84c04', '#28a197'];
 // Writes each line's name just right of its last point, in the line's colour, nudged apart when two lines end close.
 // The same 600px as the legend's container query in styles.css, so exactly one of the two is shown.
 const END_LABEL_MIN_WIDTH = 600;
-const END_LABEL_ROOM = 118;
+const END_LABEL_ROOM = 150;
 const endLabelsOn = (chart, opts) => opts.enabled && chart.width >= END_LABEL_MIN_WIDTH;
 const END_LABELS = {
   id: 'endLabels',

@@ -294,3 +294,30 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,su
   .tile__code{font-size:10px;font-weight:700;opacity:1}
   .tilemap__list{display:block}
 }
+
+/* State explorer (StateExplorer.jsx), laid out like a UKHSA chart card: GOV.UK tabs, filters left-aligned at the top
+   of the panel, the chart full width, the time bar under it. Fills reuse the tile bins' colours. */
+.explorer .chart-filters{margin:0 0 5px}
+.explorer__map{position:relative}
+.explorer__map svg{display:block;width:100%;height:auto}
+.explorer__state{stroke:#fff;stroke-width:1;fill:#e5e6e7;transition:fill .15s}
+.explorer__state.is-hover{stroke:#0b0c0c;stroke-width:2}
+.explorer__state.tile--b2{fill:#9ecae1}.explorer__state.tile--b1{fill:#deebf7}.explorer__state.tile--o1{fill:#fdbe85}.explorer__state.tile--o2{fill:#f16913}.explorer__state.tile--o3{fill:#a63603}
+.explorer__state.tile--p1{fill:#efedf5}.explorer__state.tile--p2{fill:#cbc9e2}.explorer__state.tile--p3{fill:#9e9ac8}.explorer__state.tile--p4{fill:#756bb1}.explorer__state.tile--p5{fill:#54278f}
+.explorer__side{font-size:13px;font-weight:700;fill:#0b0c0c;pointer-events:none}
+.explorer__side.tile--o2,.explorer__side.tile--o3,.explorer__side.tile--p4,.explorer__side.tile--p5{fill:#fff}
+.explorer__card{position:absolute;left:12px;bottom:12px;display:grid;gap:2px;padding:8px 12px;background:#fff;border:1px solid var(--gov-border,#b1b4b6);box-shadow:0 2px 6px rgba(0,0,0,.08);font-size:15px;pointer-events:none}
+.explorer__card em{font-style:normal;color:var(--dk-muted)}
+.explorer__time{display:flex;align-items:center;gap:12px;margin:16px 0 0}
+.explorer__time input[type=range]{flex:1;accent-color:#1d70b8}
+.explorer__time strong{min-width:7.5em;text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.explorer__time .dk-hint{white-space:nowrap}
+.explorer__play{font:inherit;font-size:13px;width:34px;height:34px;border:1px solid var(--gov-border,#b1b4b6);background:#fff;cursor:pointer}
+.explorer__chips{list-style:none;margin:0 0 15px;padding:0;display:flex;flex-wrap:wrap;gap:8px}
+.explorer__chips li{display:inline-flex;align-items:center;gap:8px;font-size:16px;background:#fff;border:1px solid var(--gov-border,#b1b4b6);padding:3px 2px 3px 10px}
+.explorer__chips button{font:inherit;font-size:19px;line-height:1;border:0;background:none;cursor:pointer;padding:2px 8px;color:var(--dk-muted)}
+.explorer__chips button:focus-visible{outline:3px solid var(--dk-focus,#fd0)}
+.explorer__dot{width:10px;height:10px;border-radius:50%;flex:none}
+@media (max-width:640px){
+  .explorer__sidebox{display:none}
+}

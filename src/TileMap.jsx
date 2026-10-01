@@ -23,13 +23,15 @@ export const GRID = {
 // Change bins on the rounded percent a tile prints, so two tiles showing the same number never differ in colour: two
 // blues at or below inflation, three oranges above it.
 export function changeBins(cpi) {
-  const c = Math.round(cpi);
+  // Edges follow inflation for the month shown: two blues at or below it, three oranges above, 15 points apart, so
+  // the legend stays true as the time bar moves (inflation was 14% by December 2022, 29% by July 2026).
+  const c = Math.round(cpi), lo = Math.max(c - 10, 0);
   return [
-    { max: 19, cls: 'tile--b2', label: 'Under 20%' },
-    { max: c, cls: 'tile--b1', label: `20% to ${c}%` },
-    { max: 45, cls: 'tile--o1', label: `${c + 1}% to 45%` },
-    { max: 60, cls: 'tile--o2', label: '46% to 60%' },
-    { max: Infinity, cls: 'tile--o3', label: 'Over 60%' },
+    { max: lo - 1, cls: 'tile--b2', label: `Under ${lo}%` },
+    { max: c, cls: 'tile--b1', label: `${lo}% to ${c}%` },
+    { max: c + 15, cls: 'tile--o1', label: `${c + 1}% to ${c + 15}%` },
+    { max: c + 30, cls: 'tile--o2', label: `${c + 16}% to ${c + 30}%` },
+    { max: Infinity, cls: 'tile--o3', label: `Over ${c + 30}%` },
   ];
 }
 // Price bins in cents a kWh on the one-decimal price a tile prints, light to dark as the price rises. A separate hue

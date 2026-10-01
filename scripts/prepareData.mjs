@@ -180,6 +180,9 @@ function cpiSinceFor(end) {
   return { change: round(pct(mean(latest), mean(base)), 2), months: latest.length, month: end };
 }
 const electricityCpi = cpiSinceFor(us.month);
+// The same comparison at every month since the 2019 base, for the map's time slider: [month, percent].
+const electricityCpiTrend = [];
+for (let m = baseEnd; m <= us.month; m = addMonths(m, 1)) { const c = cpiSinceFor(m); if (c) electricityCpiTrend.push([m.slice(0, 7), c.change]); }
 const states = STATE_CODES.filter((c) => c !== 'US').map(stateFigures).map((s) => ({ ...s, slug: slugify(s.name) })).sort((a, b) => a.name.localeCompare(b.name));
 // ── Utilities (EIA-861M): the same twelve-month figures for each utility with 10,000 or more homes, per state it serves.
 const utilityGroups = new Map();
@@ -259,9 +262,9 @@ const usHistory = {
   bill: usBill,
   bill12: rolling(usBill, (d) => round(trailingMean(usBill, d), 2)),
 };
-await page('electricity', `${BASE}/electricity`, { kind: 'electricity', us, usHistory, electricityCpi, states: states.map(({ gas, ...s }) => s), largest, utilityCount: [...utilitiesByState.values()].flat().length });
+await page('electricity', `${BASE}/electricity`, { kind: 'electricity', us, usHistory, electricityCpi, electricityCpiTrend, states: states.map(({ gas, ...s }) => s), largest, utilityCount: [...utilitiesByState.values()].flat().length });
 // The state tile map as its own page (a shareable link with its own title and preview image).
-await page('electricity/map', `${BASE}/electricity/map`, { kind: 'electricityMap', us: { month: us.month, price12: us.price12, priceSince2019: us.priceSince2019 }, electricityCpi, states: states.map((s) => ({ code: s.code, name: s.name, slug: s.slug, price12: s.price12, priceSince2019: s.priceSince2019, trend: s.trend })) });
+await page('electricity/map', `${BASE}/electricity/map`, { kind: 'electricityMap', us: { month: us.month, price12: us.price12, priceSince2019: us.priceSince2019, trend: us.trend }, electricityCpi, electricityCpiTrend, states: states.map((s) => ({ code: s.code, name: s.name, slug: s.slug, price12: s.price12, priceSince2019: s.priceSince2019, trend: s.trend })) });
 
 // ── Since 2019. BLS average prices for the fuels households buy, as the change since August 2019, before the pandemic
 // moved energy prices; the same base month the food site uses, so the two read together.
@@ -304,6 +307,7 @@ await page('home', BASE, {
   usTrend: us.trend,
   usSince2019: us.priceSince2019,
   electricityCpi,
+  electricityCpiTrend,
 });
 await page('about', `${BASE}/about`, { kind: 'about', counts: { series: manifest.series, rows: manifest.rows, states: states.length } });
 
