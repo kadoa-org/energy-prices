@@ -21,27 +21,15 @@ export function pctScale(values) {
 }
 
 // Items whose peak is more than twice the next highest get their own scale; everything else shares one.
-export function stapleScales(items, reference) {
+export function stapleScales(items) {
   const peaks = items.map((r) => Math.max(...r.points.map((p) => p[1])));
   const sorted = [...peaks].sort((a, b) => b - a);
   const own = new Set(items.filter((_, i) => peaks[i] === sorted[0] && sorted[0] > 2 * sorted[1] && sorted[1] > 0).map((r) => r.name));
-  const refs = reference ? [...reference.cpi, ...reference.wages].map((p) => p[1]) : [];
-  const shared = pctScale([...items.filter((r) => !own.has(r.name)).flatMap((r) => r.points.map((p) => p[1])), ...refs]);
-  return new Map(items.map((r) => [r.name, own.has(r.name) ? { ...pctScale(r.points.map((p) => p[1])), own: true, ...pctScale([...r.points.map((p) => p[1]), ...refs]) } : shared]));
+  const shared = pctScale(items.filter((r) => !own.has(r.name)).flatMap((r) => r.points.map((p) => p[1])));
+  return new Map(items.map((r) => [r.name, own.has(r.name) ? { ...pctScale(r.points.map((p) => p[1])), own: true } : shared]));
 }
 
-// All consumer prices and wages, drawn behind every panel on the same footing as the item: percent change from the
-// same month. Grey dashes for prices, green dots for pay, the pairing BLS's Real Earnings release reads off.
-export const REFERENCE_STYLE = { cpi: { label: 'All prices', colour: '#505a5f', dash: [5, 3] }, wages: { label: 'Wages', colour: '#00703c', dash: [1.5, 2.5] } };
-export function ReferenceKey({ reference }) {
-  if (!reference) return null;
-  return <p className="reference-key">
-    <span className="reference-key__item"><span className="reference-key__line reference-key__line--item" aria-hidden="true" />Price</span>
-    <span className="reference-key__item"><span className="reference-key__line reference-key__line--cpi" aria-hidden="true" />All prices (inflation) {signedPct(reference.cpiChange)}</span>
-    <span className="reference-key__item"><span className="reference-key__line reference-key__line--wages" aria-hidden="true" />Wages {signedPct(reference.wagesChange)}</span>
-  </p>;
-}
-export function StapleChart({ item, scale, from, to, reference }) {
+export function StapleChart({ item, scale, from, to }) {
   const canvas = useRef(null);
   useEffect(() => {
     if (!canvas.current) return undefined;
@@ -54,9 +42,9 @@ export function StapleChart({ item, scale, from, to, reference }) {
     const chart = new Chart(canvas.current, {
       type: 'line',
       // Shaded between the line and 0%, so the area is the change itself, as in the shared image.
-      data: { datasets: [...(reference ? ['cpi', 'wages'].map((k) => ({ ref: k, data: withGaps(reference[k].map(([ym, y]) => ({ x: monthTime(ym), y })), 75), parsing: false, borderColor: REFERENCE_STYLE[k].colour, borderDash: REFERENCE_STYLE[k].dash, borderWidth: 1.25, pointRadius: 0, pointHoverRadius: 0, pointHitRadius: 0, fill: false, order: 2 })) : []), { order: 1, data, parsing: false, fill: { target: { value: 0 } }, backgroundColor: 'rgba(21, 66, 117, 0.08)', borderColor: INK, borderWidth: 1.75, pointRadius: 0, pointHoverRadius: 3, pointHitRadius: 10, pointBackgroundColor: INK }] },
+      data: { datasets: [{ data, parsing: false, fill: { target: { value: 0 } }, backgroundColor: 'rgba(21, 66, 117, 0.08)', borderColor: INK, borderWidth: 1.75, pointRadius: 0, pointHoverRadius: 3, pointHitRadius: 10, pointBackgroundColor: INK }] },
       options: {
-        interaction: { mode: 'x', intersect: false },
+        interaction: { mode: 'nearest', axis: 'x', intersect: false },
         layout: { padding: { top: 4, right: 6 } },
         scales: {
           x: {
@@ -83,10 +71,9 @@ export function StapleChart({ item, scale, from, to, reference }) {
           tooltip: {
             backgroundColor: PAPER, titleColor: LABEL_INK, bodyColor: LABEL_INK, borderColor: RULE, borderWidth: 1,
             cornerRadius: 0, displayColors: false, padding: 8, titleFont: { size: 12, weight: '600' }, bodyFont: { size: 12 },
-            itemSort: (a, b) => a.dataset.order - b.dataset.order,
             callbacks: {
               title: (items) => { const d = new Date(items[0].parsed.x); return `${MONTHS[d.getUTCMonth()]} ${d.getUTCFullYear()}`; },
-              label: (i) => (i.dataset.ref ? `${REFERENCE_STYLE[i.dataset.ref].label} ${signedPct(i.parsed.y)}` : `${item.name} ${signedPct(i.parsed.y)} (${priceText(i.raw.price, item.unit)})`),
+              label: (i) => `${signedPct(i.parsed.y)} (${priceText(i.raw.price, item.unit)})`,
             },
           },
         },
@@ -105,23 +92,14 @@ export { monthTime };
 
 // The energy items of the CPI ranked by their change since the common month, with overall inflation as a dashed line,
 // so a bar that ends right of it rose faster than prices in general. "All energy" is in bold.
-export function StapleRanking({ ranking, cpi, wages, from }) {
-  const values = [...ranking.map((r) => r.change), cpi?.change ?? 0, wages ?? 0, 0];
+export function StapleRanking({ ranking, cpi, from }) {
+  const values = [...ranking.map((r) => r.change), cpi?.change ?? 0, 0];
   const min = Math.min(...values), max = Math.max(...values);
   const span = max - min || 1;
   const at = (v) => `${((v - min) / span) * 100}%`;
   return (
     <div className="ranking">
       <p className="ranking__intro">Consumer Price Index for each energy item, change since {from}. Food at home is shown for comparison.</p>
-      {wages != null && (
-        <div className="ranking__row ranking__row--label" aria-hidden="true">
-          <span />
-          <span className="ranking__track">
-            <span className="ranking__cpi-label ranking__wages-label" style={{ left: at(wages) }}>Wages {signedPct(wages)}</span>
-          </span>
-          <span />
-        </div>
-      )}
       {cpi && (
         <div className="ranking__row ranking__row--label" aria-hidden="true">
           <span />
@@ -138,7 +116,6 @@ export function StapleRanking({ ranking, cpi, wages, from }) {
             <span className="ranking__track">
               <span className="ranking__bar" style={{ left: at(Math.min(0, r.change)), width: `${(Math.abs(r.change) / span) * 100}%` }} />
               {cpi && <span className="ranking__cpi" style={{ left: at(cpi.change) }} aria-hidden="true" />}
-              {wages != null && <span className="ranking__cpi ranking__wages" style={{ left: at(wages) }} aria-hidden="true" />}
             </span>
             <span className="ranking__value">
               {signedPct(r.change)}
@@ -147,7 +124,7 @@ export function StapleRanking({ ranking, cpi, wages, from }) {
           </li>
         ))}
       </ol>
-      <p className="ranking__key">Overall inflation is the rise in all consumer prices (CPI-U, all items) over the same months. Wages are BLS average hourly earnings of production and nonsupervisory employees.</p>
+      <p className="ranking__key">Overall inflation is the rise in all consumer prices (CPI-U, all items) over the same months. Not seasonally adjusted.</p>
     </div>
   );
 }

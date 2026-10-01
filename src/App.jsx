@@ -4,7 +4,7 @@ import { ChangeTag, ChartCard, FilterSelect, KeyFigures, SectionHeading, ShowMor
 import LineChart, { SERIES_COLOURS } from './LineChart';
 import CommandPalette from './CommandPalette';
 import StateExplorer from './StateExplorer';
-import { ReferenceKey, StapleChart, StapleRanking, ValueRanking, monthTime, stapleScales } from './StaplesChart';
+import { StapleChart, StapleRanking, ValueRanking, monthTime, stapleScales } from './StaplesChart';
 import { BASE, HOME, addDays, addMonths, cents, dataPath, dateLabel, money, monthLabel, number, pctLabel } from './model.mjs';
 import { priceText } from './format.mjs';
 
@@ -51,7 +51,7 @@ function Headlines({ h }) {
 }
 function SinceBase({ staples, common }) {
   const items = staples.items;
-  const scales = stapleScales(items, staples.reference);
+  const scales = stapleScales(items);
   const from = monthTime(staples.from), to = monthTime(staples.month);
   const regionColumns = [{ key: 'name', header: 'Region', render: (r) => r.name }, ...items.map((it) => ({ key: it.name, header: it.name, align: 'right', render: (r) => (r.items[it.name] ? <><Change value={r.items[it.name].change} /><span className="cell-note">{priceText(r.items[it.name].price, it.unit)}</span></> : '–') }))];
   const columns = [
@@ -68,19 +68,19 @@ function SinceBase({ staples, common }) {
     description={`Percent change in average US prices since ${monthLabel(`${staples.from}-01`)}, from BLS.`}
     date={`Up to and including ${monthLabel(`${staples.month}-01`)}`}
     tabs={[
-      { label: 'Chart', content: <><ReferenceKey reference={staples.reference} /><ul className="staples__grid">
+      { label: 'Chart', content: <ul className="staples__grid">
         {items.map((r) => <li className="staples__item" key={r.name}>
           <div className="staples__head">{r.slug ? <a href={r.slug === 'electricity' ? `${BASE}/electricity` : fuelUrl(r.slug)}>{r.name}</a> : <span className="staples__name">{r.name}</span>}<ChangeTag value={r.change} size="small" /></div>
           <span className="staples__price">{priceText(r.price, r.unit)} <span className="staples__unit">{r.unit}, from {priceText(r.basePrice, r.unit)}</span></span>
-          <StapleChart item={r} scale={scales.get(r.name)} from={from} to={to} reference={staples.reference} />
+          <StapleChart item={r} scale={scales.get(r.name)} from={from} to={to} />
         </li>)}
-      </ul></> },
-      { label: 'Against inflation and wages', short: 'Inflation', content: <StapleRanking ranking={staples.ranking} cpi={staples.cpi} wages={staples.reference?.wagesChange} from={monthLabel(`${staples.from}-01`)} /> },
+      </ul> },
+      { label: 'Against inflation', short: 'Inflation', content: <StapleRanking ranking={staples.ranking} cpi={staples.cpi} from={monthLabel(`${staples.from}-01`)} /> },
       { label: 'By region', short: 'Regions', content: <><p className="dk-hint table-intro">Change since {monthLabel(`${staples.from}-01`)}, with the latest price under it.</p><DataTable rows={staples.regions} columns={regionColumns} rowKey={(r) => r.name} /></> },
       { label: 'Tabular data', short: 'Tabular', content: <DataTable rows={items} columns={columns} rowKey={(r) => r.name} /> },
       { label: 'Download', content: <><p className="download-intro">The BLS price and CPI series behind this chart, with every other series on the site, as a gzipped CSV.</p><Download file="energy-prices.csv.gz" common={common}>Download all data (CSV, gzip)</Download></> },
     ]}
-    footer={<p className="chart-note">Source: <a href="https://www.bls.gov/cpi/factsheets/average-prices.htm" target="_blank" rel="noreferrer">BLS average prices</a>, <a href="https://www.bls.gov/cpi/" target="_blank" rel="noreferrer">Consumer Price Index</a> and <a href="https://www.bls.gov/ces/" target="_blank" rel="noreferrer">average hourly earnings</a>, US. Not adjusted for inflation.</p>}
+    footer={<p className="chart-note">Source: <a href="https://www.bls.gov/cpi/factsheets/average-prices.htm" target="_blank" rel="noreferrer">BLS average prices</a> and <a href="https://www.bls.gov/cpi/" target="_blank" rel="noreferrer">Consumer Price Index</a>, US city average. Not adjusted for inflation.</p>}
   />;
 }
 function Pump({ pump, common }) {
