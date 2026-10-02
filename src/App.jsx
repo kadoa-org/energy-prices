@@ -162,6 +162,7 @@ function Overview({ page }) {
     <SinceBase staples={page.staples} common={page.common} />
     <Pump pump={page.pump} common={page.common} />
     <StatesCard states={page.states} us={{ price12: page.headlines.electricity.price12 }} month={page.headlines.electricity.date} common={page.common} usTrend={page.usTrend} cpi={page.electricityCpi} usSince2019={page.usSince2019} cpiTrend={page.electricityCpiTrend} />
+    {page.europe && <EuropeCard europe={page.europe} common={page.common} id="europe-overview-title" />}
   </>;
 }
 
@@ -317,6 +318,7 @@ function Fuel({ page }) {
     {page.survey && !stale && <StateSurvey survey={page.survey} eia={lines[0]} fuel={fuel} location={location} format={format} />}
     {page.surveys && <SurveyTable rows={page.surveys} fuel={fuel} format={format} />}
     {page.related && <p className="related-link">Pump prices follow crude oil: <a href={fuelUrl(page.related.slug)}>{page.related.grade}</a> {format(page.related.summary.value)} {page.related.unit}, <ChangeTag value={page.related.summary.yearChange} size="small" /> on a year ago.</p>}
+    {page.europe && <EuropeCard europe={page.europe} product={fuel.slug} common={common} />}
     {compare.length > 1 && <CompareAreas fuel={fuel} location={location} compare={compare} format={format} />}
     {page.monthly && <MonthlyAreas monthly={page.monthly} fuel={fuel} common={common} />}
   </>;
@@ -393,30 +395,44 @@ function Electricity({ page }) {
       <HistoryCard id="us-bill-title" title="Average monthly electricity bill" description="What an average home pays a month, with the 12-month average." end={page.us.month} state={page.usHistory.bill} stateName="Monthly" us={page.usHistory.bill12} compareLabel="12-month average" format={(v) => money(v, 0)} yTitle="Dollars a month" columns="Bill" file="energy-prices.csv.gz" common={page.common} note={<>Source: <a href="https://www.eia.gov/electricity/monthly/" target="_blank" rel="noreferrer">EIA Electric Power Monthly</a>.</>} downloadText="Every series on this site, including monthly US and state electricity figures, as a gzipped CSV." />
     </>}
     <StatesCard states={page.states} us={page.us} month={page.us.month} common={page.common} full usTrend={page.us.trend} cpi={page.electricityCpi} usSince2019={page.us.priceSince2019} cpiTrend={page.electricityCpiTrend} />
-    {page.europe && <EuropeCard europe={page.europe} common={page.common} />}
+    {page.europe && <EuropeCard europe={page.europe} product="electricity" common={page.common} />}
     <UtilitiesTable title="Prices at the largest utilities" hint={`The ${page.largest.length} utilities serving 250,000 homes or more, of ${number(page.utilityCount)} tracked. Past 12 months.`} utilities={page.largest} showState />
   </>;
 }
-// Europe for comparison. Eurostat publishes household prices per half year, so the US is measured over the same six
-// months; both are the change from the 2019 average, in each currency's own terms, not converted.
+// Europe for comparison, one card per product or one with a product select. Each row is the change in a country's
+// price since its 2019 average; the US is the dashed line, measured over the same half year (electricity, gas) or the
+// same four weeks (petrol, diesel). Prices stay in each currency and unit, not converted.
+const EUROPE_PRODUCTS = {
+  electricity: { label: 'Electricity', noun: 'home electricity', unitEU: 'a kWh', unitUS: 'a kWh', usPrice: (v) => cents(v), euPrice: (v) => `€${v.toFixed(2)}`, source: <><a href="https://ec.europa.eu/eurostat/databrowser/view/nrg_pc_204/default/table" target="_blank" rel="noreferrer">Eurostat</a> household electricity prices, all taxes included, 2,500 to 4,999 kWh a year; US from <a href="https://www.eia.gov/electricity/monthly/" target="_blank" rel="noreferrer">EIA Electric Power Monthly</a></> },
+  gas: { label: 'Natural gas', noun: 'home natural gas', unitEU: 'a kWh', unitUS: 'a thousand cubic feet', usPrice: (v) => money(v), euPrice: (v) => `€${v.toFixed(3)}`, source: <><a href="https://ec.europa.eu/eurostat/databrowser/view/nrg_pc_202/default/table" target="_blank" rel="noreferrer">Eurostat</a> household gas prices, all taxes included, 20 to 199 GJ a year; US residential price from <a href="https://www.eia.gov/naturalgas/monthly/" target="_blank" rel="noreferrer">EIA Natural Gas Monthly</a></> },
+  gasoline: { label: 'Petrol', noun: 'pump petrol', unitEU: 'a litre', unitUS: 'a gallon', usPrice: (v) => money(v), euPrice: (v) => `€${v.toFixed(2)}`, source: <>European Commission <a href="https://energy.ec.europa.eu/data-and-analysis/weekly-oil-bulletin_en" target="_blank" rel="noreferrer">Weekly Oil Bulletin</a>, Euro-super 95 with taxes; US regular gasoline from <a href="https://www.eia.gov/petroleum/gasdiesel/" target="_blank" rel="noreferrer">EIA</a>. Euro-super 95 is a grade above US regular</> },
+  diesel: { label: 'Diesel', noun: 'pump diesel', unitEU: 'a litre', unitUS: 'a gallon', usPrice: (v) => money(v), euPrice: (v) => `€${v.toFixed(2)}`, source: <>European Commission <a href="https://energy.ec.europa.eu/data-and-analysis/weekly-oil-bulletin_en" target="_blank" rel="noreferrer">Weekly Oil Bulletin</a>, automotive diesel with taxes; US on-highway diesel from <a href="https://www.eia.gov/petroleum/gasdiesel/" target="_blank" rel="noreferrer">EIA</a></> },
+};
 const halfLabel = (iso) => `${iso.slice(5, 7) === '01' ? 'First' : 'Second'} half of ${iso.slice(0, 4)}`;
-const euro = (v) => `€${v.toFixed(2)}`;
-function EuropeCard({ europe, common }) {
-  const rows = [...europe.countries].sort((a, b) => b.since2019 - a.since2019);
-  const tableRows = [{ code: 'US', name: 'United States', since2019: europe.us.since2019, price: `${cents(europe.us.price)} a kWh` }, ...rows.map((c) => ({ ...c, price: `${euro(c.price)} a kWh` }))];
+const periodLabel = (p) => (p.kind === 'half' ? halfLabel(p.from) : `Average of the 4 weeks from ${dateLabel(p.from)} to ${dateLabel(p.to)}`);
+function EuropeCard({ europe, product: fixed, common, id = 'europe-title' }) {
+  const available = Object.keys(EUROPE_PRODUCTS).filter((k) => (fixed ? k === fixed : europe[k]));
+  const [product, setProduct] = useState(available[0]);
+  const data = fixed ? europe : europe[product];
+  const spec = EUROPE_PRODUCTS[product];
+  if (!data || !spec) return null;
+  const rows = [...data.countries].sort((a, b) => b.since2019 - a.since2019);
+  const tableRows = [{ code: 'US', name: 'United States', since2019: data.us.since2019, price: `${spec.usPrice(data.us.price)} ${spec.unitUS}` }, ...rows.map((c) => ({ ...c, price: `${spec.euPrice(c.price)} ${spec.unitEU}` }))];
+  const picker = !fixed && available.length > 1 && <div className="chart-filters"><FilterSelect label="Energy" value={product} options={available.map((k) => [k, EUROPE_PRODUCTS[k].label])} onChange={setProduct} /></div>;
   return <ChartCard
-    id="europe-title" title="How the US compares with Europe" description="Change in the average home price per kWh since 2019 in the EU and Norway, against the US over the same months."
-    date={halfLabel(europe.half)}
+    id={id} title={fixed ? 'How the US compares with Europe' : 'US energy prices compared with Europe'}
+    description={`Change in the price of ${spec.noun} since 2019 in the EU and its members, against the US over the same period.`}
+    date={periodLabel(data.period)}
     tabs={[
-      { label: 'Chart', content: <ShowMore total={rows.length} initial={15} noun="countries">{(n) => <ValueRanking rows={rows.slice(0, n).map((c) => ({ name: c.name, value: c.since2019 }))} average={europe.us.since2019} averageLabel="United States" format={pctLabel} />}</ShowMore> },
-      { label: 'Tabular data', short: 'Tabular', content: <DataTable rows={tableRows} rowKey={(r) => r.code} columns={[
+      { label: 'Chart', content: <>{picker}<ShowMore total={rows.length} initial={15} noun="countries">{(n) => <ValueRanking rows={rows.slice(0, n).map((c) => ({ name: c.name, value: c.since2019 }))} average={data.us.since2019} averageLabel="United States" format={pctLabel} />}</ShowMore></> },
+      { label: 'Tabular data', short: 'Tabular', content: <>{picker}<DataTable rows={tableRows} rowKey={(r) => r.code} columns={[
         { key: 'name', header: 'Country', render: (r) => r.name },
         { key: 'since2019', header: 'Since 2019', align: 'right', render: (r) => pctLabel(r.since2019) },
         { key: 'price', header: 'Price', align: 'right', render: (r) => r.price },
-      ]} /> },
-      { label: 'Download', content: <><p className="download-intro">Every series on this site, including the Eurostat country prices, as a gzipped CSV.</p><Download file="energy-prices.csv.gz" common={common} /></> },
+      ]} /></> },
+      { label: 'Download', content: <><p className="download-intro">Every series on this site, including the European prices, as a gzipped CSV.</p><Download file="energy-prices.csv.gz" common={common} /></> },
     ]}
-    footer={<p className="chart-note">Source: <a href="https://ec.europa.eu/eurostat/databrowser/view/nrg_pc_204/default/table" target="_blank" rel="noreferrer">Eurostat</a> household electricity prices, all taxes included, 2,500 to 4,999 kWh a year, in euros; US from <a href="https://www.eia.gov/electricity/monthly/" target="_blank" rel="noreferrer">EIA Electric Power Monthly</a>, in dollars. Not adjusted for inflation.</p>}
+    footer={<p className="chart-note">Source: {spec.source}. Europe in euros, the US in dollars. Not adjusted for inflation.</p>}
   />;
 }
 function UtilitiesTable({ title, hint, utilities, stateSlug, showState = false }) {

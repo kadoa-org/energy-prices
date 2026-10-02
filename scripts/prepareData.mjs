@@ -43,6 +43,52 @@ const csvRows = (ids) => ids.flatMap((id) => { const d = byId.get(id); return po
 
 const lastWeek = defs.filter((d) => d.frequency === 'W').map((d) => points.get(d.id).at(-1)?.[0]).filter(Boolean).sort().at(-1);
 const lastMonth = series('eia-elec:PRICE.US-RES.M').at(-1)[0];
+// Europe for comparison: each product's change since its 2019 average in the EU and its members, against the US over
+// the same period. Household electricity and gas come from Eurostat per half year, so the US is EIA's monthly average
+// over the same six months. Petrol and diesel come from the EU Weekly Oil Bulletin, so both sides are the average of
+// the US's latest four weekly prices, on the same Mondays. Prices stay in each currency and unit.
+const avg = (xs) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null);
+const meanBetween = (pts, from, to) => avg(pts.filter(([d]) => d >= from && d < to).map(([, v]) => v));
+const meanOn = (pts, dates) => avg(pts.filter(([d]) => dates.has(d)).map(([, v]) => v));
+const base2019 = (pts) => meanBetween(pts, '2019-01-01', '2020-01-01');
+function europeHalfYear(dataset, usId) {
+  const eu = defs.filter((d) => d.source === 'eurostat' && d.sourceSeries.startsWith(`${dataset}/`));
+  const usPts = points.get(usId) ?? [];
+  // The latest half the EU average covers, and only if the US monthly series reaches its last month.
+  const half = points.get(`eurostat:${dataset}.EU27_2020`)?.at(-1)?.[0];
+  if (!half || !usPts.length || usPts.at(-1)[0] < addMonths(half, 5)) return null;
+  const end = addMonths(half, 6), usNow = meanBetween(usPts, half, end);
+  return {
+    period: { kind: 'half', from: half },
+    us: { price: round(usNow, 3), since2019: round(pct(usNow, base2019(usPts)), 1) },
+    countries: eu.map((d) => {
+      const p = points.get(d.id), at = (date) => p.find(([x]) => x === date)?.[1];
+      return { code: d.geoCode, name: d.geoName, price: round(at(half), 4), since2019: round(pct(at(half), avg(['2019-01-01', '2019-07-01'].map(at).filter((v) => v != null))), 1) };
+    }).filter((c) => c.price != null && c.since2019 != null),
+  };
+}
+function europeWeekly(key, usId) {
+  const usPts = points.get(usId) ?? [];
+  const weeks = usPts.slice(-4).map(([d]) => d);
+  if (weeks.length < 4) return null;
+  const dates = new Set(weeks);
+  return {
+    period: { kind: 'weeks', from: weeks[0], to: weeks.at(-1) },
+    us: { price: round(meanOn(usPts, dates), 3), since2019: round(pct(meanOn(usPts, dates), base2019(usPts)), 1) },
+    countries: defs.filter((d) => d.source === 'ec-oil' && d.id.endsWith(`.${key}`)).map((d) => {
+      const p = points.get(d.id), now = meanOn(p, dates);
+      // A country that missed one of the four weeks is left out rather than averaged over fewer weeks.
+      const reported = p.filter(([x]) => dates.has(x)).length;
+      return reported === dates.size ? { code: d.geoCode, name: d.geoName, price: round(now, 3), since2019: round(pct(now, base2019(p)), 1) } : null;
+    }).filter((c) => c && c.since2019 != null),
+  };
+}
+const EUROPE = {
+  electricity: europeHalfYear('nrg_pc_204', 'eia-elec:PRICE.US-RES.M'),
+  gas: europeHalfYear('nrg_pc_202', 'eia-ng:N3010US3.M'),
+  gasoline: europeWeekly('euro95', 'eia-pet:EMM_EPMR_PTE_NUS_DPG.W'),
+  diesel: europeWeekly('diesel', 'eia-pet:EMD_EPD2D_PTE_NUS_DPG.W'),
+};
 // Rate cases, collected with Kadoa from each state commission's case pages. Figures arrive already checked against
 // the commission's own wording; open cases first, then the most recent decisions.
 const STATUS_ORDER = { pending: 0, settled: 1, decided: 1, withdrawn: 2 };
@@ -180,6 +226,7 @@ for (const { fuel, fuelMeta, locations, us, nav, compare, monthly, surveys } of 
       cpi: fuel.measure === 'spot_price' ? null : cpiMonthly,
       usSummary: us.grades[0].summary, locations: nav, compare, monthly: l.slug ? null : monthly, related,
       oilHistory: fuel.slug === 'crude-oil' && !l.slug ? oilHistory : null,
+      europe: !l.slug ? (EUROPE[fuel.slug] ?? null) : null,
       surveys: l.slug ? null : surveys.length ? surveys : null, survey: l.type === 'state' ? stateSurvey(surveys, l.geoCode) : null,
     });
     const v = l.grades[0].summary.value;
@@ -325,25 +372,7 @@ const usHistory = {
   bill: usBill,
   bill12: rolling(usBill, (d) => round(trailingMean(usBill, d), 2)),
 };
-// Europe for comparison: Eurostat's household price per kWh (all taxes, 2,500 to 4,999 kWh a year), published per half
-// year. Each country's latest half against its 2019 average, and the US the same way: EIA's average residential price
-// over the same six months against its 2019 average, so the two changes cover the same months.
-const europeDefs = defs.filter((d) => d.source === 'eurostat');
-const europeHalf = europeDefs.map((d) => points.get(d.id).at(-1)?.[0]).filter(Boolean).sort().at(-1);
-const avg = (xs) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null);
-const usMonthly = series('eia-elec:PRICE.US-RES.M');
-const usMean = (from, to) => avg(usMonthly.filter(([d]) => d >= from && d < to).map(([, v]) => v));
-const halfEnd = europeHalf && addMonths(europeHalf, 6);
-const europe = europeHalf && usMonthly.at(-1)[0] >= addMonths(europeHalf, 5) ? {
-  half: europeHalf,
-  us: { price: round(usMean(europeHalf, halfEnd), 2), since2019: round(pct(usMean(europeHalf, halfEnd), usMean('2019-01-01', '2020-01-01')), 1) },
-  countries: europeDefs.map((d) => {
-    const p = points.get(d.id), at = (date) => p.find(([x]) => x === date)?.[1];
-    const base = avg(['2019-01-01', '2019-07-01'].map(at).filter((v) => v != null)), latest = at(europeHalf);
-    return { code: d.geoCode, name: d.geoName, price: round(latest, 4), since2019: round(pct(latest, base), 1) };
-  }).filter((c) => c.price != null && c.since2019 != null),
-} : null;
-await page('electricity', `${BASE}/electricity`, { kind: 'electricity', us, usHistory, electricityCpi, electricityCpiTrend, states: states.map(({ gas, ...s }) => s), largest, utilityCount: [...utilitiesByState.values()].flat().length, europe });
+await page('electricity', `${BASE}/electricity`, { kind: 'electricity', us, usHistory, electricityCpi, electricityCpiTrend, states: states.map(({ gas, ...s }) => s), largest, utilityCount: [...utilitiesByState.values()].flat().length, europe: EUROPE.electricity });
 // The state tile map as its own page (a shareable link with its own title and preview image).
 await page('electricity/map', `${BASE}/electricity/map`, { kind: 'electricityMap', us: { month: us.month, price12: us.price12, priceSince2019: us.priceSince2019, trend: us.trend }, electricityCpi, electricityCpiTrend, states: states.map((s) => ({ code: s.code, name: s.name, slug: s.slug, price12: s.price12, priceSince2019: s.priceSince2019, trend: s.trend })) });
 
@@ -381,6 +410,7 @@ const allCpi = monthlySummary(series('bls-cpi:CUUR0000SA0'));
 const weekly2y = (id) => points.get(id).filter((p) => p[0] >= '2019-08-01');
 await page('home', BASE, {
   kind: 'home',
+  europe: EUROPE,
   headlines: { gasoline: fuelHeadlines.gasoline, diesel: fuelHeadlines.diesel, electricity: { ...us.price, price12: us.price12, price12Change: us.price12Change }, bill: { value: us.bill12, change: us.bill12Change }, energyCpi: { month: energyCpi.date, change: energyCpi.yearChange, allItems: allCpi.yearChange } },
   staples: { from: FROM.slice(0, 7), month: staples[0].points.at(-1)[0], items: staples, ranking, cpi: allItems, regions },
   pump: { rows: regionalPump, gasoline: weekly2y('eia-pet:EMM_EPMR_PTE_NUS_DPG.W'), diesel: weekly2y('eia-pet:EMD_EPD2D_PTE_NUS_DPG.W') },
