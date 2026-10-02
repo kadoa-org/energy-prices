@@ -41,7 +41,19 @@ const END_LABELS = {
     ctx.save();
     ctx.font = '600 14px ' + (Chart.defaults.font.family ?? 'sans-serif');
     ctx.textBaseline = 'middle';
-    for (const l of labels) { ctx.fillStyle = l.colour; ctx.fillText(l.text, Math.max(l.x, chartArea.right) + 10, l.y); }
+    // A label wider than the room beside the plot would run off the canvas ("San Diego Gas & Electric (SDG&E)"): it
+    // falls back to the abbreviation in its closing brackets when there is one, then to an ellipsis. The tooltip
+    // keeps the full name.
+    const room = END_LABEL_ROOM - 14;
+    const fit = (text) => {
+      if (ctx.measureText(text).width <= room) return text;
+      const short = text.match(/\(([^()]+)\)\s*$/)?.[1];
+      if (short && ctx.measureText(short).width <= room) return short;
+      let t = text;
+      while (t.length > 1 && ctx.measureText(`${t}…`).width > room) t = t.slice(0, -1);
+      return `${t.trimEnd()}…`;
+    };
+    for (const l of labels) { ctx.fillStyle = l.colour; ctx.fillText(fit(l.text), Math.max(l.x, chartArea.right) + 10, l.y); }
     ctx.restore();
   },
 };
