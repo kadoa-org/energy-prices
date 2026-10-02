@@ -395,9 +395,32 @@ function Electricity({ page }) {
       <HistoryCard id="us-bill-title" title="Average monthly electricity bill" description="What an average home pays a month, with the 12-month average." end={page.us.month} state={page.usHistory.bill} stateName="Monthly" us={page.usHistory.bill12} compareLabel="12-month average" format={(v) => money(v, 0)} yTitle="Dollars a month" columns="Bill" file="energy-prices.csv.gz" common={page.common} note={<>Source: <a href="https://www.eia.gov/electricity/monthly/" target="_blank" rel="noreferrer">EIA Electric Power Monthly</a>.</>} downloadText="Every series on this site, including monthly US and state electricity figures, as a gzipped CSV." />
     </>}
     <StatesCard states={page.states} us={page.us} month={page.us.month} common={page.common} full usTrend={page.us.trend} cpi={page.electricityCpi} usSince2019={page.us.priceSince2019} cpiTrend={page.electricityCpiTrend} />
+    <UtilityChangeCard utilities={page.largest} us={page.us} cpi={page.electricityCpi} common={page.common} />
     {page.europe && <EuropeCard europe={page.europe} product="electricity" common={page.common} />}
     <UtilitiesTable title="Prices at the largest utilities" hint={`The ${page.largest.length} utilities serving 250,000 homes or more, of ${number(page.utilityCount)} tracked. Past 12 months.`} utilities={page.largest} showState />
   </>;
+}
+// The largest utilities ranked by how much their home price rose since 2019, against the US average over the same
+// months: a state average hides the spread (New York's +58% blends NYSEG's +120% and LIPA's +36%), and a reader wants
+// to know whether their own utility is unusual. Inflation is in the description, as on the state map.
+function UtilityChangeCard({ utilities, us, cpi, common }) {
+  const rows = utilities.filter((u) => u.priceSince2019 != null).sort((a, b) => b.priceSince2019 - a.priceSince2019);
+  const name = (u) => `${u.name} (${u.state})`;
+  return <ChartCard
+    id="utility-change-title" title="Price change at the largest utilities since 2019"
+    description={`Change in the average home price per kWh, past 12 months against 2019, for the ${rows.length} utilities serving 250,000 homes or more. The US average rose ${Math.round(us.priceSince2019)}%${cpi ? `, against ${Math.round(cpi.change)}% inflation` : ''}.`}
+    date={`12 months to ${monthLabel(us.month)}`}
+    tabs={[
+      { label: 'Chart', content: <ShowMore total={rows.length} initial={15} noun="utilities">{(n) => <ValueRanking rows={rows.slice(0, n).map((u) => ({ name: name(u), value: u.priceSince2019, href: utilityUrl(u.stateSlug, u.slug) }))} average={us.priceSince2019} averageLabel="US average" format={pctLabel} />}</ShowMore> },
+      { label: 'Tabular data', short: 'Tabular', content: <ShowMore total={rows.length} initial={15} noun="utilities">{(n) => <DataTable rows={rows.slice(0, n)} rowKey={(u) => u.code} columns={[
+        { key: 'name', header: 'Utility', render: (u) => <><a className="cell-link" href={utilityUrl(u.stateSlug, u.slug)}>{u.name}</a><span className="cell-note">{u.state}, {OWNERSHIP[u.ownership] ?? u.ownership}</span></> },
+        { key: 'since', header: 'Since 2019', align: 'right', render: (u) => pctLabel(u.priceSince2019) },
+        { key: 'price', header: 'Price a kWh', align: 'right', render: (u) => cents(u.price12) },
+      ]} />}</ShowMore> },
+      { label: 'Download', content: <><p className="download-intro">Every series on this site, including monthly revenue, sales and customers for each utility, as a gzipped CSV.</p><Download file="energy-prices.csv.gz" common={common} /></> },
+    ]}
+    footer={<p className="chart-note">Source: <a href="https://www.eia.gov/electricity/data/eia861m/" target="_blank" rel="noreferrer">EIA-861M</a> monthly utility sales and revenue; US average from <a href="https://www.eia.gov/electricity/monthly/" target="_blank" rel="noreferrer">EIA Electric Power Monthly</a>. In states with retail choice, the price for homes that buy their power from the utility.</p>}
+  />;
 }
 // Europe for comparison, one card per product or one with a product select. Each row is the change in a country's
 // price since its 2019 average; the US is the dashed line, measured over the same half year (electricity, gas) or the
