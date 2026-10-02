@@ -132,27 +132,30 @@ export function StapleRanking({ ranking, cpi, from }) {
 // A value ranking: one bar per row on a shared scale from zero, with a marker for the US average, used for the
 // states by electricity price.
 export function ValueRanking({ rows, average, averageLabel, format, intro }) {
+  // Labelled bars, as in a printed chart: names right-aligned against their bars on one line, the value at the bar's
+  // end. The name column is as wide as the longest name (in ch, capped), so every bar starts at the same x; the scale
+  // stops short of the track's end to leave room for the value label.
   const max = Math.max(...rows.map((r) => r.value), average ?? 0) || 1;
-  const at = (v) => `${(v / max) * 100}%`;
+  const at = (v) => `calc((100% - 4.5em) * ${Math.max(v, 0) / max})`;
+  const nameWidth = `${Math.min(Math.max(...rows.map((r) => r.name.length), 8) + 1, 36)}ch`;
   return (
-    <div className="ranking ranking--wide">
+    <div className="ranking ranking--wide ranking--labelled" style={{ '--ranking-name': nameWidth }}>
       {intro && <p className="ranking__intro">{intro}</p>}
       {average != null && (
         <div className="ranking__row ranking__row--label" aria-hidden="true">
           <span />
           <span className="ranking__track"><span className="ranking__cpi-label" style={{ left: at(average) }}>{averageLabel} {format(average)}</span></span>
-          <span />
         </div>
       )}
       <ol className="ranking__list">
         {rows.map((r) => (
           <li className="ranking__row" key={r.name}>
-            {r.href ? <a className="ranking__name" href={r.href}>{r.name}</a> : <span className="ranking__name ranking__name--plain">{r.name}</span>}
+            {r.href ? <a className="ranking__name" href={r.href} title={r.name}>{r.name}</a> : <span className="ranking__name ranking__name--plain" title={r.name}>{r.name}</span>}
             <span className="ranking__track">
               <span className="ranking__bar" style={{ left: 0, width: at(r.value) }} />
               {average != null && <span className="ranking__cpi" style={{ left: at(average) }} aria-hidden="true" />}
+              <span className="ranking__value ranking__value--end" style={{ left: at(r.value) }}>{format(r.value)}</span>
             </span>
-            <span className="ranking__value">{format(r.value)}</span>
           </li>
         ))}
       </ol>
