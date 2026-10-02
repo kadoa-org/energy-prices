@@ -393,8 +393,31 @@ function Electricity({ page }) {
       <HistoryCard id="us-bill-title" title="Average monthly electricity bill" description="What an average home pays a month, with the 12-month average." end={page.us.month} state={page.usHistory.bill} stateName="Monthly" us={page.usHistory.bill12} compareLabel="12-month average" format={(v) => money(v, 0)} yTitle="Dollars a month" columns="Bill" file="energy-prices.csv.gz" common={page.common} note={<>Source: <a href="https://www.eia.gov/electricity/monthly/" target="_blank" rel="noreferrer">EIA Electric Power Monthly</a>.</>} downloadText="Every series on this site, including monthly US and state electricity figures, as a gzipped CSV." />
     </>}
     <StatesCard states={page.states} us={page.us} month={page.us.month} common={page.common} full usTrend={page.us.trend} cpi={page.electricityCpi} usSince2019={page.us.priceSince2019} cpiTrend={page.electricityCpiTrend} />
+    {page.europe && <EuropeCard europe={page.europe} common={page.common} />}
     <UtilitiesTable title="Prices at the largest utilities" hint={`The ${page.largest.length} utilities serving 250,000 homes or more, of ${number(page.utilityCount)} tracked. Past 12 months.`} utilities={page.largest} showState />
   </>;
+}
+// Europe for comparison. Eurostat publishes household prices per half year, so the US is measured over the same six
+// months; both are the change from the 2019 average, in each currency's own terms, not converted.
+const halfLabel = (iso) => `${iso.slice(5, 7) === '01' ? 'First' : 'Second'} half of ${iso.slice(0, 4)}`;
+const euro = (v) => `€${v.toFixed(2)}`;
+function EuropeCard({ europe, common }) {
+  const rows = [...europe.countries].sort((a, b) => b.since2019 - a.since2019);
+  const tableRows = [{ code: 'US', name: 'United States', since2019: europe.us.since2019, price: `${cents(europe.us.price)} a kWh` }, ...rows.map((c) => ({ ...c, price: `${euro(c.price)} a kWh` }))];
+  return <ChartCard
+    id="europe-title" title="How the US compares with Europe" description="Change in the average home price per kWh since 2019, against the US over the same months."
+    date={halfLabel(europe.half)}
+    tabs={[
+      { label: 'Chart', content: <ValueRanking rows={rows.map((c) => ({ name: c.name, value: c.since2019 }))} average={europe.us.since2019} averageLabel="United States" format={pctLabel} /> },
+      { label: 'Tabular data', short: 'Tabular', content: <DataTable rows={tableRows} rowKey={(r) => r.code} columns={[
+        { key: 'name', header: 'Country', render: (r) => r.name },
+        { key: 'since2019', header: 'Since 2019', align: 'right', render: (r) => pctLabel(r.since2019) },
+        { key: 'price', header: 'Price', align: 'right', render: (r) => r.price },
+      ]} /> },
+      { label: 'Download', content: <><p className="download-intro">Every series on this site, including the Eurostat country prices, as a gzipped CSV.</p><Download file="energy-prices.csv.gz" common={common} /></> },
+    ]}
+    footer={<p className="chart-note">Source: <a href="https://ec.europa.eu/eurostat/databrowser/view/nrg_pc_204/default/table" target="_blank" rel="noreferrer">Eurostat</a> household electricity prices, all taxes included, 2,500 to 4,999 kWh a year, in euros; US from <a href="https://www.eia.gov/electricity/monthly/" target="_blank" rel="noreferrer">EIA Electric Power Monthly</a>, in dollars. Not adjusted for inflation.</p>}
+  />;
 }
 function UtilitiesTable({ title, hint, utilities, stateSlug, showState = false }) {
   const [sort, setSort] = useState({ key: showState ? 'price12' : 'customers', dir: 'desc' });

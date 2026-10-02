@@ -147,7 +147,7 @@ export function ValueRanking({ rows, average, averageLabel, format, intro }) {
       <ol className="ranking__list">
         {rows.map((r) => (
           <li className="ranking__row" key={r.name}>
-            <a className="ranking__name" href={r.href}>{r.name}</a>
+            {r.href ? <a className="ranking__name" href={r.href}>{r.name}</a> : <span className="ranking__name ranking__name--plain">{r.name}</span>}
             <span className="ranking__track">
               <span className="ranking__bar" style={{ left: 0, width: at(r.value) }} />
               {average != null && <span className="ranking__cpi" style={{ left: at(average) }} aria-hidden="true" />}

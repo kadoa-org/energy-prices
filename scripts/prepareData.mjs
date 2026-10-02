@@ -325,7 +325,25 @@ const usHistory = {
   bill: usBill,
   bill12: rolling(usBill, (d) => round(trailingMean(usBill, d), 2)),
 };
-await page('electricity', `${BASE}/electricity`, { kind: 'electricity', us, usHistory, electricityCpi, electricityCpiTrend, states: states.map(({ gas, ...s }) => s), largest, utilityCount: [...utilitiesByState.values()].flat().length });
+// Europe for comparison: Eurostat's household price per kWh (all taxes, 2,500 to 4,999 kWh a year), published per half
+// year. Each country's latest half against its 2019 average, and the US the same way: EIA's average residential price
+// over the same six months against its 2019 average, so the two changes cover the same months.
+const europeDefs = defs.filter((d) => d.source === 'eurostat');
+const europeHalf = europeDefs.map((d) => points.get(d.id).at(-1)?.[0]).filter(Boolean).sort().at(-1);
+const avg = (xs) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null);
+const usMonthly = series('eia-elec:PRICE.US-RES.M');
+const usMean = (from, to) => avg(usMonthly.filter(([d]) => d >= from && d < to).map(([, v]) => v));
+const halfEnd = europeHalf && addMonths(europeHalf, 6);
+const europe = europeHalf && usMonthly.at(-1)[0] >= addMonths(europeHalf, 5) ? {
+  half: europeHalf,
+  us: { price: round(usMean(europeHalf, halfEnd), 2), since2019: round(pct(usMean(europeHalf, halfEnd), usMean('2019-01-01', '2020-01-01')), 1) },
+  countries: europeDefs.map((d) => {
+    const p = points.get(d.id), at = (date) => p.find(([x]) => x === date)?.[1];
+    const base = avg(['2019-01-01', '2019-07-01'].map(at).filter((v) => v != null)), latest = at(europeHalf);
+    return { code: d.geoCode, name: d.geoName, price: round(latest, 4), since2019: round(pct(latest, base), 1) };
+  }).filter((c) => c.price != null && c.since2019 != null),
+} : null;
+await page('electricity', `${BASE}/electricity`, { kind: 'electricity', us, usHistory, electricityCpi, electricityCpiTrend, states: states.map(({ gas, ...s }) => s), largest, utilityCount: [...utilitiesByState.values()].flat().length, europe });
 // The state tile map as its own page (a shareable link with its own title and preview image).
 await page('electricity/map', `${BASE}/electricity/map`, { kind: 'electricityMap', us: { month: us.month, price12: us.price12, priceSince2019: us.priceSince2019, trend: us.trend }, electricityCpi, electricityCpiTrend, states: states.map((s) => ({ code: s.code, name: s.name, slug: s.slug, price12: s.price12, priceSince2019: s.priceSince2019, trend: s.trend })) });
 
