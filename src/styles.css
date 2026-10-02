@@ -147,6 +147,14 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,su
    switch from chart to table does not move what is below. */
 .govuk-tabs__panel{background:#fff;border:1px solid var(--gov-border);padding:24px 16px;min-width:0;min-height:560px;box-sizing:border-box}.govuk-tabs__short{display:none}
 .govuk-tabs__panel[hidden]{display:none}
+.govuk-tabs__select{display:none}
+/* Phones: the tab row becomes a select above a borderless panel, the UKHSA dashboard's pattern below tablet width. */
+@media (max-width:640px){
+  .govuk-tabs__list{display:none}
+  .govuk-tabs__select{display:block;margin:0 0 15px}
+  .govuk-tabs__select .govuk-select{width:auto;min-width:11em}
+  .govuk-tabs .govuk-tabs__panel{border:0;padding:0;background:none}
+}
 
 /* GOV.UK select */
 .chart-filters{display:flex;flex-wrap:wrap;gap:0 30px}.filter-select{margin:0 0 20px}.govuk-label{display:block;font-size:19px;line-height:25px;margin:0 0 5px;color:var(--gov-text)}
@@ -320,6 +328,14 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,su
 .explorer__dot{width:10px;height:10px;border-radius:50%;flex:none}
 @media (max-width:640px){
   .explorer__sidebox{display:none}
+  /* The side column of small-state boxes is hidden, so crop it and the left margin out of the map's viewBox width
+     (visible x -10 to 960 of -40 to 1040) and let the outlines use the full width. */
+  .explorer__map{overflow:hidden}
+  .explorer__map svg{width:111.3%;margin-left:-3.1%}
+  /* The start month drops and the end month loses its fixed width, so play, slider and month fit on one line. */
+  .explorer__time{gap:10px}
+  .explorer__time .dk-hint{display:none}
+  .explorer__time strong{min-width:0}
 }
 /* Oil shocks chart: SVG drawn at the card's width. */
 .oil-shocks{width:100%;overflow:hidden}.oil-shocks svg{display:block}

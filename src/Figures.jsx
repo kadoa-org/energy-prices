@@ -82,6 +82,14 @@ export function Tabs({ tabs, initial = 0 }) {
   }, [initial, active === initial]);
   const move = (to) => { const next = (to + tabs.length) % tabs.length; setActive(next); refs.current[next]?.focus(); };
   return <div className="govuk-tabs">
+    {/* Phones: a select in place of the tab row, as the UKHSA dashboard does below tablet width, since four or five
+        tabs wrap onto a second line there. CSS shows one or the other; both drive the same active tab. */}
+    <div className="govuk-tabs__select">
+      <label className="govuk-visually-hidden" htmlFor={`${id}-select`}>View</label>
+      <select className="govuk-select" id={`${id}-select`} value={active} onChange={(e) => setActive(Number(e.target.value))}>
+        {tabs.map((t, i) => <option key={t.label} value={i}>{t.label}</option>)}
+      </select>
+    </div>
     <ul className="govuk-tabs__list" role="tablist">
       {tabs.map((t, i) => <li key={t.label} className={`govuk-tabs__list-item${i === active ? ' govuk-tabs__list-item--selected' : ''}`} role="presentation">
         <button
