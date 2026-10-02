@@ -405,10 +405,10 @@ function EuropeCard({ europe, common }) {
   const rows = [...europe.countries].sort((a, b) => b.since2019 - a.since2019);
   const tableRows = [{ code: 'US', name: 'United States', since2019: europe.us.since2019, price: `${cents(europe.us.price)} a kWh` }, ...rows.map((c) => ({ ...c, price: `${euro(c.price)} a kWh` }))];
   return <ChartCard
-    id="europe-title" title="How the US compares with Europe" description="Change in the average home price per kWh since 2019, against the US over the same months."
+    id="europe-title" title="How the US compares with Europe" description="Change in the average home price per kWh since 2019 in the EU and Norway, against the US over the same months."
     date={halfLabel(europe.half)}
     tabs={[
-      { label: 'Chart', content: <ValueRanking rows={rows.map((c) => ({ name: c.name, value: c.since2019 }))} average={europe.us.since2019} averageLabel="United States" format={pctLabel} /> },
+      { label: 'Chart', content: <ShowMore total={rows.length} initial={15} noun="countries">{(n) => <ValueRanking rows={rows.slice(0, n).map((c) => ({ name: c.name, value: c.since2019 }))} average={europe.us.since2019} averageLabel="United States" format={pctLabel} />}</ShowMore> },
       { label: 'Tabular data', short: 'Tabular', content: <DataTable rows={tableRows} rowKey={(r) => r.code} columns={[
         { key: 'name', header: 'Country', render: (r) => r.name },
         { key: 'since2019', header: 'Since 2019', align: 'right', render: (r) => pctLabel(r.since2019) },
