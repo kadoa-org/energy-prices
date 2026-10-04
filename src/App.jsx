@@ -637,7 +637,7 @@ function RateCases({ page }) {
 
 function About() {
   return <AboutPage
-    lede="Weekly US fuel prices, monthly home electricity and gas prices by state and utility, and utility rate cases. Free to explore, download and reuse."
+    lede="Weekly US fuel prices, monthly home electricity and gas prices by state and utility, and utility rate cases."
     steps={[
       { title: 'Monitor', text: 'Kadoa checks EIA, BLS and state agencies for new figures every week.' },
       { title: 'Extract', text: 'It reads government data files and state web pages and pulls out each price and rate case.' },
