@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Button, DataTable, GitHubButton, LiveBadge, NavBar, Section, SiteFooter, SiteHeader } from './kit';
+import { AboutPage, Button, DataTable, GitHubButton, LiveBadge, NavBar, Section, SiteFooter, SiteHeader } from './kit';
+import { METHODS } from './methodology';
 import { ChangeTag, ChartCard, FilterSelect, KeyFigures, SectionHeading, ShowMore } from './Figures';
 import LineChart, { SERIES_COLOURS } from './LineChart';
 import CommandPalette from './CommandPalette';
@@ -9,6 +10,7 @@ import { StapleChart, StapleRanking, ValueRanking, monthTime, stapleScales } fro
 import { BASE, HOME, addDays, addMonths, cents, dataPath, dateLabel, money, monthLabel, number, pctLabel } from './model.mjs';
 import { priceText } from './format.mjs';
 
+const REPO = 'https://github.com/kadoa-org/energy-prices';
 const stateUrl = (slug) => `${BASE}/electricity/${slug}`;
 const utilityUrl = (stateSlug, slug) => `${BASE}/electricity/${stateSlug}/${slug}`;
 const OWNERSHIP = { 'Investor Owned': 'Investor-owned', Cooperative: 'Cooperative', Municipal: 'Municipal', Federal: 'Federal', State: 'State', 'Political Subdivision': 'Public power district' };
@@ -633,20 +635,26 @@ function RateCases({ page }) {
   </>;
 }
 
-function About({ page }) {
-  return <article className="prose">
-    <h1 className="dk-h1">About the data</h1>
-    <p className="lede">Every figure on this site comes from US federal and state government sources.</p>
-    <h2>Sources</h2>
-    <ul>
-      <li>US Energy Information Administration (EIA): weekly fuel prices, and monthly electricity and natural gas prices by state and utility.</li>
-      <li>US Bureau of Labor Statistics (BLS): average prices and the Consumer Price Index.</li>
-      <li>State utility commissions: rate cases, collected with Kadoa.</li>
-      <li>State energy offices in Connecticut, Maine, Massachusetts and New York: weekly heating oil and propane surveys, collected with Kadoa.</li>
-    </ul>
-    <p>The project is open source and contributions are welcome: <a href="https://github.com/kadoa-org/energy-prices">github.com/kadoa-org/energy-prices</a>.</p>
-    <p className="dk-hint">{number(page.counts.series)} series and {number(page.counts.rows)} figures, updated weekly, last on {dateLabel(page.common.generatedAt.slice(0, 10))}. Built by <a href="https://www.kadoa.com">Kadoa</a>.</p>
-  </article>;
+function About() {
+  return <AboutPage
+    lede="Weekly US fuel prices, monthly home electricity and gas prices by state and utility, and utility rate cases. Free to explore, download and reuse."
+    steps={[
+      { title: 'Monitor', text: 'Kadoa checks EIA, BLS and state agencies for new figures every week.' },
+      { title: 'Extract', text: 'It reads government data files and state web pages and pulls out each price and rate case.' },
+      { title: 'Clean', text: 'Missing values stay blank, and implausible ones are rejected.' },
+      { title: 'Publish', text: 'New figures go live on the site and in the CSV downloads.' },
+    ]}
+    sources={[
+      { name: 'US Energy Information Administration (EIA)', href: 'https://www.eia.gov/', what: 'Fuel prices, and electricity and gas prices by state and utility' },
+      { name: 'US Bureau of Labor Statistics (BLS)', href: 'https://www.bls.gov/cpi/', what: 'Average prices and the Consumer Price Index' },
+      { name: 'State utility commissions', href: `${BASE}/rate-cases`, what: 'Rate cases, linked case by case' },
+      { name: 'State energy offices', href: `${BASE}/fuel/heating-oil`, what: 'Heating oil and propane surveys in CT, ME, MA and NY' },
+      { name: 'Eurostat', href: 'https://ec.europa.eu/eurostat/databrowser/view/nrg_pc_204/default/table', what: 'European household electricity and gas prices' },
+      { name: 'EU Weekly Oil Bulletin', href: 'https://energy.ec.europa.eu/data-and-analysis/weekly-oil-bulletin_en', what: 'European petrol, diesel and heating oil prices' },
+    ]}
+    methods={METHODS}
+    corrections={<>Found an error? <a href={`${REPO}/issues`}>Open an issue on GitHub</a>.</>}
+  />;
 }
 
 // The state tile map on its own page, so a link to it (HN, Reddit, a newsletter) gets its own title and preview card.
