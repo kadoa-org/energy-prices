@@ -48,7 +48,8 @@ export default function FuelWork({ work }) {
           const lx = narrow ? px - 6 : Math.min(px, x(latest.month) - 30), ly = P.t - (narrow ? 34 : 40), anchor = narrow ? 'end' : 'middle';
           return <g key={e.name}>{dots}<path d={`M${narrow ? px - 2 : lx},${ly + 24}L${px},${dy - 8}`} fill="none" stroke={MUTED} /><text x={lx} y={ly} textAnchor={anchor} className="fuel-work__note halo">{e.month.slice(0, 4)}, {e.name}</text><text x={lx} y={ly + 18} textAnchor={anchor} className="fuel-work__val halo">{vals(e)}</text></g>;
         }
-        if (place === 'right') return <g key={e.name}>{dots}<text x={px + 8} y={dy + 4} className="fuel-work__val halo">{e.month.slice(0, 4)}: {vals(e)}</text></g>;
+        // A phone stacks the label left of the peak, clear of the Iran war leader line on the right.
+        if (place === 'right') return <g key={e.name}>{dots}<text x={px - 8} y={dy + 14} textAnchor="end" className="fuel-work__note halo">{e.month.slice(0, 4)}</text><text x={px - 8} y={dy + 30} textAnchor="end" className="fuel-work__val halo">{vals(e)}</text></g>;
         if (place === 'below') return <g key={e.name}>{dots}<text x={px} y={gy + 24} textAnchor="middle" className="fuel-work__val halo">{vals(e)}</text><text x={px} y={gy + 42} textAnchor="middle" className="fuel-work__note halo">{e.month.slice(0, 4)}, {e.name}</text></g>;
         const anchor = place === 'left' ? 'end' : 'middle', lx = place === 'left' ? px - 8 : px;
         return <g key={e.name}>{dots}<text x={lx} y={dy - 30} textAnchor={anchor} className="fuel-work__note halo">{e.month.slice(0, 4)}, {e.name}</text><text x={lx} y={dy - 12} textAnchor={anchor} className="fuel-work__val halo">{vals(e)}</text></g>;
