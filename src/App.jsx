@@ -694,14 +694,12 @@ function Insight({ page }) {
     <ChartCard
       id="work-title"
       title="Minutes of work per gallon"
-      description="Monthly average retail price divided by the average hourly pay of production and nonsupervisory workers."
-      date={`April 1994 to ${monthLabel(`${l.month}-01`)}`}
       tabs={[
         { label: 'Chart', content: <FuelWork work={w} /> },
         { label: 'Tabular data', short: 'Tabular', content: <ShowMore total={rows.length} initial={24} step={120} noun="months">{(n) => <DataTable rows={rows.slice(0, n)} columns={columns} rowKey={(r) => r.month} />}</ShowMore> },
         { label: 'Download', content: <><p className="download-intro">Every month since April 1994: diesel and gas prices, hourly pay and minutes of work, as a gzipped CSV.</p><Download file="fuel-minutes-of-work.csv.gz" common={page.common} /></> },
       ]}
-      footer={<p className="chart-note">Source: <a href="https://www.eia.gov/petroleum/gasdiesel/" target="_blank" rel="noreferrer">EIA</a>, <a href="https://www.bls.gov/ces/" target="_blank" rel="noreferrer">BLS</a>. Diesel records start in 1994.</p>}
+      footer={<p className="chart-note">Source: <a href="https://www.eia.gov/petroleum/gasdiesel/" target="_blank" rel="noreferrer">EIA</a>, <a href="https://www.bls.gov/ces/" target="_blank" rel="noreferrer">BLS</a> pay of production and nonsupervisory workers. Diesel records start in 1994.</p>}
     />
   </>;
 }
