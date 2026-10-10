@@ -94,6 +94,17 @@ function seo(page, path) {
     description = `${open.length} open electric and gas rate cases in ${page.states.map((s) => s.name).join(', ')}: what each utility asked for, the expected decision, and what regulators approved in the past two years.`;
     crumbs.push({ name: 'Rate cases', url: canonical });
     ld = [dataset('US utility rate cases', description, { spatialCoverage: 'United States', distribution: [{ '@type': 'DataDownload', encodingFormat: 'text/csv', contentUrl: `${absolute(dataPath)}/downloads/rate-cases.csv.gz` }] })];
+  } else if (page.kind === 'insights') {
+    title = 'Energy Price Insights: Charts and Analysis';
+    description = `Analysis built on the US Energy Price Monitor's EIA and BLS data: ${page.insights.map((i) => i.title.toLowerCase()).join('; ')}.`;
+    crumbs.push({ name: 'Insights', url: canonical });
+    ld = [{ '@context': 'https://schema.org', '@type': 'ItemList', name: title, url: canonical, numberOfItems: page.insights.length, itemListElement: page.insights.map((i, n) => ({ '@type': 'ListItem', position: n + 1, name: i.title, url: `${SITE}/energy-prices/insights/${i.slug}` })) }];
+  } else if (page.kind === 'insight') {
+    const l = page.work.latest;
+    title = `${page.title}: Minutes of Work per Gallon Since 1994`;
+    description = `A gallon of diesel took ${l.dieselMinutes.toFixed(1)} minutes of average US hourly pay in ${monthLabel(`${l.month}-01`)} and regular gas ${l.gasMinutes.toFixed(1)}${page.work.widestGap ? ', the widest gap on record' : ''}. Monthly since 1994 from EIA prices and BLS earnings, with the 2008, 2022 and 2026 spikes.`;
+    crumbs.push({ name: 'Insights', url: `${SITE}/energy-prices/insights` }, { name: 'Minutes of work per gallon', url: canonical });
+    ld = [dataset('Minutes of work per gallon of US diesel and gasoline, monthly since 1994', description, { temporalCoverage: `${page.work.rows[0].month}/${l.month}`, isBasedOn: ['https://www.eia.gov/petroleum/gasdiesel/', 'https://www.bls.gov/ces/'], distribution: [{ '@type': 'DataDownload', encodingFormat: 'text/csv', contentUrl: `${absolute(dataPath)}/downloads/fuel-minutes-of-work.csv.gz` }] })];
   } else {
     title = 'About the Data: Sources and Methods';
     description = 'Where the energy price data comes from (EIA, BLS, state utility commissions and energy offices), how changes are calculated, and how to download it.';

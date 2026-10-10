@@ -6,6 +6,7 @@ import LineChart, { SERIES_COLOURS } from './LineChart';
 import CommandPalette from './CommandPalette';
 import StateExplorer from './StateExplorer';
 import OilShocks from './OilShocks';
+import FuelWork from './FuelWork';
 import { StapleChart, StapleRanking, ValueRanking, monthTime, stapleScales } from './StaplesChart';
 import { BASE, HOME, addDays, addMonths, cents, dataPath, dateLabel, money, monthLabel, number, pctLabel } from './model.mjs';
 import { priceText } from './format.mjs';
@@ -32,7 +33,7 @@ export function Shell({ page, children }) {
   return <><a className="skip-link" href="#main-content">Skip to content</a>
     <SiteHeader brand="⚡ US Energy Price Monitor" brandHref={HOME} brandSuffix={<a href="https://www.kadoa.com" target="_blank" rel="noreferrer" className="dk-header-link">by Kadoa</a>} right={<span className="header-right"><LiveBadge>Updated weekly</LiveBadge><GitHubButton repo="kadoa-org/energy-prices" /><Button inverse onClick={() => setSearch(true)} aria-label="Search (Cmd+K)">Search <kbd className="header-kbd">⌘K</kbd></Button></span>} />
     <CommandPalette open={search} onClose={() => setSearch(false)} dataPath={dataPath(page?.common)} />
-    <NavBar collapse items={[{ href: HOME, label: 'Overview', active: kind === 'home' }, { href: `${BASE}/fuel`, label: 'Fuel prices', active: kind === 'fuel' || kind === 'fuels' }, { href: `${BASE}/electricity`, label: 'Electricity', active: kind === 'electricity' || kind === 'state' || kind === 'electricityMap' }, { href: `${BASE}/rate-cases`, label: 'Rate cases', active: kind === 'rateCases' }, { href: `${BASE}/about`, label: 'About the data', end: true, active: kind === 'about' }]} />
+    <NavBar collapse items={[{ href: HOME, label: 'Overview', active: kind === 'home' }, { href: `${BASE}/fuel`, label: 'Fuel prices', active: kind === 'fuel' || kind === 'fuels' }, { href: `${BASE}/electricity`, label: 'Electricity', active: kind === 'electricity' || kind === 'state' || kind === 'electricityMap' }, { href: `${BASE}/rate-cases`, label: 'Rate cases', active: kind === 'rateCases' }, { href: `${BASE}/insights`, label: 'Insights', active: kind === 'insights' || kind === 'insight' }, { href: `${BASE}/about`, label: 'About the data', end: true, active: kind === 'about' }]} />
     <main id="main-content" className="dk-container main">{children}</main><SiteFooter current="energy-prices" /></>;
 }
 export function Loading({ error = false }) {
@@ -669,7 +670,43 @@ function ElectricityMap({ page }) {
   </>;
 }
 
+// ── Insights: an index of cards (the Congress Trading Monitor's layout), and one page per analysis.
+function InsightsIndex({ page }) {
+  return <>
+    <div className="title-block"><h1 className="dk-h1">Insights</h1><p className="lede">Analysis built on the monitor's EIA and BLS data.</p></div>
+    <ul className="insight-cards">{page.insights.map((i) => <li className="insight-card" key={i.slug}><h2 className="insight-card__title"><a href={`${BASE}/insights/${i.slug}`}>{i.title}</a></h2><p className="insight-card__desc">{i.summary}</p></li>)}</ul>
+  </>;
+}
+function Insight({ page }) {
+  const w = page.work, l = w.latest;
+  const rows = [...w.rows].reverse();
+  const columns = [
+    { key: 'month', header: 'Month', render: (r) => monthLabel(`${r.month}-01`) },
+    { key: 'dieselMinutes', header: 'Diesel, minutes', align: 'right', render: (r) => r.dieselMinutes.toFixed(1) },
+    { key: 'gasMinutes', header: 'Gas, minutes', align: 'right', render: (r) => r.gasMinutes.toFixed(1) },
+    { key: 'diesel', header: 'Diesel price', align: 'right', hideBelow: 'sm', render: (r) => perGallon(r.diesel) },
+    { key: 'gas', header: 'Gas price', align: 'right', hideBelow: 'sm', render: (r) => perGallon(r.gas) },
+    { key: 'pay', header: 'Hourly pay', align: 'right', hideBelow: 'sm', render: (r) => money(r.pay) },
+  ];
+  return <>
+    <Breadcrumbs items={[{ label: 'Insights', href: `${BASE}/insights` }, { label: 'Minutes of work per gallon' }]} />
+    <div className="title-block"><h1 className="dk-h1">{page.title}</h1><p className="lede">Minutes of average US hourly pay to buy a gallon of <strong style={{ color: SERIES_COLOURS[1] }}>diesel</strong> or <strong style={{ color: SERIES_COLOURS[0] }}>regular gas</strong>.{w.widestGap ? ` In ${monthLabel(`${l.month}-01`)} the two were ${(l.dieselMinutes - l.gasMinutes).toFixed(1)} minutes apart, the widest gap on record.` : ''}</p></div>
+    <ChartCard
+      id="work-title"
+      title="Minutes of work per gallon"
+      description="Monthly average retail price divided by the average hourly pay of production and nonsupervisory workers."
+      date={`April 1994 to ${monthLabel(`${l.month}-01`)}`}
+      tabs={[
+        { label: 'Chart', content: <FuelWork work={w} /> },
+        { label: 'Tabular data', short: 'Tabular', content: <ShowMore total={rows.length} initial={24} step={120} noun="months">{(n) => <DataTable rows={rows.slice(0, n)} columns={columns} rowKey={(r) => r.month} />}</ShowMore> },
+        { label: 'Download', content: <><p className="download-intro">Every month since April 1994: diesel and gas prices, hourly pay and minutes of work, as a gzipped CSV.</p><Download file="fuel-minutes-of-work.csv.gz" common={page.common} /></> },
+      ]}
+      footer={<p className="chart-note">Source: <a href="https://www.eia.gov/petroleum/gasdiesel/" target="_blank" rel="noreferrer">EIA weekly retail prices</a>, averaged by month; <a href="https://www.bls.gov/ces/" target="_blank" rel="noreferrer">BLS average hourly earnings</a> of production and nonsupervisory employees (CES0500000008). "On record" means since EIA's diesel series began in 1994.</p>}
+    />
+  </>;
+}
+
 export default function App({ page }) {
-  const View = { home: Overview, fuels: FuelIndex, fuel: Fuel, electricity: Electricity, electricityMap: ElectricityMap, rateCases: RateCases, state: State, utility: Utility, about: About }[page.kind];
+  const View = { home: Overview, fuels: FuelIndex, fuel: Fuel, electricity: Electricity, electricityMap: ElectricityMap, rateCases: RateCases, state: State, utility: Utility, about: About, insights: InsightsIndex, insight: Insight }[page.kind];
   return <Shell page={page}><View page={page} /></Shell>;
 }

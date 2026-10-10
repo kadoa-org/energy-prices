@@ -214,6 +214,34 @@ const oilHistory = (() => {
   ].map(([name, [d, v]]) => ({ name, date: d, value: v }));
   return { points: pts, shocks, latest: { date: last[0], value: last[1] } };
 })();
+// Minutes of work to buy a gallon of diesel and regular gas: EIA weekly US retail prices averaged by month, divided by
+// BLS average hourly earnings of production and nonsupervisory employees (CES0500000008). Only whole months with a pay
+// figure count, so the first diesel month (from 21 March 1994) and the month after the latest pay release drop out.
+// Events use the oil price chart's names, each at the diesel peak in its window (Covid at the gas low).
+const fuelWork = (() => {
+  const pay = new Map((points.get('bls-ces:CES0500000008') ?? []).map(([d, v]) => [d.slice(0, 7), v]));
+  const byMonth = (id) => { const m = new Map(); for (const [d, v] of points.get(id) ?? []) { const k = d.slice(0, 7); m.set(k, [...(m.get(k) ?? []), v]); } return m; };
+  const gas = byMonth('eia-pet:EMM_EPMR_PTE_NUS_DPG.W'), diesel = byMonth('eia-pet:EMD_EPD2D_PTE_NUS_DPG.W');
+  const firstDiesel = (points.get('eia-pet:EMD_EPD2D_PTE_NUS_DPG.W') ?? [])[0]?.[0];
+  if (!firstDiesel || !pay.size) return null;
+  const mean = (a) => a.reduce((x, y) => x + y, 0) / a.length;
+  const rows = [...diesel.keys()].filter((k) => k > firstDiesel.slice(0, 7) && gas.has(k) && pay.has(k)).sort().map((k) => {
+    const g = mean(gas.get(k)), d = mean(diesel.get(k)), w = pay.get(k);
+    return { month: k, gas: round(g), diesel: round(d), pay: w, gasMinutes: round((g / w) * 60, 4), dieselMinutes: round((d / w) * 60, 4) };
+  });
+  const within = (a, b) => rows.filter((r) => r.month >= a && r.month <= b);
+  const top = (rs, k, low = false) => rs.reduce((p, r) => ((low ? r[k] < p[k] : r[k] > p[k]) ? r : p));
+  const events = [
+    ['Second Gulf War', top(within('2002-10', '2003-06'), 'dieselMinutes')],
+    ['Financial crisis', top(within('2008-01', '2008-12'), 'dieselMinutes')],
+    ['Covid-19 pandemic', top(within('2020-01', '2020-12'), 'gasMinutes', true)],
+    ['Russia invades Ukraine', top(within('2022-01', '2022-12'), 'dieselMinutes')],
+    ['Iran war', top(within('2026-02', '2026-06'), 'dieselMinutes')],
+  ].map(([name, r]) => ({ name, month: r.month, dieselMinutes: r.dieselMinutes, gasMinutes: r.gasMinutes }));
+  const latest = rows.at(-1), gap = (r) => r.dieselMinutes - r.gasMinutes;
+  const widestGap = rows.every((r) => gap(r) <= gap(latest) + 1e-9);
+  return { rows, events, latest, widestGap };
+})();
 // Pump prices follow crude, so the gasoline and diesel pages carry crude's headline for a link.
 const crude = fuelCards.find((c) => c.slug === 'crude-oil');
 for (const { fuel, fuelMeta, locations, us, nav, compare, monthly, surveys } of fuelData) {
@@ -425,6 +453,16 @@ await page('rate-cases', `${BASE}/rate-cases`, { kind: 'rateCases', cases: rateC
 const caseCsv = ['state,case_id,service,utility,status,filed_date,decision_date,expected_decision,requested_usd_million,requested_percent,approved_usd_million,residential_bill_impact,case_url', ...rateCases.map((c) => [c.state, c.case_id, c.service, c.utility, c.status, c.filed_date, c.decision_date, c.expected_decision, c.requested_revenue_musd, c.requested_percent, c.approved_revenue_musd, c.residential_bill_impact, c.case_url].map((v) => (v == null ? '' : /[",\n]/.test(String(v)) ? `"${String(v).replaceAll('"', '""')}"` : v)).join(','))].join('\n') + '\n';
 await writeFile(join(out, 'downloads/rate-cases.csv.gz'), gzipSync(caseCsv));
 for (const c of rateCases) searchEntries.push({ group: 'Rate cases', label: `${c.utility} ${c.service === 'gas' ? 'gas' : 'electric'} rate case`, hint: `${c.state}, ${c.case_id}, ${c.status}`, href: `${BASE}/rate-cases?state=${c.state}` });
+// ── Insights: one page per analysis, so a link (Reddit, a newsletter) opens the chart with its own title.
+const INSIGHTS = [];
+if (fuelWork) {
+  const l = fuelWork.latest;
+  INSIGHTS.push({ slug: 'fuel-minutes-of-work', title: `Diesel costs ${Math.round(l.dieselMinutes)} minutes of work per gallon, gas ${Math.round(l.gasMinutes)}`, summary: 'Minutes of average US hourly pay to buy a gallon of diesel or regular gas, since 1994.' });
+  await page('insights/fuel-minutes-of-work', `${BASE}/insights/fuel-minutes-of-work`, { kind: 'insight', slug: 'fuel-minutes-of-work', title: INSIGHTS[0].title, work: fuelWork });
+  const csv = ['month,diesel_usd_per_gallon,regular_gas_usd_per_gallon,average_hourly_earnings_usd,diesel_minutes_of_work,gas_minutes_of_work', ...fuelWork.rows.map((r) => [r.month, r.diesel, r.gas, r.pay, r.dieselMinutes, r.gasMinutes].join(','))].join('\n') + '\n';
+  await writeFile(join(out, 'downloads/fuel-minutes-of-work.csv.gz'), gzipSync(csv));
+}
+if (INSIGHTS.length) await page('insights', `${BASE}/insights`, { kind: 'insights', insights: INSIGHTS });
 await page('about', `${BASE}/about`, { kind: 'about', counts: { series: manifest.series, rows: manifest.rows, states: states.length } });
 
 // The search index: every page a reader might type a name for, with the figure that identifies it.
@@ -434,6 +472,7 @@ const pageEntries = [
   { group: 'Pages', label: 'Electricity prices by state', hint: 'Price, bill and use for every state', href: `${BASE}/electricity` },
   { group: 'Pages', label: 'Utility rate cases', hint: 'Open and recent requests to raise rates', href: `${BASE}/rate-cases` },
   { group: 'Pages', label: 'About the data', hint: 'Sources and methods', href: `${BASE}/about` },
+  ...INSIGHTS.map((i) => ({ group: 'Insights', label: i.title, hint: i.summary, href: `${BASE}/insights/${i.slug}` })),
 ];
 await writeFile(join(out, 'search.json'), JSON.stringify([...pageEntries, ...searchEntries]));
 await copyFile(join(dir, manifest.files.csv), join(out, 'downloads/energy-prices.csv.gz'));
