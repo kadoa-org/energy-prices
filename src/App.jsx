@@ -689,7 +689,6 @@ function Insight({ page }) {
     { key: 'pay', header: 'Hourly pay', align: 'right', hideBelow: 'sm', render: (r) => money(r.pay) },
   ];
   return <>
-    <Breadcrumbs items={[{ label: 'Insights', href: `${BASE}/insights` }, { label: 'Minutes of work per gallon' }]} />
     <div className="title-block"><h1 className="dk-h1">{page.title}</h1><p className="lede">Minutes of average US hourly pay to buy a gallon of <strong style={{ color: SERIES_COLOURS[1] }}>diesel</strong> or <strong style={{ color: SERIES_COLOURS[0] }}>regular gas</strong>.{w.widestGap ? ` In ${monthLabel(`${l.month}-01`)} the two were ${(l.dieselMinutes - l.gasMinutes).toFixed(1)} minutes apart, the widest gap on record.` : ''}</p></div>
     <ChartCard
       id="work-title"
