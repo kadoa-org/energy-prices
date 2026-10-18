@@ -678,7 +678,7 @@ function InsightsIndex({ page }) {
     <ul className="insight-cards">{page.insights.map((i) => <li className="insight-card" key={i.slug}><h2 className="insight-card__title"><a href={`${BASE}/insights/${i.slug}`}>{i.title}</a></h2><p className="insight-card__desc">{i.summary}</p></li>)}</ul>
   </>;
 }
-// Gold against the other two products that have led US exports since 2024. Values are Census millions of dollars.
+// Gold against the biggest US exports since 2020. Values are Census millions of dollars.
 const billions = (v) => `$${(v / 1000).toFixed(1)}B`;
 // Aircraft engines are context, in a dark grey that stays apart from the blue, orange and turquoise for colour-blind readers (7.1:1 on white).
 const AIRCRAFT = '#55595c';
@@ -710,7 +710,7 @@ function GoldExportsInsight({ page }) {
   ];
   const line = (key) => g.rows.map((r) => [`${r.month}-01`, r[key]]);
   return <>
-    <div className="title-block"><h1 className="dk-h1">{page.title}</h1><p className="lede">{g.led.length ? `Gold was the largest US export in ${monthRuns(g.led)}, ahead of crude oil and pharmaceuticals.` : ''}{g.avg2024 ? ` In 2024 it averaged ${billions(g.avg2024)} a month.` : ''}</p></div>
+    <div className="title-block"><h1 className="dk-h1">{page.title}</h1><p className="lede">{g.led.length ? `Gold was the largest US export in ${monthRuns(g.led)}, ahead of crude oil and pharmaceuticals.` : ''}{g.baseline ? ` From 2021 to 2024 it averaged ${billions(g.baseline)} a month.` : ''}</p></div>
     <ChartCard
       id="gold-title"
       title="Gold against the biggest US exports"
@@ -718,7 +718,7 @@ function GoldExportsInsight({ page }) {
       tabs={[
         { label: 'Chart', content: <LineChart series={[{ label: 'Gold', points: line('gold'), colour: SERIES_COLOURS[1] }, { label: 'Crude oil', points: line('crude'), colour: SERIES_COLOURS[0] }, { label: 'Pharmaceuticals', points: line('pharma'), colour: SERIES_COLOURS[2] }, { label: 'Aircraft engines', points: line('engines'), colour: AIRCRAFT }]} format={billions} axis={(v) => `$${v / 1000}B`} yTitle="Exports a month" monthly gapDays={45} label={`US exports in ${month(l.month)}: gold ${billions(l.gold)}, crude oil ${billions(l.crude)}, pharmaceuticals ${billions(l.pharma)}, aircraft engines ${billions(l.engines)}.`} /> },
         { label: 'Tabular data', short: 'Tabular', content: <ShowMore total={rows.length} initial={24} step={120} noun="months">{(n) => <DataTable rows={rows.slice(0, n)} columns={columns} rowKey={(r) => r.month} />}</ShowMore> },
-        { label: 'Download', content: <><p className="download-intro">Every month since January 2024: gold, crude oil, pharmaceutical and aircraft engine exports and the top export category, in millions of dollars, as a gzipped CSV.</p><Download file="gold-top-export.csv.gz" common={page.common} /></> },
+        { label: 'Download', content: <><p className="download-intro">Every month since {month(g.rows[0].month)}: gold, crude oil, pharmaceutical and aircraft engine exports and the top export category, in millions of dollars, as a gzipped CSV.</p><Download file="gold-top-export.csv.gz" common={page.common} /></> },
       ]}
       footer={<p className="chart-note">Source: <a href="https://www.census.gov/foreign-trade/Press-Release/current_press_release/index.html" target="_blank" rel="noreferrer">US Census Bureau</a> exports by end-use category, seasonally adjusted.</p>}
     />
@@ -729,6 +729,7 @@ function GoldExportsInsight({ page }) {
         <li>These are dollars, not tonnes. The gold price roughly doubled between early 2024 and late 2025, so part of the rise is price.</li>
         <li>Census counts nonmonetary gold: bars, unrefined doré, scrap and powder traded as a commodity. Gold moved by central banks, including foreign reserves stored at the New York Fed, is monetary gold and is left out.</li>
         <li>Most of it goes to Switzerland, home to the world's largest refineries, which recast bars for buyers elsewhere: $47.9B of the $86.9B exported in 2025. The UK, the hub of the London bullion market, took $19.6B.</li>
+        <li>The <a href="https://www.numismaticnews.net/gold-now-top-u-s-export" target="_blank" rel="noreferrer">Numismatic News article</a> that made this a story reads it as central banks swapping dollars for gold. Foreign central banks now hold more in gold than in US Treasury debt, it notes, and China's central bank cut its Treasury holdings from $1.1 trillion in April 2021 to $693 billion in February 2026. The author says he cannot prove the link, and trade data does not show who ends up with the gold.</li>
         <li>The tariff scare explains only part of it. In the first quarter of 2025, about $78B of gold was shipped into the US ahead of possible tariffs on bullion. From April 2025 to June 2026, exports exceeded imports by about $115B, according to <a href="https://www.bea.gov/data/intl-trade-investment/international-transactions" target="_blank" rel="noreferrer">BEA</a>.</li>
       </ul>
     </section>

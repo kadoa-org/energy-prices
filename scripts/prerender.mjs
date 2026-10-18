@@ -102,9 +102,9 @@ function seo(page, path) {
   } else if (page.kind === 'insight' && page.slug === 'gold-top-export') {
     const g = page.gold, l = g.latest, b = (v) => `$${(v / 1000).toFixed(1)}B`;
     title = `${page.title}: US Gold, Oil and Pharmaceutical Exports`;
-    description = `Monthly US exports by Census product category since 2024. ${g.led.length ? `Gold led in ${g.led.length} of the last 12 months. ` : ''}In ${monthLabel(`${l.month}-01`)}: gold ${b(l.gold)}, crude oil ${b(l.crude)}, pharmaceuticals ${b(l.pharma)}.`;
+    description = `Monthly US exports by Census product category since ${monthLabel(`${g.rows[0].month}-01`)}. ${g.led.length ? `Gold led in ${g.led.length} of the last 12 months. ` : ''}In ${monthLabel(`${l.month}-01`)}: gold ${b(l.gold)}, crude oil ${b(l.crude)}, pharmaceuticals ${b(l.pharma)}.`;
     crumbs.push({ name: 'Insights', url: `${SITE}/energy-prices/insights` }, { name: 'Gold exports', url: canonical });
-    ld = [dataset('US exports of gold, crude oil and pharmaceuticals, monthly since 2024', description, { temporalCoverage: `${g.rows[0].month}/${l.month}`, isBasedOn: ['https://www.census.gov/foreign-trade/Press-Release/current_press_release/index.html'], distribution: [{ '@type': 'DataDownload', encodingFormat: 'text/csv', contentUrl: `${absolute(dataPath)}/downloads/gold-top-export.csv.gz` }] })];
+    ld = [dataset(`US exports of gold, crude oil, pharmaceuticals and aircraft engines, monthly since ${g.rows[0].month.slice(0, 4)}`, description, { temporalCoverage: `${g.rows[0].month}/${l.month}`, isBasedOn: ['https://www.census.gov/foreign-trade/Press-Release/current_press_release/index.html'], distribution: [{ '@type': 'DataDownload', encodingFormat: 'text/csv', contentUrl: `${absolute(dataPath)}/downloads/gold-top-export.csv.gz` }] })];
   } else if (page.kind === 'insight') {
     const l = page.work.latest;
     title = `${page.title}: Minutes of Work per Gallon Since 1994`;

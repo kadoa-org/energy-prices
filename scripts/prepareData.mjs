@@ -463,7 +463,7 @@ if (fuelWork) {
   await writeFile(join(out, 'downloads/fuel-minutes-of-work.csv.gz'), gzipSync(csv));
 }
 // Gold exports: US exports by Census end-use category (seasonally adjusted, $ million). Gold, crude oil and
-// pharmaceuticals are the products that have led the list since 2024; the top category each month is taken over every
+// pharmaceuticals have led the list in most months since 2020; the top category each month is taken over every
 // category.
 const goldExports = (() => {
   const census = defs.filter((d) => d.source === 'census-exports');
@@ -476,20 +476,21 @@ const goldExports = (() => {
     const top = all.filter((c) => c.at.has(month)).reduce((a, c) => (c.at.get(month) > a.at.get(month) ? c : a));
     return { month, gold: gold.get(month), crude: crude.get(month), pharma: pharma.get(month), engines: engines.get(month) ?? null, top: top.id, topLabel: top.label, topValue: top.at.get(month) };
   });
-  const year2024 = rows.filter((r) => r.month.startsWith('2024'));
+  // The baseline before the surge: 2021 to 2024, the four full years before gold took off.
+  const base = rows.filter((r) => r.month >= '2021-01' && r.month <= '2024-12');
   return {
     rows,
     led: rows.slice(-12).filter((r) => r.top === 'nonmonetary_gold').map((r) => r.month),
-    avg2024: year2024.length === 12 ? round(year2024.reduce((s, r) => s + r.gold, 0) / 12, 1) : null,
+    baseline: base.length === 48 ? round(base.reduce((s, r) => s + r.gold, 0) / 48, 1) : null,
     latest: rows.at(-1),
   };
 })();
 if (goldExports) {
-  // The headline the social chart uses; it holds once gold has led any month since 2024.
+  // The headline the social chart uses; it holds once gold has led any month in the data.
   const slug = 'gold-top-export';
   const title = goldExports.rows.some((r) => r.top === 'nonmonetary_gold') ? "Gold became America's top export" : `US gold exports were $${(goldExports.latest.gold / 1000).toFixed(1)}B in ${monthLabel(`${goldExports.latest.month}-01`)}`;
   // Newest first on the index.
-  INSIGHTS.unshift({ slug, title, summary: 'Monthly US exports of gold, crude oil and pharmaceuticals since 2024, by Census product category.' });
+  INSIGHTS.unshift({ slug, title, summary: 'Monthly US exports of gold against crude oil, pharmaceuticals and aircraft engines since 2020, by Census product category.' });
   await page(`insights/${slug}`, `${BASE}/insights/${slug}`, { kind: 'insight', slug, title, gold: goldExports });
   const csv = ['month,gold_usd_million,crude_oil_usd_million,pharmaceuticals_usd_million,aircraft_engines_usd_million,top_category,top_category_usd_million', ...goldExports.rows.map((r) => [r.month, r.gold, r.crude, r.pharma, r.engines ?? '', /[",]/.test(r.topLabel) ? `"${r.topLabel.replaceAll('"', '""')}"` : r.topLabel, r.topValue].join(','))].join('\n') + '\n';
   await writeFile(join(out, `downloads/${slug}.csv.gz`), gzipSync(csv));
