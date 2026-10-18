@@ -727,7 +727,7 @@ function GoldExportsInsight({ page }) {
       <SectionHeading>About the data</SectionHeading>
       <ul>
         <li>These are dollars, not tonnes. The gold price roughly doubled between early 2024 and late 2025, so part of the rise is price.</li>
-        <li>Census counts nonmonetary gold: bars, unrefined doré, scrap and powder traded as a commodity. Gold moved by central banks, including foreign reserves stored at the New York Fed, is monetary gold and is left out.</li>
+        <li>Census counts nonmonetary gold: bars, unrefined doré, scrap and powder traded as a commodity. Gold moved by central banks, including foreign reserves stored at the New York Fed, is monetary gold and is left out. So countries moving their reserves out of the US don't show up in these numbers.</li>
         <li>Most of it goes to Switzerland, home to the world's largest refineries, which recast bars for buyers elsewhere: $47.9B of the $86.9B exported in 2025. The UK, the hub of the London bullion market, took $19.6B.</li>
         <li>Part of the rise is gold flowing back out after the tariff scare. Traders shipped about $78B of gold into the US in early 2025 to get ahead of possible tariffs on bullion. But from April 2025 to June 2026, exports beat imports by about $115B, according to <a href="https://www.bea.gov/data/intl-trade-investment/international-transactions" target="_blank" rel="noreferrer">BEA</a>, well more than came in.</li>
         <li>Central bank buying is another possible reason. Foreign central banks now hold more in gold than in US Treasury debt, and China's central bank cut its Treasury holdings from $1.1 trillion in April 2021 to $693 billion in February 2026. Trade data doesn't show who ends up with the gold, though.</li>
