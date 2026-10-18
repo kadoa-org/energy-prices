@@ -680,6 +680,8 @@ function InsightsIndex({ page }) {
 }
 // Gold against the other two products that have led US exports since 2024. Values are Census millions of dollars.
 const billions = (v) => `$${(v / 1000).toFixed(1)}B`;
+// Aircraft engines are context, in a dark grey that stays apart from the blue, orange and turquoise for colour-blind readers (7.1:1 on white).
+const AIRCRAFT = '#55595c';
 const GOLD_NAMES = { nonmonetary_gold: 'Gold', crude_oil: 'Crude oil', pharmaceutical_preparations: 'Pharmaceuticals' };
 const listOf = (items) => (items.length < 2 ? items.join('') : `${items.slice(0, -1).join(', ')} and ${items.at(-1)}`);
 // Consecutive months read as one stretch: "October and November 2025 and January to March 2026".
@@ -703,6 +705,7 @@ function GoldExportsInsight({ page }) {
     { key: 'gold', header: 'Gold', align: 'right', render: (r) => billions(r.gold) },
     { key: 'crude', header: 'Crude oil', align: 'right', render: (r) => billions(r.crude) },
     { key: 'pharma', header: 'Pharmaceuticals', align: 'right', hideBelow: 'sm', render: (r) => billions(r.pharma) },
+    { key: 'engines', header: 'Aircraft engines', align: 'right', hideBelow: 'sm', render: (r) => (r.engines == null ? '–' : billions(r.engines)) },
     { key: 'top', header: 'Top export', hideBelow: 'sm', render: topName },
   ];
   const line = (key) => g.rows.map((r) => [`${r.month}-01`, r[key]]);
@@ -710,12 +713,12 @@ function GoldExportsInsight({ page }) {
     <div className="title-block"><h1 className="dk-h1">{page.title}</h1><p className="lede">{g.led.length ? `Gold was the largest US export in ${monthRuns(g.led)}, ahead of crude oil and pharmaceuticals.` : ''}{g.avg2024 ? ` In 2024 it averaged ${billions(g.avg2024)} a month.` : ''}</p></div>
     <ChartCard
       id="gold-title"
-      title="Gold, crude oil and pharmaceutical exports"
+      title="Gold against the biggest US exports"
       description="US exports a month, seasonally adjusted."
       tabs={[
-        { label: 'Chart', content: <LineChart series={[{ label: 'Gold', points: line('gold'), colour: SERIES_COLOURS[1] }, { label: 'Crude oil', points: line('crude'), colour: SERIES_COLOURS[0] }, { label: 'Pharmaceuticals', points: line('pharma'), colour: SERIES_COLOURS[2] }]} format={billions} axis={(v) => `$${v / 1000}B`} yTitle="Exports a month" monthly gapDays={45} label={`US exports in ${month(l.month)}: gold ${billions(l.gold)}, crude oil ${billions(l.crude)}, pharmaceuticals ${billions(l.pharma)}.`} /> },
+        { label: 'Chart', content: <LineChart series={[{ label: 'Gold', points: line('gold'), colour: SERIES_COLOURS[1] }, { label: 'Crude oil', points: line('crude'), colour: SERIES_COLOURS[0] }, { label: 'Pharmaceuticals', points: line('pharma'), colour: SERIES_COLOURS[2] }, { label: 'Aircraft engines', points: line('engines'), colour: AIRCRAFT }]} format={billions} axis={(v) => `$${v / 1000}B`} yTitle="Exports a month" monthly gapDays={45} label={`US exports in ${month(l.month)}: gold ${billions(l.gold)}, crude oil ${billions(l.crude)}, pharmaceuticals ${billions(l.pharma)}, aircraft engines ${billions(l.engines)}.`} /> },
         { label: 'Tabular data', short: 'Tabular', content: <ShowMore total={rows.length} initial={24} step={120} noun="months">{(n) => <DataTable rows={rows.slice(0, n)} columns={columns} rowKey={(r) => r.month} />}</ShowMore> },
-        { label: 'Download', content: <><p className="download-intro">Every month since January 2024: gold, crude oil and pharmaceutical exports and the top export category, in millions of dollars, as a gzipped CSV.</p><Download file="gold-top-export.csv.gz" common={page.common} /></> },
+        { label: 'Download', content: <><p className="download-intro">Every month since January 2024: gold, crude oil, pharmaceutical and aircraft engine exports and the top export category, in millions of dollars, as a gzipped CSV.</p><Download file="gold-top-export.csv.gz" common={page.common} /></> },
       ]}
       footer={<p className="chart-note">Source: <a href="https://www.census.gov/foreign-trade/Press-Release/current_press_release/index.html" target="_blank" rel="noreferrer">US Census Bureau</a> exports by end-use category, seasonally adjusted.</p>}
     />

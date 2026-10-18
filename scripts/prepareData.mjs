@@ -471,10 +471,10 @@ const goldExports = (() => {
   const byMonth = (id) => new Map(series(id).map(([d, v]) => [d.slice(0, 7), v]));
   const all = census.map((d) => ({ id: d.id.split(':')[1], label: d.sourceSeries, at: byMonth(d.id) }));
   const get = (id) => all.find((c) => c.id === id)?.at ?? new Map();
-  const gold = get('nonmonetary_gold'), crude = get('crude_oil'), pharma = get('pharmaceutical_preparations');
+  const gold = get('nonmonetary_gold'), crude = get('crude_oil'), pharma = get('pharmaceutical_preparations'), engines = get('civilian_aircraft_engines');
   const rows = [...gold.keys()].sort().filter((m) => crude.has(m) && pharma.has(m)).map((month) => {
     const top = all.filter((c) => c.at.has(month)).reduce((a, c) => (c.at.get(month) > a.at.get(month) ? c : a));
-    return { month, gold: gold.get(month), crude: crude.get(month), pharma: pharma.get(month), top: top.id, topLabel: top.label, topValue: top.at.get(month) };
+    return { month, gold: gold.get(month), crude: crude.get(month), pharma: pharma.get(month), engines: engines.get(month) ?? null, top: top.id, topLabel: top.label, topValue: top.at.get(month) };
   });
   const year2024 = rows.filter((r) => r.month.startsWith('2024'));
   return {
@@ -491,7 +491,7 @@ if (goldExports) {
   // Newest first on the index.
   INSIGHTS.unshift({ slug, title, summary: 'Monthly US exports of gold, crude oil and pharmaceuticals since 2024, by Census product category.' });
   await page(`insights/${slug}`, `${BASE}/insights/${slug}`, { kind: 'insight', slug, title, gold: goldExports });
-  const csv = ['month,gold_usd_million,crude_oil_usd_million,pharmaceuticals_usd_million,top_category,top_category_usd_million', ...goldExports.rows.map((r) => [r.month, r.gold, r.crude, r.pharma, /[",]/.test(r.topLabel) ? `"${r.topLabel.replaceAll('"', '""')}"` : r.topLabel, r.topValue].join(','))].join('\n') + '\n';
+  const csv = ['month,gold_usd_million,crude_oil_usd_million,pharmaceuticals_usd_million,aircraft_engines_usd_million,top_category,top_category_usd_million', ...goldExports.rows.map((r) => [r.month, r.gold, r.crude, r.pharma, r.engines ?? '', /[",]/.test(r.topLabel) ? `"${r.topLabel.replaceAll('"', '""')}"` : r.topLabel, r.topValue].join(','))].join('\n') + '\n';
   await writeFile(join(out, `downloads/${slug}.csv.gz`), gzipSync(csv));
 }
 if (INSIGHTS.length) await page('insights', `${BASE}/insights`, { kind: 'insights', insights: INSIGHTS });
