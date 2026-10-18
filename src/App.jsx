@@ -706,10 +706,9 @@ function GoldExportsInsight({ page }) {
     { key: 'top', header: 'Top export', hideBelow: 'sm', render: topName },
   ];
   const line = (key) => g.rows.map((r) => [`${r.month}-01`, r[key]]);
-  const latestText = l.top === 'nonmonetary_gold' ? `gold led again at ${billions(l.gold)}` : `gold exports were ${billions(l.gold)}, behind ${topName(l).toLowerCase()} at ${billions(l.topValue)}`;
   const combined = g.abovePetroleum.length ? `combined, they topped gold in every month except ${monthRuns(g.abovePetroleum)}` : 'combined, they topped gold in every month';
   return <>
-    <div className="title-block"><h1 className="dk-h1">{page.title}</h1><p className="lede">{g.led.length ? `Gold was the largest US export in ${monthRuns(g.led)}, ahead of crude oil and pharmaceuticals.` : ''}{g.avg2024 ? ` In 2024 it averaged ${billions(g.avg2024)} a month.` : ''} In {month(l.month)}, {latestText}.</p></div>
+    <div className="title-block"><h1 className="dk-h1">{page.title}</h1><p className="lede">{g.led.length ? `Gold was the largest US export in ${monthRuns(g.led)}, ahead of crude oil and pharmaceuticals.` : ''}{g.avg2024 ? ` In 2024 it averaged ${billions(g.avg2024)} a month.` : ''}</p></div>
     <ChartCard
       id="gold-title"
       title="Gold, crude oil and pharmaceutical exports"
