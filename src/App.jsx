@@ -706,7 +706,6 @@ function GoldExportsInsight({ page }) {
     { key: 'top', header: 'Top export', hideBelow: 'sm', render: topName },
   ];
   const line = (key) => g.rows.map((r) => [`${r.month}-01`, r[key]]);
-  const combined = g.abovePetroleum.length ? `combined, they topped gold in every month except ${monthRuns(g.abovePetroleum)}` : 'combined, they topped gold in every month';
   return <>
     <div className="title-block"><h1 className="dk-h1">{page.title}</h1><p className="lede">{g.led.length ? `Gold was the largest US export in ${monthRuns(g.led)}, ahead of crude oil and pharmaceuticals.` : ''}{g.avg2024 ? ` In 2024 it averaged ${billions(g.avg2024)} a month.` : ''}</p></div>
     <ChartCard
@@ -728,7 +727,6 @@ function GoldExportsInsight({ page }) {
         <li>Census counts nonmonetary gold: bars, unrefined doré, scrap and powder traded as a commodity. Gold moved by central banks, including foreign reserves stored at the New York Fed, is monetary gold and is left out.</li>
         <li>Most of it goes to Switzerland, home to the world's largest refineries, which recast bars for buyers elsewhere: $47.9B of the $86.9B exported in 2025. The UK, the hub of the London bullion market, took $19.6B.</li>
         <li>The tariff scare explains only part of it. In the first quarter of 2025, about $78B of gold was shipped into the US ahead of possible tariffs on bullion. From April 2025 to June 2026, exports exceeded imports by about $115B, according to <a href="https://www.bea.gov/data/intl-trade-investment/international-transactions" target="_blank" rel="noreferrer">BEA</a>.</li>
-        <li>Census lists crude oil, fuel oil and other petroleum products separately. {combined[0].toUpperCase() + combined.slice(1)}.</li>
       </ul>
     </section>
   </>;

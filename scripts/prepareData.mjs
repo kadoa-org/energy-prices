@@ -464,8 +464,7 @@ if (fuelWork) {
 }
 // Gold exports: US exports by Census end-use category (seasonally adjusted, $ million). Gold, crude oil and
 // pharmaceuticals are the products that have led the list since 2024; the top category each month is taken over every
-// category. Census lists crude oil, fuel oil and other petroleum products separately, so the page also says in which
-// months gold beat the three combined.
+// category.
 const goldExports = (() => {
   const census = defs.filter((d) => d.source === 'census-exports');
   if (!census.length) return null;
@@ -473,25 +472,22 @@ const goldExports = (() => {
   const all = census.map((d) => ({ id: d.id.split(':')[1], label: d.sourceSeries, at: byMonth(d.id) }));
   const get = (id) => all.find((c) => c.id === id)?.at ?? new Map();
   const gold = get('nonmonetary_gold'), crude = get('crude_oil'), pharma = get('pharmaceutical_preparations');
-  const petroleum = ['crude_oil', 'fuel_oil', 'other_petroleum_products'].map(get);
   const rows = [...gold.keys()].sort().filter((m) => crude.has(m) && pharma.has(m)).map((month) => {
     const top = all.filter((c) => c.at.has(month)).reduce((a, c) => (c.at.get(month) > a.at.get(month) ? c : a));
-    return { month, gold: gold.get(month), crude: crude.get(month), pharma: pharma.get(month), top: top.id, topLabel: top.label, topValue: top.at.get(month), petroleum: petroleum.reduce((s, p) => s + (p.get(month) ?? 0), 0) };
+    return { month, gold: gold.get(month), crude: crude.get(month), pharma: pharma.get(month), top: top.id, topLabel: top.label, topValue: top.at.get(month) };
   });
   const year2024 = rows.filter((r) => r.month.startsWith('2024'));
-  const shown = rows.map(({ petroleum, ...r }) => r);
   return {
-    rows: shown,
+    rows,
     led: rows.slice(-12).filter((r) => r.top === 'nonmonetary_gold').map((r) => r.month),
-    abovePetroleum: rows.filter((r) => r.gold > r.petroleum).map((r) => r.month),
     avg2024: year2024.length === 12 ? round(year2024.reduce((s, r) => s + r.gold, 0) / 12, 1) : null,
-    latest: shown.at(-1),
+    latest: rows.at(-1),
   };
 })();
 if (goldExports) {
-  const COUNT = ['no', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'all 12'];
-  const n = goldExports.led.length, slug = 'gold-top-export';
-  const title = n ? `Gold was America's top export in ${COUNT[n]}${n < 12 ? ' of the last 12' : ''} months` : `US gold exports were $${(goldExports.latest.gold / 1000).toFixed(1)}B in ${monthLabel(`${goldExports.latest.month}-01`)}`;
+  // The headline the social chart uses; it holds once gold has led any month since 2024.
+  const slug = 'gold-top-export';
+  const title = goldExports.rows.some((r) => r.top === 'nonmonetary_gold') ? "Gold became America's top export" : `US gold exports were $${(goldExports.latest.gold / 1000).toFixed(1)}B in ${monthLabel(`${goldExports.latest.month}-01`)}`;
   // Newest first on the index.
   INSIGHTS.unshift({ slug, title, summary: 'Monthly US exports of gold, crude oil and pharmaceuticals since 2024, by Census product category.' });
   await page(`insights/${slug}`, `${BASE}/insights/${slug}`, { kind: 'insight', slug, title, gold: goldExports });
