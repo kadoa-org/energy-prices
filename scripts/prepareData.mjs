@@ -4,7 +4,7 @@ import { copyFile, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { createInterface } from 'node:readline';
 import { createGunzip, gzipSync } from 'node:zlib';
-import { BASE, addDays, addMonths, money, monthlySummary, pct, slugify, trailingMean, trailingPrice, weeklySummary } from '../src/model.mjs';
+import { BASE, addDays, addMonths, money, monthLabel, monthlySummary, pct, slugify, trailingMean, trailingPrice, weeklySummary } from '../src/model.mjs';
 import { utilityName } from '../src/names.mjs';
 
 const root = resolve(import.meta.dirname, '..');
@@ -461,6 +461,42 @@ if (fuelWork) {
   await page('insights/fuel-minutes-of-work', `${BASE}/insights/fuel-minutes-of-work`, { kind: 'insight', slug: 'fuel-minutes-of-work', title: INSIGHTS[0].title, work: fuelWork });
   const csv = ['month,diesel_usd_per_gallon,regular_gas_usd_per_gallon,average_hourly_earnings_usd,diesel_minutes_of_work,gas_minutes_of_work', ...fuelWork.rows.map((r) => [r.month, r.diesel, r.gas, r.pay, r.dieselMinutes, r.gasMinutes].join(','))].join('\n') + '\n';
   await writeFile(join(out, 'downloads/fuel-minutes-of-work.csv.gz'), gzipSync(csv));
+}
+// Gold exports: US exports by Census end-use category (seasonally adjusted, $ million). Gold, crude oil and
+// pharmaceuticals are the products that have led the list since 2024; the top category each month is taken over every
+// category. Census lists crude oil, fuel oil and other petroleum products separately, so the page also says in which
+// months gold beat the three combined.
+const goldExports = (() => {
+  const census = defs.filter((d) => d.source === 'census-exports');
+  if (!census.length) return null;
+  const byMonth = (id) => new Map(series(id).map(([d, v]) => [d.slice(0, 7), v]));
+  const all = census.map((d) => ({ id: d.id.split(':')[1], label: d.sourceSeries, at: byMonth(d.id) }));
+  const get = (id) => all.find((c) => c.id === id)?.at ?? new Map();
+  const gold = get('nonmonetary_gold'), crude = get('crude_oil'), pharma = get('pharmaceutical_preparations');
+  const petroleum = ['crude_oil', 'fuel_oil', 'other_petroleum_products'].map(get);
+  const rows = [...gold.keys()].sort().filter((m) => crude.has(m) && pharma.has(m)).map((month) => {
+    const top = all.filter((c) => c.at.has(month)).reduce((a, c) => (c.at.get(month) > a.at.get(month) ? c : a));
+    return { month, gold: gold.get(month), crude: crude.get(month), pharma: pharma.get(month), top: top.id, topLabel: top.label, topValue: top.at.get(month), petroleum: petroleum.reduce((s, p) => s + (p.get(month) ?? 0), 0) };
+  });
+  const year2024 = rows.filter((r) => r.month.startsWith('2024'));
+  const shown = rows.map(({ petroleum, ...r }) => r);
+  return {
+    rows: shown,
+    led: rows.slice(-12).filter((r) => r.top === 'nonmonetary_gold').map((r) => r.month),
+    abovePetroleum: rows.filter((r) => r.gold > r.petroleum).map((r) => r.month),
+    avg2024: year2024.length === 12 ? round(year2024.reduce((s, r) => s + r.gold, 0) / 12, 1) : null,
+    latest: shown.at(-1),
+  };
+})();
+if (goldExports) {
+  const COUNT = ['no', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'all 12'];
+  const n = goldExports.led.length, slug = 'gold-top-export';
+  const title = n ? `Gold was America's top export in ${COUNT[n]}${n < 12 ? ' of the last 12' : ''} months` : `US gold exports were $${(goldExports.latest.gold / 1000).toFixed(1)}B in ${monthLabel(`${goldExports.latest.month}-01`)}`;
+  // Newest first on the index.
+  INSIGHTS.unshift({ slug, title, summary: 'Monthly US exports of gold, crude oil and pharmaceuticals since 2024, by Census product category.' });
+  await page(`insights/${slug}`, `${BASE}/insights/${slug}`, { kind: 'insight', slug, title, gold: goldExports });
+  const csv = ['month,gold_usd_million,crude_oil_usd_million,pharmaceuticals_usd_million,top_category,top_category_usd_million', ...goldExports.rows.map((r) => [r.month, r.gold, r.crude, r.pharma, /[",]/.test(r.topLabel) ? `"${r.topLabel.replaceAll('"', '""')}"` : r.topLabel, r.topValue].join(','))].join('\n') + '\n';
+  await writeFile(join(out, `downloads/${slug}.csv.gz`), gzipSync(csv));
 }
 if (INSIGHTS.length) await page('insights', `${BASE}/insights`, { kind: 'insights', insights: INSIGHTS });
 await page('about', `${BASE}/about`, { kind: 'about', counts: { series: manifest.series, rows: manifest.rows, states: states.length } });

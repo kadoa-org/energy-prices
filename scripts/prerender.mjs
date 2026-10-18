@@ -96,9 +96,15 @@ function seo(page, path) {
     ld = [dataset('US utility rate cases', description, { spatialCoverage: 'United States', distribution: [{ '@type': 'DataDownload', encodingFormat: 'text/csv', contentUrl: `${absolute(dataPath)}/downloads/rate-cases.csv.gz` }] })];
   } else if (page.kind === 'insights') {
     title = 'Energy Price Insights: Charts and Analysis';
-    description = `Analysis built on the US Energy Price Monitor's EIA and BLS data: ${page.insights.map((i) => i.title.toLowerCase()).join('; ')}.`;
+    description = `Analysis built on the US Energy Price Monitor's EIA, BLS and Census data: ${page.insights.map((i) => i.title.toLowerCase()).join('; ')}.`;
     crumbs.push({ name: 'Insights', url: canonical });
     ld = [{ '@context': 'https://schema.org', '@type': 'ItemList', name: title, url: canonical, numberOfItems: page.insights.length, itemListElement: page.insights.map((i, n) => ({ '@type': 'ListItem', position: n + 1, name: i.title, url: `${SITE}/energy-prices/insights/${i.slug}` })) }];
+  } else if (page.kind === 'insight' && page.slug === 'gold-top-export') {
+    const g = page.gold, l = g.latest, b = (v) => `$${(v / 1000).toFixed(1)}B`;
+    title = `${page.title}: US Gold, Oil and Pharmaceutical Exports`;
+    description = `Monthly US exports by Census product category since 2024. ${g.led.length ? `Gold led in ${g.led.length} of the last 12 months. ` : ''}In ${monthLabel(`${l.month}-01`)}: gold ${b(l.gold)}, crude oil ${b(l.crude)}, pharmaceuticals ${b(l.pharma)}.`;
+    crumbs.push({ name: 'Insights', url: `${SITE}/energy-prices/insights` }, { name: 'Gold exports', url: canonical });
+    ld = [dataset('US exports of gold, crude oil and pharmaceuticals, monthly since 2024', description, { temporalCoverage: `${g.rows[0].month}/${l.month}`, isBasedOn: ['https://www.census.gov/foreign-trade/Press-Release/current_press_release/index.html'], distribution: [{ '@type': 'DataDownload', encodingFormat: 'text/csv', contentUrl: `${absolute(dataPath)}/downloads/gold-top-export.csv.gz` }] })];
   } else if (page.kind === 'insight') {
     const l = page.work.latest;
     title = `${page.title}: Minutes of Work per Gallon Since 1994`;

@@ -653,6 +653,7 @@ function About() {
       { name: 'State energy offices', href: `${BASE}/fuel/heating-oil`, what: 'Heating oil and propane surveys in CT, ME, MA and NY' },
       { name: 'Eurostat', href: 'https://ec.europa.eu/eurostat/databrowser/view/nrg_pc_204/default/table', what: 'European household electricity and gas prices' },
       { name: 'EU Weekly Oil Bulletin', href: 'https://energy.ec.europa.eu/data-and-analysis/weekly-oil-bulletin_en', what: 'European petrol, diesel and heating oil prices' },
+      { name: 'US Census Bureau', href: 'https://www.census.gov/foreign-trade/index.html', what: 'US exports by product, for the gold exports insight' },
     ]}
     methods={METHODS}
     corrections={<>Found an error? <a href={`${REPO}/issues`}>Open an issue on GitHub</a>.</>}
@@ -673,11 +674,56 @@ function ElectricityMap({ page }) {
 // ── Insights: an index of cards (the Congress Trading Monitor's layout), and one page per analysis.
 function InsightsIndex({ page }) {
   return <>
-    <div className="title-block"><h1 className="dk-h1">Insights</h1><p className="lede">Analysis built on the monitor's EIA and BLS data.</p></div>
+    <div className="title-block"><h1 className="dk-h1">Insights</h1><p className="lede">Analysis built on the monitor's EIA, BLS and Census data.</p></div>
     <ul className="insight-cards">{page.insights.map((i) => <li className="insight-card" key={i.slug}><h2 className="insight-card__title"><a href={`${BASE}/insights/${i.slug}`}>{i.title}</a></h2><p className="insight-card__desc">{i.summary}</p></li>)}</ul>
   </>;
 }
-function Insight({ page }) {
+// Gold against the other two products that have led US exports since 2024. Values are Census millions of dollars.
+const billions = (v) => `$${(v / 1000).toFixed(1)}B`;
+const GOLD_NAMES = { nonmonetary_gold: 'Gold', crude_oil: 'Crude oil', pharmaceutical_preparations: 'Pharmaceuticals' };
+const listOf = (items) => (items.length < 2 ? items.join('') : `${items.slice(0, -1).join(', ')} and ${items.at(-1)}`);
+// Consecutive months read as one stretch: "October and November 2025 and January to March 2026".
+function monthRuns(months) {
+  const runs = [];
+  for (const m of months) {
+    const last = runs.at(-1)?.at(-1);
+    if (last && addMonths(`${last}-01`, 1).slice(0, 7) === m && last.slice(0, 4) === m.slice(0, 4)) runs.at(-1).push(m);
+    else runs.push([m]);
+  }
+  const name = (m) => monthLabel(`${m}-01`).split(' ')[0];
+  return listOf(runs.map((r) => (r.length === 1 ? monthLabel(`${r[0]}-01`) : `${name(r[0])} ${r.length === 2 ? 'and' : 'to'} ${name(r.at(-1))} ${r[0].slice(0, 4)}`)));
+}
+function GoldExportsInsight({ page }) {
+  const g = page.gold, l = g.latest;
+  const month = (m) => monthLabel(`${m}-01`);
+  const rows = [...g.rows].reverse();
+  const topName = (r) => GOLD_NAMES[r.top] ?? r.topLabel;
+  const columns = [
+    { key: 'month', header: 'Month', render: (r) => month(r.month) },
+    { key: 'gold', header: 'Gold', align: 'right', render: (r) => billions(r.gold) },
+    { key: 'crude', header: 'Crude oil', align: 'right', render: (r) => billions(r.crude) },
+    { key: 'pharma', header: 'Pharmaceuticals', align: 'right', hideBelow: 'sm', render: (r) => billions(r.pharma) },
+    { key: 'top', header: 'Top export', hideBelow: 'sm', render: topName },
+  ];
+  const line = (key) => g.rows.map((r) => [`${r.month}-01`, r[key]]);
+  const latestText = l.top === 'nonmonetary_gold' ? `gold led again at ${billions(l.gold)}` : `gold exports were ${billions(l.gold)}, behind ${topName(l).toLowerCase()} at ${billions(l.topValue)}`;
+  const combined = g.abovePetroleum.length ? `combined, they topped gold in every month except ${monthRuns(g.abovePetroleum)}` : 'combined, they topped gold in every month';
+  return <>
+    <div className="title-block"><h1 className="dk-h1">{page.title}</h1><p className="lede">{g.led.length ? `Gold was the largest US export in ${monthRuns(g.led)}, ahead of crude oil and pharmaceuticals.` : ''}{g.avg2024 ? ` In 2024 it averaged ${billions(g.avg2024)} a month.` : ''} In {month(l.month)}, {latestText}.</p></div>
+    <ChartCard
+      id="gold-title"
+      title="Gold, crude oil and pharmaceutical exports"
+      description="US exports a month, seasonally adjusted."
+      tabs={[
+        { label: 'Chart', content: <LineChart series={[{ label: 'Gold', points: line('gold'), colour: SERIES_COLOURS[1] }, { label: 'Crude oil', points: line('crude'), colour: SERIES_COLOURS[0] }, { label: 'Pharmaceuticals', points: line('pharma'), colour: SERIES_COLOURS[2] }]} format={billions} axis={(v) => `$${v / 1000}B`} yTitle="Exports a month" monthly gapDays={45} label={`US exports in ${month(l.month)}: gold ${billions(l.gold)}, crude oil ${billions(l.crude)}, pharmaceuticals ${billions(l.pharma)}.`} /> },
+        { label: 'Tabular data', short: 'Tabular', content: <ShowMore total={rows.length} initial={24} step={120} noun="months">{(n) => <DataTable rows={rows.slice(0, n)} columns={columns} rowKey={(r) => r.month} />}</ShowMore> },
+        { label: 'Download', content: <><p className="download-intro">Every month since January 2024: gold, crude oil and pharmaceutical exports and the top export category, in millions of dollars, as a gzipped CSV.</p><Download file="gold-top-export.csv.gz" common={page.common} /></> },
+      ]}
+      footer={<p className="chart-note">Source: <a href="https://www.census.gov/foreign-trade/Press-Release/current_press_release/index.html" target="_blank" rel="noreferrer">US Census Bureau</a> exports by end-use category, seasonally adjusted. Census lists crude oil, fuel oil and other petroleum products separately; {combined}.</p>}
+    />
+  </>;
+}
+function FuelWorkInsight({ page }) {
   const w = page.work, l = w.latest;
   const rows = [...w.rows].reverse();
   const columns = [
@@ -701,6 +747,12 @@ function Insight({ page }) {
       footer={<p className="chart-note">Source: <a href="https://www.eia.gov/petroleum/gasdiesel/" target="_blank" rel="noreferrer">EIA</a>, <a href="https://www.bls.gov/ces/" target="_blank" rel="noreferrer">BLS</a> pay of production and nonsupervisory workers. Diesel records start in 1994.</p>}
     />
   </>;
+}
+
+const INSIGHT_VIEWS = { 'gold-top-export': GoldExportsInsight, 'fuel-minutes-of-work': FuelWorkInsight };
+function Insight({ page }) {
+  const View = INSIGHT_VIEWS[page.slug];
+  return <View page={page} />;
 }
 
 export default function App({ page }) {
