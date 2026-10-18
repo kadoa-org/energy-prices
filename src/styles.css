@@ -354,6 +354,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,su
 @media (max-width:640px){.ranking--labelled .ranking__row{grid-template-columns:min(var(--ranking-name),44%) minmax(0,1fr);gap:8px}.ranking--labelled .ranking__name{font-size:13px;line-height:16px;white-space:normal;overflow:visible;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}}
 
 /* Insights: cards on the index (the Congress Trading Monitor's layout) and the minutes-of-work chart. */
+.insight-notes{margin:40px 0 0;max-width:760px}.insight-notes ul{margin:0;padding-left:20px}.insight-notes li{margin:0 0 10px;line-height:1.5}
 .insight-cards{list-style:none;margin:24px 0 0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:20px}
 .insight-card{background:#f3f2f1;padding:20px 20px 4px;border-top:4px solid #1d70b8}.insight-card__title{font-size:24px;line-height:1.25;margin:0 0 12px}.insight-card__title a{color:#1d70b8}.insight-card__desc{margin:0 0 16px}
 .fuel-work{width:100%;overflow:hidden}.fuel-work svg{display:block}

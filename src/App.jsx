@@ -718,8 +718,19 @@ function GoldExportsInsight({ page }) {
         { label: 'Tabular data', short: 'Tabular', content: <ShowMore total={rows.length} initial={24} step={120} noun="months">{(n) => <DataTable rows={rows.slice(0, n)} columns={columns} rowKey={(r) => r.month} />}</ShowMore> },
         { label: 'Download', content: <><p className="download-intro">Every month since January 2024: gold, crude oil and pharmaceutical exports and the top export category, in millions of dollars, as a gzipped CSV.</p><Download file="gold-top-export.csv.gz" common={page.common} /></> },
       ]}
-      footer={<p className="chart-note">Source: <a href="https://www.census.gov/foreign-trade/Press-Release/current_press_release/index.html" target="_blank" rel="noreferrer">US Census Bureau</a> exports by end-use category, seasonally adjusted. Census lists crude oil, fuel oil and other petroleum products separately; {combined}.</p>}
+      footer={<p className="chart-note">Source: <a href="https://www.census.gov/foreign-trade/Press-Release/current_press_release/index.html" target="_blank" rel="noreferrer">US Census Bureau</a> exports by end-use category, seasonally adjusted.</p>}
     />
+    {/* Background for readers who ask what is being counted. The figures here are fixed to the years they name. */}
+    <section className="insight-notes">
+      <SectionHeading>About the data</SectionHeading>
+      <ul>
+        <li>These are dollars, not tonnes. The gold price roughly doubled between early 2024 and late 2025, so part of the rise is price.</li>
+        <li>Census counts nonmonetary gold: bars, unrefined doré, scrap and powder traded as a commodity. Gold moved by central banks, including foreign reserves stored at the New York Fed, is monetary gold and is left out.</li>
+        <li>Most of it goes to Switzerland, home to the world's largest refineries, which recast bars for buyers elsewhere: $47.9B of the $86.9B exported in 2025. The UK, the hub of the London bullion market, took $19.6B.</li>
+        <li>The tariff scare explains only part of it. In the first quarter of 2025, about $78B of gold was shipped into the US ahead of possible tariffs on bullion. From April 2025 to June 2026, exports exceeded imports by about $115B, according to <a href="https://www.bea.gov/data/intl-trade-investment/international-transactions" target="_blank" rel="noreferrer">BEA</a>.</li>
+        <li>Census lists crude oil, fuel oil and other petroleum products separately. {combined[0].toUpperCase() + combined.slice(1)}.</li>
+      </ul>
+    </section>
   </>;
 }
 function FuelWorkInsight({ page }) {
