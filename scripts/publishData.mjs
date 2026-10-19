@@ -31,16 +31,8 @@ const copy = spawnSync('cp', [process.platform === 'darwin' ? '-Rc' : '-R', join
 if (copy.status !== 0) throw new Error('Could not snapshot public/data');
 process.on('exit', () => rmSync(snapshot, { recursive: true, force: true }));
 const dataDir = join(snapshot, 'data');
-const homeBody = await readFile(join(dataDir, 'home.json'));
-const home = JSON.parse(homeBody);
-// The id carries the export time, so a retry with the same data resumes into the same folder, and a hash of home.json,
-// and of routes.json, so a rebuild that changes the pages lands in a fresh folder instead of behind a stale cache.
+const home = JSON.parse(await readFile(join(dataDir, 'home.json')));
 const sha256 = (body) => createHash('sha256').update(body).digest('hex');
-// routes.json joins the hash because a build that adds or removes a page leaves home.json unchanged, and reusing the
-// folder would serve the old, edge-cached route list.
-const routesBody = await readFile(join(dataDir, 'routes.json'));
-const runId = `${home.common.generatedAt.slice(0, 19).replaceAll(':', '-')}-${sha256(Buffer.concat([homeBody, routesBody])).slice(0, 8)}`;
-const base = `${PREFIX}/data/${runId}`;
 const types = { '.json': 'application/json', '.csv': 'text/csv', '.gz': 'application/gzip', '.png': 'image/png' };
 const storageUrl = (path) => `https://${HOST}/${ZONE}/${path}`;
 const headers = { AccessKey: KEY };
@@ -65,8 +57,15 @@ const uploads = [];
 for await (const local of walk(dataDir)) {
   const rel = relative(dataDir, local);
   const body = await readFile(local);
-  uploads.push({ local, remote: `${base}/${rel}`, hash: sha256(body), size: body.length, type: types[rel.slice(rel.lastIndexOf('.'))] ?? 'application/octet-stream' });
+  uploads.push({ local, rel, hash: sha256(body), size: body.length, type: types[rel.slice(rel.lastIndexOf('.'))] ?? 'application/octet-stream' });
 }
+// The id carries the export time and a hash of every file's path and content: a retry with the same data resumes into
+// the same folder, and any changed page lands in a fresh one instead of behind a stale cache. Hashing only home.json
+// and routes.json reused the live folder when a site change edited one page (the gold insight's 12-month totals).
+const manifestHash = sha256(uploads.map((u) => `${u.rel}\t${u.hash}`).sort().join('\n'));
+const runId = `${home.common.generatedAt.slice(0, 19).replaceAll(':', '-')}-${manifestHash.slice(0, 8)}`;
+const base = `${PREFIX}/data/${runId}`;
+for (const u of uploads) u.remote = `${base}/${u.rel}`;
 console.log(JSON.stringify({ runId, files: uploads.length, megabytes: Math.round(uploads.reduce((n, u) => n + u.size, 0) / 1e6), target: `${CDN}/${base}/`, dryRun }));
 if (dryRun) process.exit(0);
 
