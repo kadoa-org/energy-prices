@@ -111,9 +111,10 @@ export function Tabs({ tabs, initial = 0 }) {
 }
 
 // A chart card: title, italic description, the date the data runs to, then the tabs.
-export function ChartCard({ title, description, date, tabs, footer, id }) {
+// hideTitle keeps the title for screen readers only, where the page heading above already names the chart.
+export function ChartCard({ title, description, date, tabs, footer, id, hideTitle = false }) {
   return <section className="chart-panel-card" aria-labelledby={id}>
-    <h2 className="chart-panel-card__title" id={id}>{title}</h2>
+    <h2 className={hideTitle ? 'govuk-visually-hidden' : 'chart-panel-card__title'} id={id}>{title}</h2>
     {description && <p className="chart-panel-card__desc">{description}</p>}
     {date && <p className="chart-panel-card__date">{date}</p>}
     <Tabs tabs={tabs.filter(Boolean)} />

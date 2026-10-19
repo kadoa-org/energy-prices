@@ -709,17 +709,27 @@ function GoldExportsInsight({ page }) {
     { key: 'top', header: 'Top export', hideBelow: 'sm', render: topName },
   ];
   const line = (key) => g.rows.map((r) => [`${r.month}-01`, r[key]]);
+  // The 12-month totals carry the headline; single months are the second view, since gold leads one month and is
+  // fifth the next.
+  // Data published before the 12-month totals existed has none: the page then shows the monthly chart alone.
+  const t = g.totals?.at(-1);
+  const total = (key) => g.totals.map((r) => [`${r.month}-01`, r[key]]);
+  // One line: the chart shows the rest, and About the data explains it.
+  const lede = t && g.leadSince
+    ? 'Over the last 12 months, gold took the lead from crude oil and pharmaceuticals.'
+    : g.led.length ? `Gold was the largest US export in ${monthRuns(g.led)}, ahead of crude oil and pharmaceuticals.` : '';
   return <>
-    <div className="title-block"><h1 className="dk-h1">{page.title}</h1><p className="lede">{g.led.length ? `Gold was the largest US export in ${monthRuns(g.led)}, ahead of crude oil and pharmaceuticals.` : ''}{g.baseline ? ` From 2021 to 2024 it averaged ${billions(g.baseline)} a month.` : ''}</p></div>
+    <div className="title-block"><h1 className="dk-h1">{page.title}</h1><p className="lede">{lede}</p></div>
     <ChartCard
       id="gold-title"
       title="Gold against the biggest US exports"
-      description="US exports a month, seasonally adjusted."
+      hideTitle
       tabs={[
-        { label: 'Chart', content: <LineChart series={[{ label: 'Gold', points: line('gold'), colour: SERIES_COLOURS[1] }, { label: 'Crude oil', points: line('crude'), colour: SERIES_COLOURS[0] }, { label: 'Pharmaceuticals', points: line('pharma'), colour: SERIES_COLOURS[2] }, { label: 'Aircraft engines', points: line('engines'), colour: AIRCRAFT }]} format={billions} axis={(v) => `$${v / 1000}B`} yTitle="Exports a month" monthly gapDays={45} label={`US exports in ${month(l.month)}: gold ${billions(l.gold)}, crude oil ${billions(l.crude)}, pharmaceuticals ${billions(l.pharma)}, aircraft engines ${billions(l.engines)}.`} /> },
+        t && { label: '12-month total', short: '12 months', content: <LineChart series={[{ label: 'Gold', points: total('gold'), colour: SERIES_COLOURS[1] }, { label: 'Crude oil', points: total('crude'), colour: SERIES_COLOURS[0] }, { label: 'Pharmaceuticals', points: total('pharma'), colour: SERIES_COLOURS[2] }, { label: 'Aircraft engines', points: total('engines'), colour: AIRCRAFT }]} format={billions} axis={(v) => `$${v / 1000}B`} yTitle="Exports over the previous 12 months" monthly gapDays={45} label={`US exports in the 12 months to ${month(t.month)}: gold ${billions(t.gold)}, crude oil ${billions(t.crude)}, pharmaceuticals ${billions(t.pharma)}, aircraft engines ${billions(t.engines)}.`} /> },
+        { label: 'Monthly', content: <LineChart series={[{ label: 'Gold', points: line('gold'), colour: SERIES_COLOURS[1] }, { label: 'Crude oil', points: line('crude'), colour: SERIES_COLOURS[0] }, { label: 'Pharmaceuticals', points: line('pharma'), colour: SERIES_COLOURS[2] }, { label: 'Aircraft engines', points: line('engines'), colour: AIRCRAFT }]} format={billions} axis={(v) => `$${v / 1000}B`} yTitle="Exports a month" monthly gapDays={45} label={`US exports in ${month(l.month)}: gold ${billions(l.gold)}, crude oil ${billions(l.crude)}, pharmaceuticals ${billions(l.pharma)}, aircraft engines ${billions(l.engines)}.`} /> },
         { label: 'Tabular data', short: 'Tabular', content: <ShowMore total={rows.length} initial={24} step={120} noun="months">{(n) => <DataTable rows={rows.slice(0, n)} columns={columns} rowKey={(r) => r.month} />}</ShowMore> },
         { label: 'Download', content: <><p className="download-intro">Every month since {month(g.rows[0].month)}: gold, crude oil, pharmaceutical and aircraft engine exports and the top export category, in millions of dollars, as a gzipped CSV.</p><Download file="gold-top-export.csv.gz" common={page.common} /></> },
-      ]}
+      ].filter(Boolean)}
       footer={<p className="chart-note">Source: <a href="https://www.census.gov/foreign-trade/Press-Release/current_press_release/index.html" target="_blank" rel="noreferrer">US Census Bureau</a> exports by end-use category, seasonally adjusted.</p>}
     />
     {/* Background for readers who ask what is being counted. The figures here are fixed to the years they name. */}

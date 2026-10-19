@@ -478,19 +478,41 @@ const goldExports = (() => {
   });
   // The baseline before the surge: 2021 to 2024, the four full years before gold took off.
   const base = rows.filter((r) => r.month >= '2021-01' && r.month <= '2024-12');
+  // 12-month totals: "top export" is a claim about a year, and month by month gold swings from under $2B to over
+  // $18B, leading in one month and fifth in the next. Each total sums the month and the 11 before it, and the top
+  // category is taken over every category's total, as for single months.
+  const sum12 = (at, i) => {
+    const w = rows.slice(i - 11, i + 1).map((r) => at.get(r.month));
+    return w.every((v) => v != null) ? round(w.reduce((s, v) => s + v, 0), 1) : null;
+  };
+  const totals = rows.slice(11).map((r, j) => {
+    const i = j + 11;
+    const top = all.map((c) => ({ c, v: sum12(c.at, i) })).filter((x) => x.v != null).reduce((a, x) => (x.v > a.v ? x : a));
+    return { month: r.month, gold: sum12(gold, i), crude: sum12(crude, i), pharma: sum12(pharma, i), engines: sum12(engines, i), top: top.c.id };
+  });
+  const leads = (r) => r.top === 'nonmonetary_gold';
+  // the first month of gold's current run at the top of the 12-month totals
+  const runStart = leads(totals.at(-1)) ? totals[totals.findLastIndex((r) => !leads(r)) + 1].month : null;
   return {
     rows,
+    totals,
+    leadSince: runStart,
     led: rows.slice(-12).filter((r) => r.top === 'nonmonetary_gold').map((r) => r.month),
     baseline: base.length === 48 ? round(base.reduce((s, r) => s + r.gold, 0) / 48, 1) : null,
     latest: rows.at(-1),
   };
 })();
 if (goldExports) {
-  // The headline the social chart uses; it holds once gold has led any month in the data.
+  // The headline the social chart uses: "now" holds while gold leads the latest 12-month totals, "became" once it
+  // has led any single month.
   const slug = 'gold-top-export';
-  const title = goldExports.rows.some((r) => r.top === 'nonmonetary_gold') ? "Gold became America's top export" : `US gold exports were $${(goldExports.latest.gold / 1000).toFixed(1)}B in ${monthLabel(`${goldExports.latest.month}-01`)}`;
+  const title = goldExports.leadSince
+    ? 'Gold is now the top US export'
+    : goldExports.rows.some((r) => r.top === 'nonmonetary_gold')
+      ? "Gold became America's top export"
+      : `US gold exports were $${(goldExports.latest.gold / 1000).toFixed(1)}B in ${monthLabel(`${goldExports.latest.month}-01`)}`;
   // Newest first on the index.
-  INSIGHTS.unshift({ slug, title, summary: 'Monthly US exports of gold against crude oil, pharmaceuticals and aircraft engines since 2020, by Census product category.' });
+  INSIGHTS.unshift({ slug, title, summary: 'US exports of gold against crude oil, pharmaceuticals and aircraft engines since 2020, over 12 months and month by month, by Census product category.' });
   await page(`insights/${slug}`, `${BASE}/insights/${slug}`, { kind: 'insight', slug, title, gold: goldExports });
   const csv = ['month,gold_usd_million,crude_oil_usd_million,pharmaceuticals_usd_million,aircraft_engines_usd_million,top_category,top_category_usd_million', ...goldExports.rows.map((r) => [r.month, r.gold, r.crude, r.pharma, r.engines ?? '', /[",]/.test(r.topLabel) ? `"${r.topLabel.replaceAll('"', '""')}"` : r.topLabel, r.topValue].join(','))].join('\n') + '\n';
   await writeFile(join(out, `downloads/${slug}.csv.gz`), gzipSync(csv));
