@@ -658,15 +658,83 @@ if (utilityOwnership) {
   }
   await writeFile(join(out, `downloads/${slug}.csv.gz`), gzipSync(lines.join('\n') + '\n'));
 }
+// PJM's capacity price and home electricity prices (EIA state residential revenue and sales). PJM's auction price for
+// reserving power plants rose ninefold for the year from 1 June 2025. Its first year at that price, June 2025 to May
+// 2026, is compared with the twelve months before, as revenue over kWh for the whole twelve months; a group sums
+// revenue and kWh over its states before dividing, so each state counts by what its homes bought.
+const PJM = {
+  // On PJM's grid, where homes can choose a supplier and most take the utility's default supply, bought at auction.
+  choice: ['NJ', 'PA', 'MD', 'DE', 'DC', 'OH'],
+  // On PJM's grid, where the utilities own most of their plants, so they pay less of the capacity price.
+  integrated: ['VA', 'WV'],
+  // Only partly on PJM's grid (ComEd in Illinois, AEP and Duke areas elsewhere): shown, but in neither group.
+  partial: ['IL', 'MI', 'NC', 'TN', 'KY', 'IN'],
+  start: '2025-06-01',
+  // RTO clearing price, dollars per MW-day, by delivery year from 1 June (PJM Base Residual Auction reports).
+  capacity: [['2023/24', 34.13], ['2024/25', 28.92], ['2025/26', 269.92], ['2026/27', 329.17], ['2027/28', 333.44], ['2028/29', 325]],
+  // Henry Hub spot, dollars per MMBtu, average of the same two years (EIA), for the gas caveat.
+  henryHub: { before: 2.93, during: 3.62 },
+  // Monitoring Analytics (PJM's market monitor), 5 Jan 2026: capacity revenue in 2025/26 due to data-center load.
+  dataCenters2025: 9.33e9,
+};
+const pjmPrices = (() => {
+  const yearEnd = addMonths(PJM.start, 11), priorEnd = addMonths(PJM.start, -1);
+  if (lastMonth < yearEnd) return null;
+  const monthly = new Map([...STATE_CODES, 'US'].map((code) => [code, { rev: new Map(series(elec('residential_revenue', code))), sales: new Map(impliedSales(code)) }]));
+  const onGrid = [...PJM.choice, ...PJM.integrated];
+  const others = STATE_CODES.filter((c) => c !== 'US' && !onGrid.includes(c) && !PJM.partial.includes(c));
+  // Twelve months to `end`, summed over the states before dividing, in cents a kWh; null if any state misses a month.
+  const price = (codes, end) => {
+    let r = 0, k = 0;
+    for (const code of codes) {
+      const { rev, sales } = monthly.get(code);
+      for (let i = 0; i < 12; i++) { const m = addMonths(end, -i); if (!rev.has(m) || !sales.has(m)) return null; r += rev.get(m); k += sales.get(m); }
+    }
+    return k > 0 ? (r / k) * 100 : null;
+  };
+  const change = (codes, end) => round(pct(price(codes, end), price(codes, addMonths(end, -12))), 1);
+  const group = (code) => (PJM.choice.includes(code) || PJM.integrated.includes(code) ? 'pjm' : PJM.partial.includes(code) ? 'partial' : 'other');
+  const rows = states.map((s) => ({ code: s.code, name: s.name, slug: s.slug, group: group(s.code), from: round(price([s.code], priorEnd), 2), to: round(price([s.code], yearEnd), 2), change: change([s.code], yearEnd) }))
+    .filter((r) => r.change != null).sort((a, b) => b.change - a.change);
+  const lead = rows.findIndex((r) => r.group !== 'pjm');
+  const sides = { choice: PJM.choice, integrated: PJM.integrated, partial: PJM.partial, others };
+  const groups = Object.fromEntries(Object.entries(sides).map(([k, codes]) => [k, { from: round(price(codes, priorEnd), 2), to: round(price(codes, yearEnd), 2), change: change(codes, yearEnd), before: change(codes, priorEnd), latest: change(codes, lastMonth) }]));
+  // The change from a year earlier at every month since 2019, and for each twelve months to May (the delivery year).
+  const trend = { choice: [], others: [] };
+  for (let m = '2019-01-01'; m <= lastMonth; m = addMonths(m, 1)) for (const k of ['choice', 'others']) { const v = change(sides[k], m); if (v != null) trend[k].push([m, v]); }
+  const years = [];
+  for (let m = '2019-05-01'; m <= yearEnd; m = addMonths(m, 12)) years.push({ end: m, choice: change(PJM.choice, m), others: change(others, m) });
+  const gaps = years.slice(0, -1).map((y) => y.choice - y.others);
+  return {
+    start: PJM.start, yearEnd, priorEnd, latest: lastMonth, lead, rows, groups, trend, years,
+    us: change(['US'], yearEnd),
+    gap: round(groups.choice.change - groups.others.change, 1),
+    priorGap: round(Math.max(...gaps), 1),
+    capacity: PJM.capacity.map(([year, price]) => ({ year, price })),
+    henryHub: round(pct(PJM.henryHub.during, PJM.henryHub.before), 0),
+    dataCenters: PJM.dataCenters2025,
+    states: { choice: PJM.choice, integrated: PJM.integrated, partial: PJM.partial },
+  };
+})();
+if (pjmPrices) {
+  const p = pjmPrices, slug = 'pjm-power-prices';
+  const WORDS = ['', 'biggest jump', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight'];
+  const title = p.lead >= 2 ? `The ${WORDS[p.lead]} biggest jumps in home power prices were all on one grid` : `Home power prices rose ${p.groups.choice.change}% on the PJM grid, ${p.groups.others.change}% elsewhere`;
+  INSIGHTS.unshift({ slug, title, summary: 'Change in the average home electricity price by state in the first year of PJM\'s ninefold capacity price, June 2025 to May 2026.' });
+  await page(`insights/${slug}`, `${BASE}/insights/${slug}`, { kind: 'insight', slug, title, pjm: p });
+  const lines = ['state,name,grid,price_cents_kwh_jun2024_may2025,price_cents_kwh_jun2025_may2026,change_pct'];
+  for (const r of p.rows) lines.push([r.code, /[",]/.test(r.name) ? `"${r.name}"` : r.name, { pjm: 'PJM', partial: 'partly PJM', other: 'not PJM' }[r.group], r.from, r.to, r.change].join(','));
+  await writeFile(join(out, `downloads/${slug}.csv.gz`), gzipSync(lines.join('\n') + '\n'));
+}
 if (INSIGHTS.length) await page('insights', `${BASE}/insights`, { kind: 'insights', insights: INSIGHTS });
 await page('about', `${BASE}/about`, { kind: 'about', counts: { series: manifest.series, rows: manifest.rows, states: states.length } });
 // The newest insight, announced in a banner under the navigation on every other page until the date given. Decided
 // here at build time, so the prerendered page and the browser agree. The banner has its own text, about 50
 // characters with the number first, so it fits a phone in one or two lines; the page keeps the full title.
 const ANNOUNCE = {
-  slug: 'investor-owned-utilities',
-  until: '2026-11-30',
-  text: utilityOwnership && `Investor-owned power prices rose ${Math.round(utilityOwnership.change.iou)}% since ${utilityOwnership.base}`,
+  slug: 'pjm-power-prices',
+  until: '2026-12-15',
+  text: pjmPrices && `Home power prices up ${Math.round(pjmPrices.groups.choice.change)}% on the PJM grid, ${Math.round(pjmPrices.groups.others.change)}% elsewhere`,
 };
 const announced = INSIGHTS.find((i) => i.slug === ANNOUNCE.slug);
 if (announced && ANNOUNCE.text && new Date().toISOString().slice(0, 10) <= ANNOUNCE.until) common.announce = { key: `insights/${announced.slug}`, href: `${BASE}/insights/${announced.slug}`, title: ANNOUNCE.text };

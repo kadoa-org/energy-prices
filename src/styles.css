@@ -126,7 +126,10 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,su
 
 /* Chart card: grey container, title, italic description, date, tabs */
 /* Measured from the UKHSA chart card: 20px padding, header and tabs 24px apart. */
-.chart-panel-card{background:var(--gov-grey-bg);padding:20px;margin:0 0 40px;min-width:0}
+.chart-panel-card{background:var(--gov-grey-bg);padding:20px;margin:0 0 40px;min-width:0;display:flex;flex-direction:column;gap:24px}
+/* Kit spacing: heading, tabs and source 24px apart (20px on a phone), whatever the heading holds. */
+.chart-panel-card__head>:last-child{margin-bottom:0}.chart-panel-card__head--hidden{position:absolute}
+.chart-panel-card__footer{margin-top:-10px}.chart-panel-card__footer>.chart-note:first-child{margin-top:0}
 .chart-panel-card__title{font-size:24px;line-height:30px;font-weight:700;margin:0 0 8px}
 .chart-panel-card__desc{font-size:16px;line-height:20px;font-style:italic;color:var(--gov-secondary);margin:0 0 10px}
 .chart-panel-card__date{font-size:16px;line-height:20px;color:var(--gov-secondary);margin:0 0 24px}
@@ -167,7 +170,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,su
 .chart-legend__item{display:inline-flex;align-items:center;gap:8px}.chart-legend__swatch{display:inline-block;width:28px;height:3px;background:var(--chart-series-ink)}
 .chart-legend__swatch--gap{height:0;border-top:2px dotted var(--gov-border);background:none}
 
-@media (max-width:640px){.chart-panel-card{padding:15px}.govuk-tabs__tab{font-size:16px;padding:10px 8px}.govuk-tabs__list-item--selected .govuk-tabs__tab{padding:14px 7px 16px}.govuk-tabs__panel{padding:12px;min-height:400px}.govuk-tabs__long{display:none}.govuk-tabs__short{display:inline}}
+@media (max-width:640px){.chart-panel-card{padding:15px;gap:20px}.govuk-tabs__tab{font-size:16px;padding:10px 8px}.govuk-tabs__list-item--selected .govuk-tabs__tab{padding:14px 7px 16px}.govuk-tabs__panel{padding:12px;min-height:400px}.govuk-tabs__long{display:none}.govuk-tabs__short{display:inline}}
 .table-intro{margin:0 0 15px}.download-intro{margin:0 0 20px;font-size:19px;line-height:25px}
 .download-row{display:flex;flex-wrap:wrap;gap:15px}.section-download{margin:20px 0 0;font-size:16px;line-height:24px}.section-download .dk-btn{margin-left:10px}
 

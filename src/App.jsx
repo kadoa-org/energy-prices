@@ -728,7 +728,6 @@ function GoldExportsInsight({ page }) {
     <ChartCard
       id="gold-title"
       title="Gold against the biggest US exports"
-      hideTitle
       tabs={[
         t && { label: '12-month total', short: '12 months', content: <LineChart series={[{ label: 'Gold', points: total('gold'), colour: SERIES_COLOURS[1] }, { label: 'Crude oil', points: total('crude'), colour: SERIES_COLOURS[0] }, { label: 'Pharmaceuticals', points: total('pharma'), colour: SERIES_COLOURS[2] }, { label: 'Aircraft engines', points: total('engines'), colour: AIRCRAFT }]} format={billions} axis={(v) => `$${v / 1000}B`} yTitle="Exports over the previous 12 months" monthly gapDays={45} label={`US exports in the 12 months to ${month(t.month)}: gold ${billions(t.gold)}, crude oil ${billions(t.crude)}, pharmaceuticals ${billions(t.pharma)}, aircraft engines ${billions(t.engines)}.`} /> },
         { label: 'Monthly', content: <LineChart series={[{ label: 'Gold', points: line('gold'), colour: SERIES_COLOURS[1] }, { label: 'Crude oil', points: line('crude'), colour: SERIES_COLOURS[0] }, { label: 'Pharmaceuticals', points: line('pharma'), colour: SERIES_COLOURS[2] }, { label: 'Aircraft engines', points: line('engines'), colour: AIRCRAFT }]} format={billions} axis={(v) => `$${v / 1000}B`} yTitle="Exports a month" monthly gapDays={45} label={`US exports in ${month(l.month)}: gold ${billions(l.gold)}, crude oil ${billions(l.crude)}, pharmaceuticals ${billions(l.pharma)}, aircraft engines ${billions(l.engines)}.`} /> },
@@ -771,8 +770,16 @@ function FuelWorkInsight({ page }) {
         { label: 'Tabular data', short: 'Tabular', content: <ShowMore total={rows.length} initial={24} step={120} noun="months">{(n) => <DataTable rows={rows.slice(0, n)} columns={columns} rowKey={(r) => r.month} />}</ShowMore> },
         { label: 'Download', content: <><p className="download-intro">Every month since April 1994: diesel and gas prices, hourly pay and minutes of work, as a gzipped CSV.</p><Download file="fuel-minutes-of-work.csv.gz" common={page.common} /></> },
       ]}
-      footer={<p className="chart-note">Source: <a href="https://www.eia.gov/petroleum/gasdiesel/" target="_blank" rel="noreferrer">EIA</a>, <a href="https://www.bls.gov/ces/" target="_blank" rel="noreferrer">BLS</a> pay of production and nonsupervisory workers. Diesel records start in 1994.</p>}
+      footer={<p className="chart-note">Source: <a href="https://www.eia.gov/petroleum/gasdiesel/" target="_blank" rel="noreferrer">EIA</a> retail fuel prices, <a href="https://www.bls.gov/ces/" target="_blank" rel="noreferrer">BLS</a> hourly pay.</p>}
     />
+    <section className="insight-notes">
+      <SectionHeading>About the data</SectionHeading>
+      <ul>
+        <li>Minutes of work is the month&apos;s average US retail price for a gallon, from EIA&apos;s weekly survey, divided by average hourly pay that month, times 60.</li>
+        <li>Pay is BLS average hourly earnings of production and nonsupervisory workers, before tax.</li>
+        <li>EIA&apos;s diesel survey starts in March 1994, so the chart starts in April 1994. Prices are in dollars of the day; dividing by the same month&apos;s pay makes years comparable.</li>
+      </ul>
+    </section>
   </>;
 }
 
@@ -888,7 +895,75 @@ function UtilityOwnershipInsight({ page }) {
   </>;
 }
 
-const INSIGHT_VIEWS = { 'investor-owned-utilities': UtilityOwnershipInsight, 'gold-top-export': GoldExportsInsight, 'fuel-minutes-of-work': FuelWorkInsight };
+// PJM's capacity price and home electricity prices by state. PJM states are the story (orange), states partly on its
+// grid a light orange, the rest grey; the US average is the dashed line.
+const PJM_COLOURS = { pjm: SERIES_COLOURS[1], partial: '#eeae86', other: '#c3c6c8' };
+function PjmPricesInsight({ page }) {
+  const p = page.pjm, g = p.groups;
+  const [sort, setSort] = useState({ key: 'change', dir: 'desc' });
+  const span = `${monthLabel(p.start)} to ${monthLabel(p.yearEnd)}`;
+  // One decimal throughout: whole percents would tie Pennsylvania and Maryland and round the lede's 13.8 to 14.
+  const pct1 = (v) => `${v > 0 ? '+' : v < 0 ? '−' : ''}${Math.abs(v).toFixed(1)}%`;
+  const pc = (v) => `${Math.abs(v).toFixed(1)}%`;
+  const during = p.capacity.find((c) => c.year === '2025/26');
+  const ranking = p.rows.map((r) => ({ name: r.name, value: r.change, href: stateUrl(r.slug), colour: PJM_COLOURS[r.group] }));
+  const gridLabel = { pjm: 'PJM', partial: 'Partly PJM', other: 'No' };
+  const stateColumns = [
+    { key: 'name', header: 'State', sortable: true, render: (r) => <a className="cell-link" href={stateUrl(r.slug)}>{r.name}</a> },
+    { key: 'group', header: 'On PJM grid', sortable: true, hideBelow: 'sm', render: (r) => gridLabel[r.group] },
+    { key: 'from', header: 'Year before', align: 'right', sortable: true, hideBelow: 'sm', render: (r) => centsKwh(r.from) },
+    { key: 'to', header: span, align: 'right', sortable: true, hideBelow: 'sm', render: (r) => centsKwh(r.to) },
+    { key: 'change', header: 'Change', align: 'right', sortable: true, render: (r) => pct1(r.change) },
+  ];
+  const yearColumns = [
+    { key: 'end', header: '12 months to', render: (r) => monthLabel(r.end) },
+    { key: 'choice', header: 'PJM, retail choice', align: 'right', render: (r) => pct1(r.choice) },
+    { key: 'others', header: 'Not on PJM grid', align: 'right', render: (r) => pct1(r.others) },
+  ];
+  const source = <p className="chart-note">Source: <a href="https://www.eia.gov/electricity/monthly/" target="_blank" rel="noreferrer">EIA</a> state home electricity revenue and sales; <a href="https://www.pjm.com/markets-and-operations/rpm" target="_blank" rel="noreferrer">PJM</a> capacity auctions.</p>;
+  // The key sits inside the chart panel, above the bars, as on the GOV.UK dashboards; the card's description stays plain.
+  const key = <div className="chart-legend" style={{ justifyContent: 'flex-start' }}>
+    {[['pjm', 'On the PJM grid'], ['partial', 'Partly on it'], ['other', 'Not on it']].map(([k, label]) => <span className="chart-legend__item" key={k}><span className="chart-legend__swatch" style={{ width: 14, height: 14, background: PJM_COLOURS[k] }} />{label}</span>)}
+    <span className="chart-legend__item"><span className="chart-legend__swatch chart-legend__swatch--compare" style={{ width: 0, height: 14, borderTop: 'none', borderLeft: '2px dashed #0b0c0c' }} />US average</span>
+  </div>;
+  return <>
+    <div className="title-block"><h1 className="dk-h1">{page.title}</h1><p className="lede">PJM runs the grid for 13 states and DC. In June 2025, the price it pays power plants to stand by for peak demand rose ninefold. Over the next year, home electricity prices rose {pc(g.choice.change)} in six of its states, and {pc(g.others.change)} in states off the grid.</p></div>
+    <ChartCard
+      id="states-title"
+      title="Change in home electricity price by state"
+      description="Average home price in the year after the capacity price rose, against the year before."
+      tabs={[
+        { label: 'Chart', content: <ShowMore total={ranking.length} initial={15} noun="states">{(n) => <>{key}<ValueRanking rows={ranking.slice(0, n)} average={p.us} averageLabel="US" format={pct1} /></>}</ShowMore> },
+        { label: 'Tabular data', short: 'Tabular', content: <ShowMore total={p.rows.length} initial={15} noun="states">{(n) => <DataTable rows={sortBy(p.rows, sort, (r, k) => r[k]).slice(0, n)} columns={stateColumns} rowKey={(r) => r.code} sort={sort} onSort={(key) => setSort(toggle(key))} />}</ShowMore> },
+        { label: 'Download', content: <><p className="download-intro">Every state: average home price for the year before and for {span}, and the change, as a gzipped CSV.</p><Download file="pjm-power-prices.csv.gz" common={page.common} /></> },
+      ]}
+      footer={source}
+    />
+    <ChartCard
+      id="gap-title"
+      title={`Level in the year before the new price, then ${p.gap} points apart`}
+      description="Change in the average home price from a year earlier."
+      tabs={[
+        { label: 'Chart', content: <LineChart series={[{ label: 'PJM, retail choice', points: p.trend.choice, colour: PJM_COLOURS.pjm }, { label: 'Not on PJM grid', points: p.trend.others, colour: SERIES_COLOURS[0] }]} format={pct1} axis={(v) => `${v}%`} yTitle="Change from a year earlier" monthly gapDays={45} label={`Change in the twelve-month average home price from a year earlier, to ${monthLabel(p.latest)}: PJM states with retail choice ${pct1(g.choice.latest)}, states not on the PJM grid ${pct1(g.others.latest)}.`} /> },
+        { label: 'Tabular data', short: 'Tabular', content: <DataTable rows={[...p.years].reverse()} columns={yearColumns} rowKey={(r) => r.end} /> },
+      ]}
+      footer={source}
+    />
+    <section className="insight-notes">
+      <SectionHeading>About the data</SectionHeading>
+      <ul>
+        <li>Price is home revenue over kilowatt-hours sold, over twelve months. PJM states with retail choice are {listOf(p.states.choice)}: most homes there take their utility&apos;s default supply, bought at auction, so the capacity price passes through.</li>
+        <li>In the twelve months before the new price, the two groups rose at the same pace: {pc(g.choice.before)} and {pc(g.others.before)}. The PJM states also rose faster in the years to May 2023 and 2024, as the 2022 gas price spike passed through multi-year supply contracts, but by at most {p.priorGap} points. This year the gap was {p.gap} points.</li>
+        <li>Natural gas also cost {p.henryHub}% more over the same year at Henry Hub, the US benchmark. That reached every state, not only PJM&apos;s.</li>
+        <li>In {listOf(p.states.integrated)}, also on PJM&apos;s grid, utilities own most of their plants, so they pay less of the capacity price. Prices there rose {pc(g.integrated.change)}. States partly on the grid ({listOf(p.states.partial)}) rose {pc(g.partial.change)} and are in neither group.</li>
+        <li>PJM&apos;s market monitor puts ${(p.dataCenters / 1e9).toFixed(1)} billion of the capacity cost for {during.year} down to data-center demand. The price has stayed at or near the auction&apos;s cap since: {listOf(p.capacity.filter((c) => c.price > during.price).map((c) => `$${c.price.toFixed(2)} for ${c.year}`))}.</li>
+        <li>EIA counts revenue before New Jersey&apos;s $100 bill credit of September and October 2025. When EIA withholds a month of a state&apos;s sales, it is filled from the revenue and price EIA publishes. Figures for 2025 and 2026 are preliminary.</li>
+      </ul>
+    </section>
+  </>;
+}
+
+const INSIGHT_VIEWS = { 'pjm-power-prices': PjmPricesInsight, 'investor-owned-utilities': UtilityOwnershipInsight, 'gold-top-export': GoldExportsInsight, 'fuel-minutes-of-work': FuelWorkInsight };
 function Insight({ page }) {
   const View = INSIGHT_VIEWS[page.slug];
   return <View page={page} />;

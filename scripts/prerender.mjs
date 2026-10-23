@@ -109,6 +109,12 @@ function seo(page, path) {
       : `Monthly US exports by Census product category since ${monthLabel(`${g.rows[0].month}-01`)}. ${g.led.length ? `Gold led in ${g.led.length} of the last 12 months. ` : ''}In ${monthLabel(`${l.month}-01`)}: gold ${b(l.gold)}, crude oil ${b(l.crude)}, pharmaceuticals ${b(l.pharma)}.`;
     crumbs.push({ name: 'Insights', url: `${SITE}/energy-prices/insights` }, { name: 'Gold exports', url: canonical });
     ld = [dataset(`US exports of gold, crude oil, pharmaceuticals and aircraft engines, monthly since ${g.rows[0].month.slice(0, 4)}`, description, { temporalCoverage: `${g.rows[0].month}/${l.month}`, isBasedOn: ['https://www.census.gov/foreign-trade/Press-Release/current_press_release/index.html'], distribution: [{ '@type': 'DataDownload', encodingFormat: 'text/csv', contentUrl: `${absolute(dataPath)}/downloads/gold-top-export.csv.gz` }] })];
+  } else if (page.kind === 'insight' && page.slug === 'pjm-power-prices') {
+    const p = page.pjm, top = p.rows.slice(0, 4).map((r) => `${r.name} ${pctLabel(r.change)}`).join(', ');
+    title = `${page.title}: PJM Capacity Prices and Home Electricity`;
+    description = `Average home electricity price, June 2025 to May 2026 against the year before: PJM states with retail choice ${pctLabel(p.groups.choice.change)}, states off the PJM grid ${pctLabel(p.groups.others.change)}, US ${pctLabel(p.us)}. Biggest rises: ${top}. EIA data for every state.`;
+    crumbs.push({ name: 'Insights', url: `${SITE}/energy-prices/insights` }, { name: 'PJM power prices', url: canonical });
+    ld = [dataset('US home electricity price change by state, PJM capacity year 2025/26', description, { temporalCoverage: `${p.start.slice(0, 7)}/${p.yearEnd.slice(0, 7)}`, isBasedOn: ['https://www.eia.gov/electricity/monthly/', 'https://www.pjm.com/markets-and-operations/rpm'], distribution: [{ '@type': 'DataDownload', encodingFormat: 'text/csv', contentUrl: `${absolute(dataPath)}/downloads/pjm-power-prices.csv.gz` }] })];
   } else if (page.kind === 'insight' && page.slug === 'investor-owned-utilities') {
     const o = page.ownership, first = o.rows[0].year;
     title = `${page.title}: Electricity Prices by Utility Owner`;
