@@ -720,7 +720,9 @@ if (pjmPrices) {
   const p = pjmPrices, slug = 'pjm-power-prices';
   const WORDS = ['', 'biggest jump', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight'];
   const title = p.lead >= 2 ? `The ${WORDS[p.lead]} biggest jumps in home power prices were all on one grid` : `Home power prices rose ${p.groups.choice.change}% on the PJM grid, ${p.groups.others.change}% elsewhere`;
-  INSIGHTS.unshift({ slug, title, summary: 'Change in the average home electricity price by state in the first year of PJM\'s ninefold capacity price, June 2025 to May 2026.' });
+  // Listed after the utility ownership insight, which stays the newest one.
+  const after = INSIGHTS.findIndex((i) => i.slug === 'investor-owned-utilities') + 1;
+  INSIGHTS.splice(after, 0, { slug, title, summary: 'Change in the average home electricity price by state in the first year of PJM\'s ninefold capacity price, June 2025 to May 2026.' });
   await page(`insights/${slug}`, `${BASE}/insights/${slug}`, { kind: 'insight', slug, title, pjm: p });
   const lines = ['state,name,grid,price_cents_kwh_jun2024_may2025,price_cents_kwh_jun2025_may2026,change_pct'];
   for (const r of p.rows) lines.push([r.code, /[",]/.test(r.name) ? `"${r.name}"` : r.name, { pjm: 'PJM', partial: 'partly PJM', other: 'not PJM' }[r.group], r.from, r.to, r.change].join(','));
@@ -732,9 +734,9 @@ await page('about', `${BASE}/about`, { kind: 'about', counts: { series: manifest
 // here at build time, so the prerendered page and the browser agree. The banner has its own text, about 50
 // characters with the number first, so it fits a phone in one or two lines; the page keeps the full title.
 const ANNOUNCE = {
-  slug: 'pjm-power-prices',
-  until: '2026-12-15',
-  text: pjmPrices && `Home power prices up ${Math.round(pjmPrices.groups.choice.change)}% on the PJM grid, ${Math.round(pjmPrices.groups.others.change)}% elsewhere`,
+  slug: 'investor-owned-utilities',
+  until: '2026-11-30',
+  text: utilityOwnership && `Investor-owned power prices rose ${Math.round(utilityOwnership.change.iou)}% since ${utilityOwnership.base}`,
 };
 const announced = INSIGHTS.find((i) => i.slug === ANNOUNCE.slug);
 if (announced && ANNOUNCE.text && new Date().toISOString().slice(0, 10) <= ANNOUNCE.until) common.announce = { key: `insights/${announced.slug}`, href: `${BASE}/insights/${announced.slug}`, title: ANNOUNCE.text };
