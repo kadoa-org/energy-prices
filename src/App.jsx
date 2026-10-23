@@ -832,7 +832,7 @@ function UtilityOwnershipInsight({ page }) {
   // Percentages in sentences go without the sign the tables use.
   const pc = (v) => pctLabel(Math.abs(v)).replace(/^\+/, '');
   return <>
-    <div className="title-block"><h1 className="dk-h1">{page.title}</h1><p className="lede">Average home price per kilowatt-hour, {base} to {latest}. <strong style={{ color: OWNER_COLOURS.public }}>Public</strong> utilities and <strong style={{ color: OWNER_COLOURS.coop }}>co-ops</strong> serve about 1 in {Math.round(1 / o.nfpShare)} US homes; <strong style={{ color: OWNER_COLOURS.iou }}>investor-owned</strong> utilities serve the rest. Inflation was {pc(o.inflation)}.</p></div>
+    <div className="title-block"><h1 className="dk-h1">{page.title}</h1><p className="lede">In {latest}, homes paid {centsKwh(last.price.iou)} a kilowatt-hour at <strong style={{ color: OWNER_COLOURS.iou }}>investor-owned</strong> utilities, {centsKwh(last.price.public)} at <strong style={{ color: OWNER_COLOURS.public }}>public</strong> utilities and {centsKwh(last.price.coop)} at <strong style={{ color: OWNER_COLOURS.coop }}>co-ops</strong>. Since {base}, investor-owned prices rose {pc(o.change.iou)} and public ones {pc(o.change.public)}, against {pc(o.inflation)} inflation.</p></div>
     {/* One card per finding; tabs only switch between views of the same figures (change or cents, chart or table). */}
     <ChartCard
       id="price-title"

@@ -626,6 +626,8 @@ const utilityOwnership = (() => {
     use: { iou: use(us.iou.get(latest)), public: use(us.public.get(latest)), coop: use(us.coop.get(latest)) },
     // Public utilities' and co-ops' share of all homes, counting retail-choice homes with the investor-owned side.
     nfpShare: round(homesIn('nfp') / (homesIn('nfp') + homesIn('wires')), 3),
+    // How much more a kWh cost at investor-owned than at public utilities in the latest year, from the unrounded totals.
+    premium: round(pct(kwh(us.iou.get(latest)), kwh(us.public.get(latest))), 1),
     states: stateRows.map(({ iou, nfp, ...s }) => ({ ...s, iou: (({ ratio, ...x }) => x)(iou), nfp: (({ ratio, ...x }) => x)(nfp) })),
     // At the precision shown (0.1 point), so a tie on the page (South Dakota in 2025) never counts as faster.
     faster: stateRows.filter((r) => r.iou.change > r.nfp.change).length,
@@ -641,8 +643,7 @@ const utilityOwnership = (() => {
 })();
 if (utilityOwnership) {
   const o = utilityOwnership, slug = 'investor-owned-utilities';
-  // A no-break space keeps the second figure with its group when the title wraps on a phone.
-  const title = `Investor-owned utilities raised home power prices ${Math.round(o.change.iou)}% since ${o.base}, nonprofits ${Math.round(o.change.nfp)}%`;
+  const title = `Investor-owned utilities charge ${Math.round(o.premium)}% more than public providers`;
   INSIGHTS.unshift({ slug, title, summary: `Average home electricity price at investor-owned utilities against public utilities and co-ops, by state and by utility, since ${o.rows[0].year}.` });
   await page(`insights/${slug}`, `${BASE}/insights/${slug}`, { kind: 'insight', slug, title, ownership: o });
   // Every group, the US and each state, every year: what EIA reports, and the price and bill derived from it.
@@ -736,7 +737,7 @@ await page('about', `${BASE}/about`, { kind: 'about', counts: { series: manifest
 const ANNOUNCE = {
   slug: 'investor-owned-utilities',
   until: '2026-11-30',
-  text: utilityOwnership && `Investor-owned power prices rose ${Math.round(utilityOwnership.change.iou)}% since ${utilityOwnership.base}`,
+  text: utilityOwnership && `Investor-owned utilities charge ${Math.round(utilityOwnership.premium)}% more than public ones`,
 };
 const announced = INSIGHTS.find((i) => i.slug === ANNOUNCE.slug);
 if (announced && ANNOUNCE.text && new Date().toISOString().slice(0, 10) <= ANNOUNCE.until) common.announce = { key: `insights/${announced.slug}`, href: `${BASE}/insights/${announced.slug}`, title: ANNOUNCE.text };
