@@ -9,6 +9,7 @@ import OilShocks from './OilShocks';
 import FuelWork from './FuelWork';
 import PriceSpread from './PriceSpread';
 import GapDots from './GapDots';
+import PriceGaps from './PriceGaps';
 import { StapleChart, StapleRanking, ValueRanking, monthTime, stapleScales } from './StaplesChart';
 import { BASE, HOME, addDays, addMonths, cents, dataPath, dateLabel, money, monthLabel, number, pctLabel } from './model.mjs';
 import { priceText } from './format.mjs';
@@ -870,6 +871,25 @@ function UtilityOwnershipInsight({ page }) {
       ]}
       footer={source(false)}
     />
+    {o.noHydro && o.sameState && (() => {
+      // The headline comparison first, then the stricter checks: no hydro states, the same state, the most rural utilities.
+      const checks = [
+        { name: 'Public, all states', a: last.price.iou, b: last.price.public, gap: o.premium, colour: OWNER_COLOURS.public },
+        { name: 'Public, no hydro states', a: o.noHydro.iouPrice, b: o.noHydro.publicPrice, gap: o.noHydro.premium, colour: OWNER_COLOURS.public },
+        { name: 'Public and co-ops, same state', a: o.sameState.iouPrice, b: o.sameState.nfpPrice, gap: o.sameState.premium, colour: `linear-gradient(90deg, ${OWNER_COLOURS.public} 50%, ${OWNER_COLOURS.coop} 50%)` },
+        { name: 'Co-ops, most rural', a: last.price.iou, b: last.price.coop, gap: o.coopPremium, colour: OWNER_COLOURS.coop },
+      ];
+      return <ChartCard
+        id="checks-title"
+        title="Price gap after accounting for location"
+        description={`Average home price per kilowatt-hour in ${latest}. Hydro states get the most power from dams: ${listOf(o.noHydro.states)}.`}
+        tabs={[
+          { label: 'Chart', content: <PriceGaps rows={checks} a={{ label: 'Investor-owned', colour: OWNER_COLOURS.iou }} keys={[{ label: 'Public', colour: OWNER_COLOURS.public }, { label: 'Co-ops', colour: OWNER_COLOURS.coop }]} format={(v, tick) => (tick ? `${v}¢` : `${v.toFixed(1)}¢`)} gap={(r) => `+${Math.round(r.gap)}%`} /> },
+          { label: 'Tabular data', short: 'Tabular', content: <DataTable rows={checks} columns={[{ key: 'name', header: 'Investor-owned against' }, { key: 'a', header: 'Investor-owned', align: 'right', render: (r) => centsKwh(r.a) }, { key: 'b', header: 'Compared with', align: 'right', render: (r) => centsKwh(r.b) }, { key: 'gap', header: 'Gap', align: 'right', render: (r) => `+${r.gap.toFixed(1)}%` }]} rowKey={(r) => r.name} /> },
+        ]}
+        footer={source(false)}
+      />;
+    })()}
     <ChartCard
       id="utilities-title"
       title={`Largest utilities, ${base} to ${latest}`}
@@ -893,8 +913,7 @@ function UtilityOwnershipInsight({ page }) {
     <section className="insight-notes">
       <SectionHeading>About the data</SectionHeading>
       <ul>
-        <li>Public power is common where electricity is cheap, so we also compared utilities within each state. Investor-owned utilities charged more than public utilities and co-ops in {o.pricier} of {o.states.length} states, and their prices rose faster in {o.faster}.</li>
-        <li>Public utilities pay no income tax, borrow tax-free and often buy cheap federal hydropower. That explains part of the price gap, but not why it widened after {base}.</li>
+        <li>Public power is common in cities and near federal dams, where power is cheap, and public utilities pay no income tax and borrow tax-free. That explains some of the gap, not why it grew.</li>
         <li>Most of the gap opened from {o.surge.from} to {o.surge.to}, during the energy price spike: {pc(o.surge.iou)} at investor-owned utilities, {pc(o.surge.nfp)} at public utilities and co-ops.{Math.abs(o.before.iou - o.before.nfp) < 1.5 && Math.abs(o.after.iou - o.after.nfp) < 1.5 ? ' Before and since, both rose at about the same pace.' : ''}</li>
         <li>After inflation, investor-owned prices {o.real.iou < 0 ? 'fell' : 'rose'} {pc(o.real.iou)}. Public and co-op prices {o.real.nfp < 0 ? 'fell' : 'rose'} {pc(o.real.nfp)}.</li>
         <li>Co-op homes have the highest bills, {money(b1.coop, 0)} a month in {latest}, because they use the most power.</li>

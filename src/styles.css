@@ -385,3 +385,23 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,su
 
 /* Running text keeps to the GOV.UK two-thirds column, about 640px, so lines stay short on a wide screen. */
 .title-block .lede,.insight-notes,.key-figures__context,.chart-panel-card__desc{max-width:640px}
+
+/* Price dumbbells (PriceGaps.jsx): name, track, gap. Values sit beside their dots, the comparison on the left. */
+.pgaps{--pgaps-name:24ch}
+.pgaps__key{display:flex;flex-wrap:wrap;gap:6px 20px;margin:0 0 15px;font-size:16px}.pgaps__key span{display:inline-flex;align-items:center;gap:8px}
+.pgaps__key i{display:inline-block;width:14px;height:14px;border-radius:50%}
+.pgaps__list{list-style:none;margin:0;padding:0}
+.pgaps__row{display:grid;grid-template-columns:min(var(--pgaps-name),40%) minmax(0,1fr) 56px;align-items:center;gap:15px;min-height:52px}
+.pgaps__row--axis{min-height:24px}
+.pgaps__name{font-size:16px;line-height:1.25;text-align:right}
+.pgaps__track{position:relative;height:28px;margin:0 30px}
+.pgaps__row--axis .pgaps__track{height:20px}
+.pgaps__tick{position:absolute;top:0;transform:translateX(-50%);font-size:14px;color:var(--dk-muted);white-space:nowrap}
+.pgaps__grid{position:absolute;top:-12px;bottom:-12px;border-left:1px solid var(--dk-rule-soft)}
+.pgaps__line{position:absolute;top:50%;height:3px;margin-top:-1.5px;background:#b1b4b6}
+.pgaps__dot{position:absolute;top:50%;width:16px;height:16px;margin:-8px 0 0 -8px;border-radius:50%;border:2px solid #fff;box-sizing:border-box}
+.pgaps__val{position:absolute;bottom:100%;margin-bottom:-2px;font-size:14px;font-variant-numeric:tabular-nums;white-space:nowrap;transform:translateX(-50%);color:var(--dk-muted)}
+.pgaps__val--a{font-weight:700}
+.pgaps__gap,.pgaps__gap-head{font-size:16px;font-weight:700;text-align:right;font-variant-numeric:tabular-nums}
+.pgaps__gap-head{font-size:14px;font-weight:400;color:var(--dk-muted)}
+@media (max-width:640px){.pgaps__row{grid-template-columns:min(var(--pgaps-name),36%) minmax(0,1fr) 44px;gap:8px;min-height:44px}.pgaps__track{margin:0 12px}.pgaps__tick:nth-child(even){display:none}.pgaps__val{display:none}}

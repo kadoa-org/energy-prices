@@ -631,6 +631,31 @@ const utilityOwnership = (() => {
     states: stateRows.map(({ iou, nfp, ...s }) => ({ ...s, iou: (({ ratio, ...x }) => x)(iou), nfp: (({ ratio, ...x }) => x)(nfp) })),
     // At the precision shown (0.1 point), so a tie on the page (South Dakota in 2025) never counts as faster.
     faster: stateRows.filter((r) => r.iou.change > r.nfp.change).length,
+    // The national comparison without the hydro-heavy states, where public power often buys cheap federal hydropower:
+    // states whose own plants made over a fifth of their power from hydro in 2025 (EIA-923 via the EIA bulk ELEC file).
+    noHydro: (() => {
+      const HYDRO = ['WA', 'VT', 'ID', 'OR', 'MT', 'AK', 'SD'];
+      const codes = states.map((st) => st.code).filter((c) => !HYDRO.includes(c));
+      const kwhOf = (groups, year) => {
+        let rev = 0, sales = 0;
+        for (const code of codes) { const t = totals(groups, code).get(year); if (t) { rev += t.rev; sales += t.sales; } }
+        return sales ? rev / sales : null;
+      };
+      const premium = round(pct(kwhOf(GROUPS.iou, latest), kwhOf(GROUPS.public, latest)), 1);
+      const rose = (groups) => round(pct(kwhOf(groups, latest), kwhOf(groups, base)), 1);
+      return { states: HYDRO, premium, iou: rose(GROUPS.iou), public: rose(GROUPS.public), iouPrice: round(kwhOf(GROUPS.iou, latest) * 100, 2), publicPrice: round(kwhOf(GROUPS.public, latest) * 100, 2) };
+    })(),
+    // How much more investor-owned homes paid a kWh in the latest year against public and co-op homes in the same state,
+    // averaged over the states with both, each weighted by its homes in either group: the gap with location held equal.
+    // Both prices averaged over the same states with the same weights, so the two dots and the gap agree.
+    sameState: (() => {
+      const w = (r) => r.iou.homes + r.nfp.homes, total = stateRows.reduce((a, r) => a + w(r), 0);
+      const avgOf = (k) => stateRows.reduce((a, r) => a + w(r) * r[k].to, 0) / total;
+      const iou = avgOf('iou'), nfp = avgOf('nfp');
+      return { iouPrice: round(iou, 2), nfpPrice: round(nfp, 2), premium: round(pct(iou, nfp), 1) };
+    })(),
+    // Against co-ops alone, nationally: the utilities with the most rural, costliest-to-wire territories.
+    coopPremium: round(pct(kwh(us.iou.get(latest)), kwh(us.coop.get(latest))), 1),
     // States where investor-owned homes paid more a kWh in the latest year, the headline's comparison within each state.
     pricier: stateRows.filter((r) => r.iou.to > r.nfp.to).length,
     reliability: (() => {
