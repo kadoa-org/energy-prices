@@ -863,7 +863,7 @@ function UtilityOwnershipInsight({ page }) {
     <ChartCard
       id="states-title"
       title={`Price change by state, ${base} to ${latest}`}
-      description={<>Investor-owned prices rose faster than nonprofit (public and co-op) prices in {o.faster} of the {o.states.length} states with both: <strong style={{ color: OWNER_COLOURS.iou }}>investor-owned</strong> against <strong style={{ color: OWNER_COLOURS.public }}>nonprofit</strong>.</>}
+      description={<>States sorted by how far <strong style={{ color: OWNER_COLOURS.iou }}>investor-owned</strong> prices pulled ahead of <strong style={{ color: OWNER_COLOURS.public }}>nonprofit</strong> (public and co-op) prices. The gap is widest at the top.</>}
       tabs={[
         { label: 'Chart', content: <GapDots rows={byGap} a={{ label: 'investor-owned', colour: OWNER_COLOURS.iou }} b={{ label: 'nonprofit', colour: OWNER_COLOURS.public }} format={pctLabel} divider={(n) => `Nonprofit prices rose as fast or faster in these ${n}`} /> },
         { label: 'Tabular data', short: 'Tabular', content: <ShowMore total={states.length} initial={15} noun="states">{(n) => <DataTable rows={states.slice(0, n)} columns={stateColumns} rowKey={(r) => r.code} sort={stateSort} onSort={(key) => setStateSort(toggle(key))} />}</ShowMore> },
@@ -880,10 +880,21 @@ function UtilityOwnershipInsight({ page }) {
       ]}
       footer={source(true)}
     />
+    {o.reliability && <ChartCard
+      id="outages-title"
+      title="Outage minutes a year by utility owner"
+      description="Minutes without power for the average home, not counting major storms."
+      tabs={[
+        { label: 'Chart', content: <LineChart series={owners.map(([k, label]) => ({ label, points: at(o.reliability.rows, (r) => r[k]), colour: OWNER_COLOURS[k] }))} format={(v) => `${Math.round(v)} min`} axis={(v) => `${v}`} yTitle="Minutes a year" yearly gapDays={400} label={`Outage minutes a year for the average home in ${o.reliability.latest}, without major storms: investor-owned ${o.reliability.rows.at(-1).iou}, public ${o.reliability.rows.at(-1).public}, co-op ${o.reliability.rows.at(-1).coop}.`} /> },
+        { label: 'Tabular data', short: 'Tabular', content: <DataTable rows={[...o.reliability.rows].reverse()} columns={[{ key: 'year', header: 'Year' }, ...owners.map(([k, label]) => ({ key: k, header: label, align: 'right', render: (r) => (r[k] == null ? '–' : `${r[k]} min`) }))]} rowKey={(r) => r.year} /> },
+      ]}
+      footer={<p className="chart-note">Source: <a href="https://www.eia.gov/electricity/data/eia861/" target="_blank" rel="noreferrer">EIA</a> annual survey of utilities (Form 861), reliability.</p>}
+    />}
     <section className="insight-notes">
       <SectionHeading>About the data</SectionHeading>
       <ul>
-        <li>Public power is common where electricity is cheap, so we also compared utilities within each state. Investor-owned prices rose faster in {o.faster} of {o.states.length} states.</li>
+        <li>Public power is common where electricity is cheap, so we also compared utilities within each state. Investor-owned utilities charged more than public utilities and co-ops in {o.pricier} of {o.states.length} states, and their prices rose faster in {o.faster}.</li>
+        <li>Public utilities pay no income tax, borrow tax-free and often buy cheap federal hydropower. That explains part of the price gap, but not why it widened after {base}.</li>
         <li>Most of the gap opened from {o.surge.from} to {o.surge.to}, during the energy price spike: {pc(o.surge.iou)} at investor-owned utilities, {pc(o.surge.nfp)} at public utilities and co-ops.{Math.abs(o.before.iou - o.before.nfp) < 1.5 && Math.abs(o.after.iou - o.after.nfp) < 1.5 ? ' Before and since, both rose at about the same pace.' : ''}</li>
         <li>After inflation, investor-owned prices {o.real.iou < 0 ? 'fell' : 'rose'} {pc(o.real.iou)}. Public and co-op prices {o.real.nfp < 0 ? 'fell' : 'rose'} {pc(o.real.nfp)}.</li>
         <li>Co-op homes have the highest bills, {money(b1.coop, 0)} a month in {latest}, because they use the most power.</li>

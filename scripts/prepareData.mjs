@@ -631,6 +631,26 @@ const utilityOwnership = (() => {
     states: stateRows.map(({ iou, nfp, ...s }) => ({ ...s, iou: (({ ratio, ...x }) => x)(iou), nfp: (({ ratio, ...x }) => x)(nfp) })),
     // At the precision shown (0.1 point), so a tie on the page (South Dakota in 2025) never counts as faster.
     faster: stateRows.filter((r) => r.iou.change > r.nfp.change).length,
+    // States where investor-owned homes paid more a kWh in the latest year, the headline's comparison within each state.
+    pricier: stateRows.filter((r) => r.iou.to > r.nfp.to).length,
+    reliability: (() => {
+      // Outage minutes a year for the average home, without major storms (EIA-861 reliability, SAIDI), each group
+      // weighted by the customers its utilities report for. Within each state, investor-owned against public and co-op
+      // together, as for prices. Absent from exports made before the reliability series existed.
+      const saidi = (g, geo) => byYear(`eia-861:${g}-${geo}-SAIDI`), cust = (g, geo) => byYear(`eia-861:${g}-${geo}-RCUST`);
+      if (!saidi('investor_owned', 'US').size) return null;
+      const OWNERS = ['investor_owned', 'public', 'cooperative'], KEYS = { investor_owned: 'iou', public: 'public', cooperative: 'coop' };
+      const years = [...saidi('investor_owned', 'US').keys()].sort((a, b) => a - b);
+      const rows = years.map((year) => ({ year, ...Object.fromEntries(OWNERS.map((g) => [KEYS[g], saidi(g, 'US').has(year) ? round(saidi(g, 'US').get(year), 0) : null])) }));
+      const last = years.at(-1);
+      const nfp = (geo) => {
+        let w = 0, v = 0;
+        for (const g of ['public', 'cooperative']) { const c = cust(g, geo).get(last), m = saidi(g, geo).get(last); if (c && m != null) { w += c; v += m * c; } }
+        return w ? v / w : null;
+      };
+      const both = states.map((s) => ({ iou: saidi('investor_owned', s.code).get(last), nfp: nfp(s.code) })).filter((r) => r.iou != null && r.nfp != null);
+      return { latest: last, rows, states: both.length, longer: both.filter((r) => r.iou > r.nfp).length };
+    })(),
     mixed: { iou: mixed('iou'), nfp: mixed('nfp') },
     utilities,
     // The large public utilities at 20 cents or more (Los Angeles and Long Island in 2025), named under the chart since
