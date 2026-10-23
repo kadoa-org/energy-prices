@@ -130,7 +130,7 @@ export function StapleRanking({ ranking, cpi, from }) {
 }
 
 // A value ranking: one bar per row on a shared scale from zero, with a marker for the US average, used for the
-// states by electricity price.
+// states by electricity price. A row may carry its own bar colour (a utility's owner on the ownership insight).
 export function ValueRanking({ rows, average, averageLabel, format, intro }) {
   // Labelled bars, as in a printed chart: names right-aligned against their bars on one line, the value at the bar's
   // end. The name column is as wide as the longest name (in ch, capped), so every bar starts at the same x; the scale
@@ -152,7 +152,7 @@ export function ValueRanking({ rows, average, averageLabel, format, intro }) {
           <li className="ranking__row" key={r.name}>
             {r.href ? <a className="ranking__name" href={r.href} title={r.name}>{r.name}</a> : <span className="ranking__name ranking__name--plain" title={r.name}>{r.name}</span>}
             <span className="ranking__track">
-              <span className="ranking__bar" style={{ left: 0, width: at(r.value) }} />
+              <span className="ranking__bar" style={{ left: 0, width: at(r.value), ...(r.colour ? { background: r.colour } : {}) }} />
               {average != null && <span className="ranking__cpi" style={{ left: at(average) }} aria-hidden="true" />}
               <span className="ranking__value ranking__value--end" style={{ left: at(r.value) }}>{format(r.value)}</span>
             </span>

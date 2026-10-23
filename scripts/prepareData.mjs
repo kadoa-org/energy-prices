@@ -37,7 +37,11 @@ const out = join(root, 'public/data');
 await rm(out, { recursive: true, force: true });
 for (const sub of ['fuel', 'electricity', 'downloads']) await mkdir(join(out, sub), { recursive: true });
 const pages = [];
-const page = async (key, path, body) => { pages.push({ key, path }); const file = join(out, `${key}.json`); await mkdir(dirname(file), { recursive: true }); await writeFile(file, JSON.stringify({ key, ...body, common })); };
+// Each page is serialised when it is made, but written at the end with the final `common`, so something every page
+// carries (the banner for the newest insight) can come from analysis that runs after the first pages.
+const queued = [];
+const COMMON = '"__common__"';
+const page = async (key, path, body) => { pages.push({ key, path }); queued.push([key, JSON.stringify({ key, ...body, common: '__common__' })]); };
 const csv = (rows) => gzipSync(['date,series_id,area,product,measure,unit,value', ...rows.map((r) => r.map((v) => (/[",\n]/.test(String(v)) ? `"${String(v).replaceAll('"', '""')}"` : v)).join(','))].join('\n') + '\n');
 const csvRows = (ids) => ids.flatMap((id) => { const d = byId.get(id); return points.get(id).map(([date, v]) => [date, id, d.geoName, d.product, d.measure, d.unit, v]); });
 
@@ -517,8 +521,163 @@ if (goldExports) {
   const csv = ['month,gold_usd_million,crude_oil_usd_million,pharmaceuticals_usd_million,aircraft_engines_usd_million,top_category,top_category_usd_million', ...goldExports.rows.map((r) => [r.month, r.gold, r.crude, r.pharma, r.engines ?? '', /[",]/.test(r.topLabel) ? `"${r.topLabel.replaceAll('"', '""')}"` : r.topLabel, r.topValue].join(','))].join('\n') + '\n';
   await writeFile(join(out, `downloads/${slug}.csv.gz`), gzipSync(csv));
 }
+// Investor-owned against public and co-op utilities (EIA-861, annual, every utility on the full survey). The home
+// price is residential revenue over kWh sold on bundled service (supply and delivery from the same utility), the basis
+// of EIA's own utility price tables, summed over a group before dividing so each group is weighted by what its homes
+// bought. 2020 is the base: the last year before prices took off. Inflation is CPI-U over the same calendar years.
+const OWNERSHIP_BASE = 2020;
+// Before the base, and the years the gap opened (2021 to 2023, through the 2022 energy price spike).
+const OWNERSHIP_BEFORE = 2015, OWNERSHIP_SURGE = 2023;
+const ownershipLabel = (o) => ({ 'Investor Owned': 'Investor-owned', Cooperative: 'Co-op' })[o] ?? 'Public';
+const utilityOwnership = (() => {
+  if (!points.get('eia-861:investor_owned-US-REV')?.length) return null;
+  const byYear = (id) => new Map((points.get(id) ?? []).map(([d, v]) => [Number(d.slice(0, 4)), v]));
+  // Revenue in thousand dollars over MWh is dollars a kWh; a group is the sum of its EIA groups, year by year.
+  const totals = (groups, geo) => {
+    const out = new Map();
+    for (const g of groups) {
+      const rev = byYear(`eia-861:${g}-${geo}-REV`), sales = byYear(`eia-861:${g}-${geo}-SALES`), cust = byYear(`eia-861:${g}-${geo}-CUST`);
+      for (const [y, r] of rev) {
+        if (!sales.get(y)) continue;
+        const t = out.get(y) ?? { rev: 0, sales: 0, cust: 0 };
+        t.rev += r; t.sales += sales.get(y); t.cust += cust.get(y) ?? 0;
+        out.set(y, t);
+      }
+    }
+    return out;
+  };
+  const kwh = (t) => (t ? t.rev / t.sales : null);
+  const price = (t) => (t ? round(kwh(t) * 100, 2) : null);
+  const bill = (t) => (t?.cust ? round((t.rev * 1000) / t.cust / 12, 2) : null);
+  const use = (t) => (t?.cust ? round((t.sales * 1000) / t.cust / 12, 0) : null);
+  // Not-for-profit is public and co-op together; "on investor-owned wires" adds the homes that buy from a retail
+  // supplier (delivery-only plus energy-only revenue, and Texas retail providers), most of them in investor-owned areas.
+  const GROUPS = { iou: ['investor_owned'], public: ['public'], coop: ['cooperative'], nfp: ['public', 'cooperative'], wires: ['investor_owned', 'retail_choice'] };
+  const us = Object.fromEntries(Object.entries(GROUPS).map(([k, g]) => [k, totals(g, 'US')]));
+  const years = [...us.iou.keys()].sort((a, b) => a - b);
+  const latest = years.at(-1), base = OWNERSHIP_BASE;
+  if (!us.iou.has(base) || latest <= base) return null;
+  const change = (k, from = base, to = latest, groups = us) => (groups[k].has(from) && groups[k].has(to) ? round(pct(kwh(groups[k].get(to)), kwh(groups[k].get(from))), 1) : null);
+  const cpiByYear = new Map();
+  for (const [d, v] of series('bls-cpi:CUUR0000SA0')) { const y = Number(d.slice(0, 4)); cpiByYear.set(y, [...(cpiByYear.get(y) ?? []), v]); }
+  // BLS published no October 2025 index, so a year may average 11 months; fewer is not a year.
+  const cpiYear = (y) => (cpiByYear.get(y)?.length >= 11 ? avg(cpiByYear.get(y)) : null);
+  const inflation = cpiYear(latest) && cpiYear(base) ? round(pct(cpiYear(latest), cpiYear(base)), 1) : null;
+  const real = (k) => (inflation == null ? null : round(((1 + change(k) / 100) / (1 + inflation / 100) - 1) * 100, 1));
+  const rows = years.map((year) => ({
+    year,
+    price: { iou: price(us.iou.get(year)), public: price(us.public.get(year)), coop: price(us.coop.get(year)), nfp: price(us.nfp.get(year)) },
+    bill: { iou: bill(us.iou.get(year)), public: bill(us.public.get(year)), coop: bill(us.coop.get(year)) },
+    homes: { iou: us.iou.get(year)?.cust ?? null, public: us.public.get(year)?.cust ?? null, coop: us.coop.get(year)?.cust ?? null },
+    // Change since the base from the unrounded totals, so the chart agrees with the title to the decimal.
+    since: { iou: change('iou', base, year), public: change('public', base, year), coop: change('coop', base, year) },
+    inflation: cpiYear(year) && cpiYear(base) ? round(pct(cpiYear(year), cpiYear(base)), 1) : null,
+  }));
+  // Within each state: investor-owned against not-for-profit, where the state has both in both years. The nationwide
+  // comparison could be geography (public power is common where power is cheap); this one is not.
+  const stateRows = states.map((s) => {
+    const iou = totals(GROUPS.iou, s.code), nfp = totals(GROUPS.nfp, s.code);
+    if (![iou.get(base), iou.get(latest), nfp.get(base), nfp.get(latest)].every(Boolean)) return null;
+    const side = (t) => ({ from: price(t.get(base)), to: price(t.get(latest)), change: round(pct(kwh(t.get(latest)), kwh(t.get(base))), 1), homes: t.get(latest).cust, ratio: kwh(t.get(latest)) / kwh(t.get(base)) });
+    return { code: s.code, name: s.name, slug: s.slug, iou: side(iou), nfp: side(nfp) };
+  }).filter(Boolean);
+  // Both groups weighted by the same state mix (each state's homes in either group): the national change with
+  // geography held equal.
+  const weight = (r) => r.iou.homes + r.nfp.homes, weights = stateRows.reduce((a, r) => a + weight(r), 0);
+  const mixed = (k) => round((stateRows.reduce((a, r) => a + weight(r) * r[k].ratio, 0) / weights - 1) * 100, 1);
+  // The largest utilities by homes, each with its own price change, linked to its page when EIA-861M lists it.
+  const utilities = defs.filter((d) => d.source === 'eia-861' && d.geoType === 'utility' && d.measure === 'residential_revenue').map((d) => {
+    const rev = byYear(d.id), sales = byYear(d.id.replace(/-REV$/, '-SALES')), cust = byYear(d.id.replace(/-REV$/, '-CUST'));
+    const homes = cust.get(latest);
+    if (!(homes >= 250_000) || !sales.get(base) || !sales.get(latest) || !rev.has(base) || !rev.has(latest)) return null;
+    const st = states.find((s) => s.code === d.state);
+    const own = (utilitiesByState.get(d.state) ?? []).find((u) => u.code === d.geoCode);
+    return {
+      code: d.geoCode, name: utilityName(d.geoName), state: d.state, ownership: ownershipLabel(d.ownership), homes,
+      from: round((rev.get(base) / sales.get(base)) * 100, 2), to: round((rev.get(latest) / sales.get(latest)) * 100, 2),
+      change: round(pct(rev.get(latest) / sales.get(latest), rev.get(base) / sales.get(base)), 1),
+      href: own && st ? `${BASE}/electricity/${st.slug}/${own.slug}` : null,
+    };
+  }).filter(Boolean).sort((a, b) => b.change - a.change);
+  // How prices spread across homes in the latest year: each utility's average home price, its homes counted in
+  // 2-cent bands from under 10 cents to 30 cents and over. Every utility on the full survey, small ones included.
+  const EDGES = [10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30];
+  const bandOf = (cents) => { const i = EDGES.findIndex((e) => cents < e); return i === -1 ? EDGES.length : i; };
+  const groupOfUtility = (own) => (own === 'Investor Owned' ? 'iou' : own === 'Cooperative' ? 'coop' : own === 'Federal' ? null : 'public');
+  const homesByBand = { iou: EDGES.map(() => 0).concat(0), public: EDGES.map(() => 0).concat(0), coop: EDGES.map(() => 0).concat(0) };
+  for (const d of defs.filter((x) => x.source === 'eia-861' && x.geoType === 'utility' && x.measure === 'residential_revenue')) {
+    const g = groupOfUtility(d.ownership);
+    const rev = byYear(d.id).get(latest), sales = byYear(d.id.replace(/-REV$/, '-SALES')).get(latest), homes = byYear(d.id.replace(/-REV$/, '-CUST')).get(latest);
+    if (!g || !rev || !sales || !homes) continue;
+    homesByBand[g][bandOf((rev / sales) * 100)] += homes;
+  }
+  const spread = Object.fromEntries(Object.entries(homesByBand).map(([g, homes]) => {
+    const all = homes.reduce((a, h) => a + h, 0), share = (from, to) => round((homes.slice(bandOf(from), to == null ? undefined : bandOf(to)).reduce((a, h) => a + h, 0) / all) * 100, 1);
+    return [g, { shares: homes.map((h) => round((h / all) * 100, 1)), under14: share(0, 14), from12to20: share(12, 20), from30: share(30) }];
+  }));
+  const homesIn = (k) => us[k].get(latest).cust;
+  return {
+    base, latest, rows, inflation,
+    change: { iou: change('iou'), public: change('public'), coop: change('coop'), nfp: change('nfp'), wires: change('wires') },
+    real: { iou: real('iou'), nfp: real('nfp') },
+    before: { from: OWNERSHIP_BEFORE, to: base, iou: change('iou', OWNERSHIP_BEFORE, base), nfp: change('nfp', OWNERSHIP_BEFORE, base) },
+    surge: { from: base, to: OWNERSHIP_SURGE, iou: change('iou', base, OWNERSHIP_SURGE), nfp: change('nfp', base, OWNERSHIP_SURGE) },
+    after: { from: OWNERSHIP_SURGE, to: latest, iou: change('iou', OWNERSHIP_SURGE, latest), nfp: change('nfp', OWNERSHIP_SURGE, latest) },
+    use: { iou: use(us.iou.get(latest)), public: use(us.public.get(latest)), coop: use(us.coop.get(latest)) },
+    // Public utilities' and co-ops' share of all homes, counting retail-choice homes with the investor-owned side.
+    nfpShare: round(homesIn('nfp') / (homesIn('nfp') + homesIn('wires')), 3),
+    states: stateRows.map(({ iou, nfp, ...s }) => ({ ...s, iou: (({ ratio, ...x }) => x)(iou), nfp: (({ ratio, ...x }) => x)(nfp) })),
+    // At the precision shown (0.1 point), so a tie on the page (South Dakota in 2025) never counts as faster.
+    faster: stateRows.filter((r) => r.iou.change > r.nfp.change).length,
+    mixed: { iou: mixed('iou'), nfp: mixed('nfp') },
+    utilities,
+    // The large public utilities at 20 cents or more (Los Angeles and Long Island in 2025), named under the chart since
+    // they are the outlier readers ask about, with their share of public homes.
+    spread: { edges: EDGES, ...spread, highPublic: (() => {
+      const high = utilities.filter((u) => u.ownership === 'Public' && u.to >= 20).sort((a, b) => b.homes - a.homes);
+      return { names: high.map((u) => u.name), share: round((high.reduce((a, u) => a + u.homes, 0) / homesIn('public')) * 100, 1) };
+    })() },
+  };
+})();
+if (utilityOwnership) {
+  const o = utilityOwnership, slug = 'investor-owned-utilities';
+  // A no-break space keeps the second figure with its group when the title wraps on a phone.
+  const title = `Investor-owned utilities raised home power prices ${Math.round(o.change.iou)}% since ${o.base}, nonprofits ${Math.round(o.change.nfp)}%`;
+  INSIGHTS.unshift({ slug, title, summary: `Average home electricity price at investor-owned utilities against public utilities and co-ops, by state and by utility, since ${o.rows[0].year}.` });
+  await page(`insights/${slug}`, `${BASE}/insights/${slug}`, { kind: 'insight', slug, title, ownership: o });
+  // Every group, the US and each state, every year: what EIA reports, and the price and bill derived from it.
+  const groupIds = defs.filter((d) => d.source === 'eia-861' && d.geoType !== 'utility' && d.measure === 'residential_revenue');
+  const lines = ['year,area,group,revenue_usd_thousand,sales_mwh,homes,price_cents_per_kwh,bill_usd_per_month'];
+  for (const d of groupIds.sort((a, b) => a.geoCode.localeCompare(b.geoCode) || a.ownership.localeCompare(b.ownership))) {
+    const sales = new Map(points.get(d.id.replace(/-REV$/, '-SALES'))), cust = new Map(points.get(d.id.replace(/-REV$/, '-CUST')) ?? []);
+    for (const [date, rev] of points.get(d.id)) {
+      const kwhs = sales.get(date), homes = cust.get(date);
+      if (!kwhs) continue;
+      lines.push([date.slice(0, 4), d.geoCode, d.ownership, rev, kwhs, homes ?? '', round((rev / kwhs) * 100, 2), homes ? round((rev * 1000) / homes / 12, 2) : ''].join(','));
+    }
+  }
+  await writeFile(join(out, `downloads/${slug}.csv.gz`), gzipSync(lines.join('\n') + '\n'));
+}
 if (INSIGHTS.length) await page('insights', `${BASE}/insights`, { kind: 'insights', insights: INSIGHTS });
 await page('about', `${BASE}/about`, { kind: 'about', counts: { series: manifest.series, rows: manifest.rows, states: states.length } });
+// The newest insight, announced in a banner under the navigation on every other page until the date given. Decided
+// here at build time, so the prerendered page and the browser agree. The banner has its own text, about 50
+// characters with the number first, so it fits a phone in one or two lines; the page keeps the full title.
+const ANNOUNCE = {
+  slug: 'investor-owned-utilities',
+  until: '2026-11-30',
+  text: utilityOwnership && `Investor-owned power prices rose ${Math.round(utilityOwnership.change.iou)}% since ${utilityOwnership.base}`,
+};
+const announced = INSIGHTS.find((i) => i.slug === ANNOUNCE.slug);
+if (announced && ANNOUNCE.text && new Date().toISOString().slice(0, 10) <= ANNOUNCE.until) common.announce = { key: `insights/${announced.slug}`, href: `${BASE}/insights/${announced.slug}`, title: ANNOUNCE.text };
+const commonJson = JSON.stringify(common);
+for (const [key, json] of queued) {
+  const file = join(out, `${key}.json`);
+  await mkdir(dirname(file), { recursive: true });
+  const at = json.lastIndexOf(COMMON);
+  if (at < 0) throw new Error(`Page ${key} lost its common placeholder`);
+  await writeFile(file, json.slice(0, at) + commonJson + json.slice(at + COMMON.length));
+}
 
 // The search index: every page a reader might type a name for, with the figure that identifies it.
 const pageEntries = [

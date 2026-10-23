@@ -61,8 +61,8 @@ const MONTH_ONLY = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep
 const monthOf = (t) => { const d = new Date(t); return `${MONTH_ONLY[d.getUTCMonth()]} ${d.getUTCFullYear()}`; };
 
 // series: [{ label, points: [[iso, value]], compare?, colour? }]. format(v) prints a value in its unit; axis(v) the
-// ticks. `compact` is the card size used on index pages: shorter, no axis titles.
-export default function LineChart({ series, from, to, format, axis = format, yTitle, xTitle, monthly = false, gapDays = 21, label, compact = false }) {
+// ticks. `compact` is the card size used on index pages: shorter, no axis titles. `yearly` names a point by its year.
+export default function LineChart({ series, from, to, format, axis = format, yTitle, xTitle, monthly = false, yearly = false, gapDays = 21, label, compact = false }) {
   const canvas = useRef(null);
   const shown = series.map((s) => ({ ...s, points: s.points.filter(([d]) => (!from || d >= from) && (!to || d <= to)) })).filter((s) => s.points.length);
   useEffect(() => {
@@ -121,7 +121,7 @@ export default function LineChart({ series, from, to, format, axis = format, yTi
             backgroundColor: PAPER, titleColor: LABEL_INK, bodyColor: LABEL_INK, borderColor: RULE, borderWidth: 1, cornerRadius: 0,
             displayColors: false, padding: 10, titleFont: { size: 13, weight: '600' }, bodyFont: { size: 12 },
             callbacks: {
-              title: (items) => (monthly ? monthOf(items[0].parsed.x) : `Week of ${dayLabel(items[0].parsed.x)}`),
+              title: (items) => (yearly ? String(new Date(items[0].parsed.x).getUTCFullYear()) : monthly ? monthOf(items[0].parsed.x) : `Week of ${dayLabel(items[0].parsed.x)}`),
               label: (item) => `${shown.length > 1 ? `${item.dataset.label}: ` : ''}${format(item.parsed.y)}`,
             },
           },

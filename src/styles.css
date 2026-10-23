@@ -361,3 +361,16 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,su
 .fuel-work__tick{font-size:14px;fill:#6b7276}.fuel-work__note{font-size:14px;fill:#6b7276}.fuel-work__val{font-size:15px;font-weight:700}.fuel-work__end{font-size:15px;font-weight:700}
 .fuel-work .halo{paint-order:stroke;stroke:#fff;stroke-width:5px;stroke-linejoin:round}
 @media (max-width:640px){.fuel-work__tick,.fuel-work__note{font-size:12px}.fuel-work__val,.fuel-work__end{font-size:13px}}
+/* Gap dots: two dots per labelled row on one scale, joined by a grey line, with faint gridlines at the ticks. */
+.dots .ranking__track{height:22px}.dots__tick{position:absolute;bottom:0;transform:translateX(-50%);font-size:14px;color:var(--dk-muted,#505a5f);white-space:nowrap}
+.dots__grid{position:absolute;top:-3px;bottom:-3px;border-left:1px solid var(--dk-rule-soft,#e5e6e7)}
+.dots__line{position:absolute;top:50%;height:2px;margin-top:-1px;background:#b1b4b6}
+.dots__dot{position:absolute;top:50%;width:12px;height:12px;margin:-6px 0 0 -6px;border-radius:50%;box-shadow:0 0 0 1.5px #fff}
+.dots__divider{margin:12px 0 8px;padding:8px 0 0;border-top:1px solid var(--dk-faint,#b1b4b6);font-size:14px;font-weight:600;color:var(--dk-muted,#505a5f)}
+/* Price spread: one histogram per utility owner on one scale. Tick labels live in a 44px gutter left of the bars. */
+.spread{display:grid;gap:26px}.spread__panel{margin:0}.spread__caption{margin:0 0 10px;font-size:16px;line-height:1.45}
+.spread__plot{position:relative;height:140px;margin-top:22px}.spread__grid{position:absolute;left:0;right:0;border-top:1px solid var(--dk-rule-soft,#e5e6e7)}.spread__grid--base{border-top-color:var(--dk-faint,#b1b4b6)}
+.spread__tick{position:absolute;left:0;bottom:3px;font-size:14px;line-height:1;color:var(--dk-muted,#505a5f);font-variant-numeric:tabular-nums}
+.spread__bars{position:absolute;top:0;bottom:0;left:44px;right:0;display:grid;grid-template-columns:repeat(var(--bands),minmax(0,1fr));gap:2px}
+.spread__band{display:flex;align-items:flex-end}.spread__bar{display:block;width:100%}
+.spread__axis{position:relative;height:24px;margin-left:44px;font-size:14px;color:var(--dk-muted,#505a5f)}.spread__axis span{position:absolute;top:6px;transform:translateX(-50%);white-space:nowrap}

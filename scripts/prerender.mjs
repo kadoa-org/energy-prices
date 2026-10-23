@@ -109,6 +109,12 @@ function seo(page, path) {
       : `Monthly US exports by Census product category since ${monthLabel(`${g.rows[0].month}-01`)}. ${g.led.length ? `Gold led in ${g.led.length} of the last 12 months. ` : ''}In ${monthLabel(`${l.month}-01`)}: gold ${b(l.gold)}, crude oil ${b(l.crude)}, pharmaceuticals ${b(l.pharma)}.`;
     crumbs.push({ name: 'Insights', url: `${SITE}/energy-prices/insights` }, { name: 'Gold exports', url: canonical });
     ld = [dataset(`US exports of gold, crude oil, pharmaceuticals and aircraft engines, monthly since ${g.rows[0].month.slice(0, 4)}`, description, { temporalCoverage: `${g.rows[0].month}/${l.month}`, isBasedOn: ['https://www.census.gov/foreign-trade/Press-Release/current_press_release/index.html'], distribution: [{ '@type': 'DataDownload', encodingFormat: 'text/csv', contentUrl: `${absolute(dataPath)}/downloads/gold-top-export.csv.gz` }] })];
+  } else if (page.kind === 'insight' && page.slug === 'investor-owned-utilities') {
+    const o = page.ownership, first = o.rows[0].year;
+    title = `${page.title}: Electricity Prices by Utility Owner`;
+    description = `Average home electricity price from ${o.base} to ${o.latest}: investor-owned utilities ${pctLabel(o.change.iou)}, public utilities ${pctLabel(o.change.public)}, co-ops ${pctLabel(o.change.coop)}, against ${pctLabel(o.inflation)} inflation. Investor-owned prices rose faster in ${o.faster} of ${o.states.length} states. EIA annual data by state and utility since ${first}.`;
+    crumbs.push({ name: 'Insights', url: `${SITE}/energy-prices/insights` }, { name: 'Prices by utility owner', url: canonical });
+    ld = [dataset(`US home electricity prices by utility ownership, annual since ${first}`, description, { temporalCoverage: `${first}/${o.latest}`, isBasedOn: ['https://www.eia.gov/electricity/data/eia861/', 'https://www.bls.gov/cpi/'], distribution: [{ '@type': 'DataDownload', encodingFormat: 'text/csv', contentUrl: `${absolute(dataPath)}/downloads/investor-owned-utilities.csv.gz` }] })];
   } else if (page.kind === 'insight') {
     const l = page.work.latest;
     title = `${page.title}: Minutes of Work per Gallon Since 1994`;

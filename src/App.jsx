@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { AboutPage, Button, DataTable, GitHubButton, LiveBadge, NavBar, Section, SiteFooter, SiteHeader } from './kit';
+import { AboutPage, Button, DataTable, GitHubButton, LiveBadge, NavBar, PhaseBanner, Section, SiteFooter, SiteHeader } from './kit';
 import { METHODS } from './methodology';
 import { ChangeTag, ChartCard, FilterSelect, KeyFigures, SectionHeading, ShowMore } from './Figures';
 import LineChart, { SERIES_COLOURS } from './LineChart';
@@ -7,6 +7,8 @@ import CommandPalette from './CommandPalette';
 import StateExplorer from './StateExplorer';
 import OilShocks from './OilShocks';
 import FuelWork from './FuelWork';
+import PriceSpread from './PriceSpread';
+import GapDots from './GapDots';
 import { StapleChart, StapleRanking, ValueRanking, monthTime, stapleScales } from './StaplesChart';
 import { BASE, HOME, addDays, addMonths, cents, dataPath, dateLabel, money, monthLabel, number, pctLabel } from './model.mjs';
 import { priceText } from './format.mjs';
@@ -27,6 +29,7 @@ function Change({ value }) {
 
 export function Shell({ page, children }) {
   const kind = page?.kind;
+  const announce = page?.common?.announce;
   // Search opens from the header button, so it works on a phone, and from Cmd+K or Ctrl+K.
   const [search, setSearch] = useState(false);
   useEffect(() => { const onKey = (e) => { if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); setSearch((o) => !o); } }; window.addEventListener('keydown', onKey); return () => window.removeEventListener('keydown', onKey); }, []);
@@ -34,6 +37,8 @@ export function Shell({ page, children }) {
     <SiteHeader brand="⚡ US Energy Price Monitor" brandHref={HOME} brandSuffix={<a href="https://www.kadoa.com" target="_blank" rel="noreferrer" className="dk-header-link">by Kadoa</a>} right={<span className="header-right"><LiveBadge>Updated weekly</LiveBadge><GitHubButton repo="kadoa-org/energy-prices" /><Button inverse onClick={() => setSearch(true)} aria-label="Search (Cmd+K)">Search <kbd className="header-kbd">⌘K</kbd></Button></span>} />
     <CommandPalette open={search} onClose={() => setSearch(false)} dataPath={dataPath(page?.common)} />
     <NavBar collapse items={[{ href: HOME, label: 'Overview', active: kind === 'home' }, { href: `${BASE}/fuel`, label: 'Fuel prices', active: kind === 'fuel' || kind === 'fuels' }, { href: `${BASE}/electricity`, label: 'Electricity', active: kind === 'electricity' || kind === 'state' || kind === 'electricityMap' }, { href: `${BASE}/rate-cases`, label: 'Rate cases', active: kind === 'rateCases' }, { href: `${BASE}/insights`, label: 'Insights', active: kind === 'insights' || kind === 'insight' }, { href: `${BASE}/about`, label: 'About the data', end: true, active: kind === 'about' }]} />
+    {/* The newest insight, on every page but its own; the data build decides what and until when. */}
+    {announce && page.key !== announce.key && <PhaseBanner tag="New" label="Insight:" href={announce.href}>{announce.title}</PhaseBanner>}
     <main id="main-content" className="dk-container main">{children}</main><SiteFooter current="energy-prices" /></>;
 }
 export function Loading({ error = false }) {
@@ -771,7 +776,119 @@ function FuelWorkInsight({ page }) {
   </>;
 }
 
-const INSIGHT_VIEWS = { 'gold-top-export': GoldExportsInsight, 'fuel-minutes-of-work': FuelWorkInsight };
+// Investor-owned against public and co-op utilities, from EIA's annual survey of every utility. Investor-owned is the
+// story (orange); public and co-op are blue and turquoise; inflation is the grey dashed comparison.
+const OWNER_COLOURS = { iou: SERIES_COLOURS[1], public: SERIES_COLOURS[0], coop: SERIES_COLOURS[2] };
+const centsKwh = (v) => `${v.toFixed(1)}¢`;
+const sortBy = (rows, sort, value) => [...rows].sort((a, b) => { const av = value(a, sort.key), bv = value(b, sort.key); return (typeof av === 'number' ? av - bv : String(av).localeCompare(String(bv))) * (sort.dir === 'asc' ? 1 : -1); });
+const toggle = (key) => (s) => ({ key, dir: s.key === key && s.dir === 'desc' ? 'asc' : 'desc' });
+function UtilityOwnershipInsight({ page }) {
+  const o = page.ownership, { base, latest } = o;
+  const [stateSort, setStateSort] = useState({ key: 'name', dir: 'asc' });
+  const [utilitySort, setUtilitySort] = useState({ key: 'change', dir: 'desc' });
+  const since = o.rows.filter((r) => r.year >= base);
+  const at = (rows, pick) => rows.map((r) => [`${r.year}-01-01`, pick(r)]).filter(([, v]) => v != null);
+  const owners = [['iou', 'Investor-owned'], ['public', 'Public'], ['coop', 'Co-op']];
+  const first = o.rows[0], last = o.rows.at(-1);
+  const stateValue = (r, k) => ({ name: r.name, iou: r.iou.change, nfp: r.nfp.change, iouPrice: r.iou.to, nfpPrice: r.nfp.to })[k];
+  const stateColumns = [
+    { key: 'name', header: 'State', sortable: true, render: (r) => <a className="cell-link" href={stateUrl(r.slug)}>{r.name}</a> },
+    { key: 'iou', header: 'Investor-owned', align: 'right', sortable: true, render: (r) => <Change value={r.iou.change} /> },
+    { key: 'nfp', header: 'Nonprofit', align: 'right', sortable: true, render: (r) => <Change value={r.nfp.change} /> },
+    { key: 'iouPrice', header: `Investor-owned, ${latest}`, align: 'right', sortable: true, hideBelow: 'sm', render: (r) => centsKwh(r.iou.to) },
+    { key: 'nfpPrice', header: `Nonprofit, ${latest}`, align: 'right', sortable: true, hideBelow: 'sm', render: (r) => centsKwh(r.nfp.to) },
+  ];
+  const utilityColumns = [
+    { key: 'name', header: 'Utility', sortable: true, render: (r) => (r.href ? <a className="cell-link" href={r.href}>{r.name}</a> : r.name) },
+    { key: 'state', header: 'State', sortable: true, hideBelow: 'sm' },
+    { key: 'ownership', header: 'Owner', sortable: true },
+    { key: 'from', header: String(base), align: 'right', sortable: true, hideBelow: 'sm', render: (r) => centsKwh(r.from) },
+    { key: 'to', header: String(latest), align: 'right', sortable: true, hideBelow: 'sm', render: (r) => centsKwh(r.to) },
+    { key: 'change', header: 'Change', align: 'right', sortable: true, render: (r) => <Change value={r.change} /> },
+  ];
+  const states = sortBy(o.states, stateSort, stateValue);
+  const utilities = sortBy(o.utilities, utilitySort, (r, k) => r[k]);
+  // Cents a kWh for each owner, with the change since the base year beside it from the base on.
+  const yearColumns = [
+    { key: 'year', header: 'Year' },
+    ...owners.map(([k, label]) => ({ key: k, header: label, align: 'right', render: (r) => <>{centsKwh(r.price[k])}{r.year > base && <span className="dk-hint"> {pctLabel(r.since[k])}</span>}</> })),
+    { key: 'inflation', header: `Inflation since ${base}`, align: 'right', hideBelow: 'sm', render: (r) => (r.year > base ? pctLabel(r.inflation) : '–') },
+    ...owners.map(([k, label]) => ({ key: `bill-${k}`, header: `${label}, monthly bill`, align: 'right', hideBelow: 'sm', render: (r) => money(r.bill[k], 0) })),
+  ];
+  // States by how much faster investor-owned prices rose than nonprofit ones.
+  const byGap = [...o.states].sort((x, y) => (y.iou.change - y.nfp.change) - (x.iou.change - x.nfp.change)).map((s) => ({ name: s.name, href: stateUrl(s.slug), a: s.iou.change, b: s.nfp.change }));
+  const e = o.spread.edges;
+  const spreadRows = [...Array(e.length + 1).keys()].map((i) => ({ band: i === 0 ? `Under ${e[0]}¢` : i === e.length ? `${e.at(-1)}¢ or more` : `${e[i - 1]} to ${e[i]}¢`, iou: o.spread.iou.shares[i], public: o.spread.public.shares[i], coop: o.spread.coop.shares[i] }));
+  const spreadColumns = [{ key: 'band', header: 'Price a kWh' }, ...owners.map(([k, label]) => ({ key: k, header: label, align: 'right', render: (r) => `${r[k].toFixed(1)}%` }))];
+  const source = (cpi) => <p className="chart-note">Source: <a href="https://www.eia.gov/electricity/data/eia861/" target="_blank" rel="noreferrer">EIA</a> annual survey of utilities (Form 861), homes buying supply and delivery from their utility{cpi ? <>; <a href="https://www.bls.gov/cpi/" target="_blank" rel="noreferrer">BLS</a> CPI</> : null}.</p>;
+  const b0 = o.rows.find((r) => r.year === base).bill, b1 = last.bill;
+  // Percentages in sentences go without the sign the tables use.
+  const pc = (v) => pctLabel(Math.abs(v)).replace(/^\+/, '');
+  return <>
+    <div className="title-block"><h1 className="dk-h1">{page.title}</h1><p className="lede">Average home price per kilowatt-hour, {base} to {latest}. <strong style={{ color: OWNER_COLOURS.public }}>Public</strong> utilities and <strong style={{ color: OWNER_COLOURS.coop }}>co-ops</strong> serve about 1 in {Math.round(1 / o.nfpShare)} US homes; <strong style={{ color: OWNER_COLOURS.iou }}>investor-owned</strong> utilities serve the rest. Inflation was {pc(o.inflation)}.</p></div>
+    {/* One card per finding; tabs only switch between views of the same figures (change or cents, chart or table). */}
+    <ChartCard
+      id="price-title"
+      title="Average home price by utility owner"
+      description={`Change since ${base} against inflation, or cents per kilowatt-hour since ${first.year}.`}
+      tabs={[
+        { label: `Change since ${base}`, short: 'Change', content: <LineChart series={[...owners.map(([k, label]) => ({ label, points: at(since, (r) => r.since[k]), colour: OWNER_COLOURS[k] })), { label: 'Inflation', points: at(since, (r) => r.inflation), compare: true }]} format={pctLabel} axis={(v) => `${v}%`} yTitle={`Price change since ${base}`} yearly gapDays={400} label={`Change in the average home price per kWh from ${base} to ${latest}: investor-owned ${pctLabel(o.change.iou)}, public ${pctLabel(o.change.public)}, co-op ${pctLabel(o.change.coop)}; inflation ${pctLabel(o.inflation)}.`} /> },
+        { label: 'Cents per kWh', short: 'Cents', content: <LineChart series={owners.map(([k, label]) => ({ label, points: at(o.rows, (r) => r.price[k]), colour: OWNER_COLOURS[k] }))} format={centsKwh} axis={(v) => `${v}¢`} yTitle="Cents a kWh" yearly gapDays={400} label={`Average home price per kWh in ${first.year} and ${latest}: investor-owned ${centsKwh(first.price.iou)} and ${centsKwh(last.price.iou)}, public ${centsKwh(first.price.public)} and ${centsKwh(last.price.public)}, co-op ${centsKwh(first.price.coop)} and ${centsKwh(last.price.coop)}.`} /> },
+        { label: 'Tabular data', short: 'Tabular', content: <DataTable rows={[...o.rows].reverse()} columns={yearColumns} rowKey={(r) => r.year} /> },
+        { label: 'Download', content: <><p className="download-intro">Every year since {first.year}: home revenue, kWh sold, homes, price and bill by utility owner, for the US and each state, as a gzipped CSV.</p><Download file="investor-owned-utilities.csv.gz" common={page.common} /></> },
+      ]}
+      footer={source(true)}
+    />
+    <ChartCard
+      id="spread-title"
+      title={`Home prices in ${latest}`}
+      description="Share of homes by their utility's average price per kilowatt-hour, in 2-cent bands."
+      tabs={[
+        { label: 'Chart', content: <PriceSpread edges={o.spread.edges} panels={[
+          { key: 'iou', label: 'Investor-owned', colour: OWNER_COLOURS.iou, shares: o.spread.iou.shares, note: `${pc(o.spread.iou.from12to20)} of homes paid 12 to 20 cents, and ${pc(o.spread.iou.from30)} paid 30 cents or more.` },
+          { key: 'public', label: 'Public', colour: OWNER_COLOURS.public, shares: o.spread.public.shares, note: `${pc(o.spread.public.under14)} paid under 14 cents.${o.spread.highPublic.names.length ? ` The bump at the high end is ${listOf(o.spread.highPublic.names)}, ${pc(o.spread.highPublic.share)} of public homes.` : ''}` },
+          { key: 'coop', label: 'Co-op', colour: OWNER_COLOURS.coop, shares: o.spread.coop.shares, note: `${pc(o.spread.coop.under14)} paid under 14 cents.` },
+        ]} /> },
+        { label: 'Tabular data', short: 'Tabular', content: <DataTable rows={spreadRows} columns={spreadColumns} rowKey={(r) => r.band} /> },
+      ]}
+      footer={source(false)}
+    />
+    <ChartCard
+      id="states-title"
+      title={`Price change by state, ${base} to ${latest}`}
+      description={<>Investor-owned prices rose faster than nonprofit (public and co-op) prices in {o.faster} of the {o.states.length} states with both: <strong style={{ color: OWNER_COLOURS.iou }}>investor-owned</strong> against <strong style={{ color: OWNER_COLOURS.public }}>nonprofit</strong>.</>}
+      tabs={[
+        { label: 'Chart', content: <GapDots rows={byGap} a={{ label: 'investor-owned', colour: OWNER_COLOURS.iou }} b={{ label: 'nonprofit', colour: OWNER_COLOURS.public }} format={pctLabel} divider={(n) => `Nonprofit prices rose as fast or faster in these ${n}`} /> },
+        { label: 'Tabular data', short: 'Tabular', content: <ShowMore total={states.length} initial={15} noun="states">{(n) => <DataTable rows={states.slice(0, n)} columns={stateColumns} rowKey={(r) => r.code} sort={stateSort} onSort={(key) => setStateSort(toggle(key))} />}</ShowMore> },
+      ]}
+      footer={source(false)}
+    />
+    <ChartCard
+      id="utilities-title"
+      title={`Largest utilities, ${base} to ${latest}`}
+      description={<>Change in the average home price at utilities with 250,000 or more homes: <strong style={{ color: OWNER_COLOURS.iou }}>investor-owned</strong>, <strong style={{ color: OWNER_COLOURS.public }}>public</strong> and <strong style={{ color: OWNER_COLOURS.coop }}>co-op</strong>.</>}
+      tabs={[
+        { label: 'Chart', content: <ShowMore total={o.utilities.length} initial={20} noun="utilities">{(n) => <ValueRanking rows={o.utilities.slice(0, n).map((u) => ({ name: `${u.name}, ${u.state}`, value: u.change, href: u.href, colour: OWNER_COLOURS[{ 'Investor-owned': 'iou', Public: 'public', 'Co-op': 'coop' }[u.ownership]] }))} average={o.inflation} averageLabel="Inflation" format={pctLabel} />}</ShowMore> },
+        { label: 'Tabular data', short: 'Tabular', content: <ShowMore total={utilities.length} initial={15} noun="utilities">{(n) => <DataTable rows={utilities.slice(0, n)} columns={utilityColumns} rowKey={(r) => r.code} sort={utilitySort} onSort={(key) => setUtilitySort(toggle(key))} />}</ShowMore> },
+      ]}
+      footer={source(true)}
+    />
+    <section className="insight-notes">
+      <SectionHeading>About the data</SectionHeading>
+      <ul>
+        <li>It isn't geography. Public power is common where electricity is cheap, but within the same state, investor-owned prices rose faster in {o.faster} of {o.states.length} states. With both weighted by the same states, {pc(o.mixed.iou)} against {pc(o.mixed.nfp)}.</li>
+        <li>The gap is recent. From {o.before.from} to {o.before.to}, prices rose {pc(o.before.iou)} at investor-owned utilities and {pc(o.before.nfp)} at public utilities and co-ops. From {o.surge.from} to {o.surge.to}, through the 2022 energy price spike, {pc(o.surge.iou)} against {pc(o.surge.nfp)}. {Math.abs(o.after.iou - o.after.nfp) < 1 ? `Since ${o.after.from}, both rose about ${Math.round((o.after.iou + o.after.nfp) / 2)}%, so the gap hasn't closed.` : `Since ${o.after.from}, ${pc(o.after.iou)} against ${pc(o.after.nfp)}.`}</li>
+        <li>Bills too. In {base}, homes paid {money(b0.iou, 0)} a month at investor-owned utilities and {money(b0.public, 0)} at public utilities. In {latest}, {money(b1.iou, 0)} against {money(b1.public, 0)}. Co-op homes pay the most, {money(b1.coop, 0)}, because they use the most electricity: {number(o.use.coop)} kWh a month, against {number(o.use.iou)} at investor-owned utilities.</li>
+        <li>After inflation, investor-owned prices {o.real.iou < 0 ? 'fell' : 'rose'} {pc(o.real.iou)}; public and co-op prices {o.real.nfp < 0 ? 'fell' : 'rose'} {pc(o.real.nfp)}.</li>
+        <li>In states with retail choice, many homes buy their power from a retail supplier and pay the utility for delivery only. EIA counts them apart, so they are not in the investor-owned figures. Counting them too, prices for homes on investor-owned wires rose {pc(o.change.wires)}.</li>
+        <li>Price is home revenue over kilowatt-hours sold, for homes buying supply and delivery from the same utility. Public utilities are city, state and other public utilities, such as public power districts. Federal ones sell almost no power to homes and are left out, as are the smallest utilities, which file a shorter survey.</li>
+        <li>This shows what homes paid, not why. Investor-owned utilities earn a return for shareholders on what they build; public utilities and co-ops have no shareholders. For the increases utilities are asking for now, see <a href={`${BASE}/rate-cases`}>rate cases</a>.</li>
+      </ul>
+    </section>
+  </>;
+}
+
+const INSIGHT_VIEWS = { 'investor-owned-utilities': UtilityOwnershipInsight, 'gold-top-export': GoldExportsInsight, 'fuel-minutes-of-work': FuelWorkInsight };
 function Insight({ page }) {
   const View = INSIGHT_VIEWS[page.slug];
   return <View page={page} />;
