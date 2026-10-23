@@ -740,11 +740,11 @@ function GoldExportsInsight({ page }) {
     <section className="insight-notes">
       <SectionHeading>About the data</SectionHeading>
       <ul>
-        <li>These are dollars, not tonnes. The gold price roughly doubled between early 2024 and late 2025, so part of the rise is price.</li>
-        <li>Census counts nonmonetary gold: bars, unrefined doré, scrap and powder traded as a commodity. Gold moved by central banks, including foreign reserves stored at the New York Fed, is monetary gold and is left out. So countries moving their reserves out of the US don't show up in these numbers.</li>
-        <li>Most of it goes to Switzerland, home to the world's largest refineries, which recast bars for buyers elsewhere: $47.9B of the $86.9B exported in 2025. The UK, the hub of the London bullion market, took $19.6B.</li>
-        <li>Part of the rise is gold flowing back out after the tariff scare. Traders shipped about $78B of gold into the US in early 2025 to get ahead of possible tariffs on bullion. But from April 2025 to June 2026, exports beat imports by about $115B, according to <a href="https://www.bea.gov/data/intl-trade-investment/international-transactions" target="_blank" rel="noreferrer">BEA</a>, well more than came in.</li>
-        <li>Central bank buying is another possible reason. Foreign central banks now hold more in gold than in US Treasury debt, and China's central bank cut its Treasury holdings from $1.1 trillion in April 2021 to $693 billion in February 2026. Trade data doesn't show who ends up with the gold, though.</li>
+        <li>These are dollars, not tonnes. The gold price roughly doubled from early 2024 to late 2025, so part of the rise is price.</li>
+        <li>Census counts gold traded as a commodity: bars, doré and scrap. Central bank reserves are left out, so countries moving their reserves out of the US don&apos;t show up here.</li>
+        <li>Most of it goes to Switzerland, home of the biggest refineries: $47.9B of the $86.9B exported in 2025. The UK, home of the London bullion market, took $19.6B.</li>
+        <li>Some of it is gold going back out. Traders rushed about $78B of gold into the US in early 2025, ahead of possible tariffs. From April 2025 to June 2026, exports beat imports by about $115B (<a href="https://www.bea.gov/data/intl-trade-investment/international-transactions" target="_blank" rel="noreferrer">BEA</a>).</li>
+        <li>Central bank demand may play a part. Foreign central banks now hold more gold than US Treasuries. Trade data doesn&apos;t show who ends up with it.</li>
       </ul>
     </section>
   </>;
@@ -775,9 +775,9 @@ function FuelWorkInsight({ page }) {
     <section className="insight-notes">
       <SectionHeading>About the data</SectionHeading>
       <ul>
-        <li>Minutes of work is the month&apos;s average US retail price for a gallon, from EIA&apos;s weekly survey, divided by average hourly pay that month, times 60.</li>
-        <li>Pay is BLS average hourly earnings of production and nonsupervisory workers, before tax.</li>
-        <li>EIA&apos;s diesel survey starts in March 1994, so the chart starts in April 1994. Prices are in dollars of the day; dividing by the same month&apos;s pay makes years comparable.</li>
+        <li>We divide the month&apos;s average price of a gallon by average hourly pay, then turn that into minutes.</li>
+        <li>Pay is BLS average hourly earnings for production and nonsupervisory workers, before tax.</li>
+        <li>EIA&apos;s diesel prices start in 1994.</li>
       </ul>
     </section>
   </>;
@@ -828,7 +828,7 @@ function UtilityOwnershipInsight({ page }) {
   const spreadRows = [...Array(e.length + 1).keys()].map((i) => ({ band: i === 0 ? `Under ${e[0]}¢` : i === e.length ? `${e.at(-1)}¢ or more` : `${e[i - 1]} to ${e[i]}¢`, iou: o.spread.iou.shares[i], public: o.spread.public.shares[i], coop: o.spread.coop.shares[i] }));
   const spreadColumns = [{ key: 'band', header: 'Price a kWh' }, ...owners.map(([k, label]) => ({ key: k, header: label, align: 'right', render: (r) => `${r[k].toFixed(1)}%` }))];
   const source = (cpi) => <p className="chart-note">Source: <a href="https://www.eia.gov/electricity/data/eia861/" target="_blank" rel="noreferrer">EIA</a> annual survey of utilities (Form 861), homes buying supply and delivery from their utility{cpi ? <>; <a href="https://www.bls.gov/cpi/" target="_blank" rel="noreferrer">BLS</a> CPI</> : null}.</p>;
-  const b0 = o.rows.find((r) => r.year === base).bill, b1 = last.bill;
+  const b1 = last.bill;
   // Percentages in sentences go without the sign the tables use.
   const pc = (v) => pctLabel(Math.abs(v)).replace(/^\+/, '');
   return <>
@@ -883,13 +883,13 @@ function UtilityOwnershipInsight({ page }) {
     <section className="insight-notes">
       <SectionHeading>About the data</SectionHeading>
       <ul>
-        <li>It isn't geography. Public power is common where electricity is cheap, but within the same state, investor-owned prices rose faster in {o.faster} of {o.states.length} states. With both weighted by the same states, {pc(o.mixed.iou)} against {pc(o.mixed.nfp)}.</li>
-        <li>The gap is recent. From {o.before.from} to {o.before.to}, prices rose {pc(o.before.iou)} at investor-owned utilities and {pc(o.before.nfp)} at public utilities and co-ops. From {o.surge.from} to {o.surge.to}, through the 2022 energy price spike, {pc(o.surge.iou)} against {pc(o.surge.nfp)}. {Math.abs(o.after.iou - o.after.nfp) < 1 ? `Since ${o.after.from}, both rose about ${Math.round((o.after.iou + o.after.nfp) / 2)}%, so the gap hasn't closed.` : `Since ${o.after.from}, ${pc(o.after.iou)} against ${pc(o.after.nfp)}.`}</li>
-        <li>Bills too. In {base}, homes paid {money(b0.iou, 0)} a month at investor-owned utilities and {money(b0.public, 0)} at public utilities. In {latest}, {money(b1.iou, 0)} against {money(b1.public, 0)}. Co-op homes pay the most, {money(b1.coop, 0)}, because they use the most electricity: {number(o.use.coop)} kWh a month, against {number(o.use.iou)} at investor-owned utilities.</li>
-        <li>After inflation, investor-owned prices {o.real.iou < 0 ? 'fell' : 'rose'} {pc(o.real.iou)}; public and co-op prices {o.real.nfp < 0 ? 'fell' : 'rose'} {pc(o.real.nfp)}.</li>
-        <li>In states with retail choice, many homes buy their power from a retail supplier and pay the utility for delivery only. EIA counts them apart, so they are not in the investor-owned figures. Counting them too, prices for homes on investor-owned wires rose {pc(o.change.wires)}.</li>
-        <li>Price is home revenue over kilowatt-hours sold, for homes buying supply and delivery from the same utility. Public utilities are city, state and other public utilities, such as public power districts. Federal ones sell almost no power to homes and are left out, as are the smallest utilities, which file a shorter survey.</li>
-        <li>This shows what homes paid, not why. Investor-owned utilities earn a return for shareholders on what they build; public utilities and co-ops have no shareholders. For the increases utilities are asking for now, see <a href={`${BASE}/rate-cases`}>rate cases</a>.</li>
+        <li>Public power is common where electricity is cheap, so we also compared utilities within each state. Investor-owned prices rose faster in {o.faster} of {o.states.length} states.</li>
+        <li>Most of the gap opened from {o.surge.from} to {o.surge.to}, during the energy price spike: {pc(o.surge.iou)} at investor-owned utilities, {pc(o.surge.nfp)} at public utilities and co-ops.{Math.abs(o.before.iou - o.before.nfp) < 1.5 && Math.abs(o.after.iou - o.after.nfp) < 1.5 ? ' Before and since, both rose at about the same pace.' : ''}</li>
+        <li>After inflation, investor-owned prices {o.real.iou < 0 ? 'fell' : 'rose'} {pc(o.real.iou)}. Public and co-op prices {o.real.nfp < 0 ? 'fell' : 'rose'} {pc(o.real.nfp)}.</li>
+        <li>Co-op homes have the highest bills, {money(b1.coop, 0)} a month in {latest}, because they use the most power.</li>
+        <li>Homes that buy power from a retail supplier aren&apos;t in the investor-owned figures. Counting them, prices on investor-owned lines rose {pc(o.change.wires)}.</li>
+        <li>Price is what homes paid divided by the kilowatt-hours they used, from EIA&apos;s yearly survey of utilities. Federal utilities and the smallest ones are left out.</li>
+        <li>The data shows what homes paid, not why. Investor-owned utilities earn a return for shareholders on what they build. Public utilities and co-ops have no shareholders. See the <a href={`${BASE}/rate-cases`}>rate cases</a> for increases utilities are asking for now.</li>
       </ul>
     </section>
   </>;
@@ -952,12 +952,13 @@ function PjmPricesInsight({ page }) {
     <section className="insight-notes">
       <SectionHeading>About the data</SectionHeading>
       <ul>
-        <li>Price is home revenue over kilowatt-hours sold, over twelve months. PJM states with retail choice are {listOf(p.states.choice)}: most homes there take their utility&apos;s default supply, bought at auction, so the capacity price passes through.</li>
-        <li>In the twelve months before the new price, the two groups rose at the same pace: {pc(g.choice.before)} and {pc(g.others.before)}. The PJM states also rose faster in the years to May 2023 and 2024, as the 2022 gas price spike passed through multi-year supply contracts, but by at most {p.priorGap} points. This year the gap was {p.gap} points.</li>
-        <li>Natural gas also cost {p.henryHub}% more over the same year at Henry Hub, the US benchmark. That reached every state, not only PJM&apos;s.</li>
-        <li>In {listOf(p.states.integrated)}, also on PJM&apos;s grid, utilities own most of their plants, so they pay less of the capacity price. Prices there rose {pc(g.integrated.change)}. States partly on the grid ({listOf(p.states.partial)}) rose {pc(g.partial.change)} and are in neither group.</li>
-        <li>PJM&apos;s market monitor puts ${(p.dataCenters / 1e9).toFixed(1)} billion of the capacity cost for {during.year} down to data-center demand. The price has stayed at or near the auction&apos;s cap since: {listOf(p.capacity.filter((c) => c.price > during.price).map((c) => `$${c.price.toFixed(2)} for ${c.year}`))}.</li>
-        <li>EIA counts revenue before New Jersey&apos;s $100 bill credit of September and October 2025. When EIA withholds a month of a state&apos;s sales, it is filled from the revenue and price EIA publishes. Figures for 2025 and 2026 are preliminary.</li>
+        <li>Price is what homes paid divided by the kilowatt-hours they used, over twelve months.</li>
+        <li>The six PJM states with retail choice are {listOf(p.states.choice)}. Most homes there get default supply bought at auction, so the capacity price feeds straight into bills.</li>
+        <li>In the year before, both groups rose about the same: {pc(g.choice.before)} and {pc(g.others.before)}. PJM states also rose faster in 2023 and 2024, after the 2022 gas spike, but by {p.priorGap} points at most. This year the gap was {p.gap} points.</li>
+        <li>Gas rose too, {p.henryHub}% at Henry Hub, but that hit every state.</li>
+        <li>{listOf(p.states.integrated)} are on PJM&apos;s grid too, but their utilities own most of their plants and pay less of the capacity price. Prices there rose {pc(g.integrated.change)}. States only partly on the grid ({listOf(p.states.partial)}) are in neither group.</li>
+        <li>PJM&apos;s market monitor says data centers added ${(p.dataCenters / 1e9).toFixed(1)} billion to the {during.year} capacity bill. The price has stayed near the auction&apos;s cap since.</li>
+        <li>EIA&apos;s 2025 and 2026 figures are preliminary and don&apos;t net out New Jersey&apos;s $100 bill credit.</li>
       </ul>
     </section>
   </>;
