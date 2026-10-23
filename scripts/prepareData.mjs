@@ -643,7 +643,7 @@ const utilityOwnership = (() => {
 })();
 if (utilityOwnership) {
   const o = utilityOwnership, slug = 'investor-owned-utilities';
-  const title = `Investor-owned utilities charge ${Math.round(o.premium)}% more than public providers`;
+  const title = `Investor-owned utilities charge ${Math.round(o.premium)}% more for electricity than public ones`;
   INSIGHTS.unshift({ slug, title, summary: `Average home electricity price at investor-owned utilities against public utilities and co-ops, by state and by utility, since ${o.rows[0].year}.` });
   await page(`insights/${slug}`, `${BASE}/insights/${slug}`, { kind: 'insight', slug, title, ownership: o });
   // Every group, the US and each state, every year: what EIA reports, and the price and bill derived from it.
@@ -737,7 +737,7 @@ await page('about', `${BASE}/about`, { kind: 'about', counts: { series: manifest
 const ANNOUNCE = {
   slug: 'investor-owned-utilities',
   until: '2026-11-30',
-  text: utilityOwnership && `Investor-owned utilities charge ${Math.round(utilityOwnership.premium)}% more than public ones`,
+  text: utilityOwnership && `Investor-owned utilities charge ${Math.round(utilityOwnership.premium)}% more for power`,
 };
 const announced = INSIGHTS.find((i) => i.slug === ANNOUNCE.slug);
 if (announced && ANNOUNCE.text && new Date().toISOString().slice(0, 10) <= ANNOUNCE.until) common.announce = { key: `insights/${announced.slug}`, href: `${BASE}/insights/${announced.slug}`, title: ANNOUNCE.text };
