@@ -111,6 +111,9 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,su
 .cmdk-empty{padding:24px 12px;text-align:center;color:var(--dk-muted)}
 .cmdk-foot{display:flex;align-items:center;gap:6px;padding:0 12px;height:32px;border-top:1px solid var(--dk-rule);font-size:14px;color:var(--dk-muted)}
 @media(max-width:640px){.header-right .dk-btn-label,.header-kbd{display:none}}
+/* Header buttons at body-s; on phones "by Kadoa" drops under the site name so the name is never cut off. */
+.dk-header .dk-btn{font-size:16px}
+@media(max-width:640px){.dk-header-brand-group{flex-direction:column;align-items:flex-start;gap:0}.dk-header-brand{font-size:16px}.header-right{gap:8px}}
 
 /* Reverse engineered from the UKHSA data dashboard, which is built on the GOV.UK Design System. Values are the ones
    read off the live page, not approximations. */
