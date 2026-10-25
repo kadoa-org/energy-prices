@@ -177,9 +177,9 @@ function Overview({ page }) {
 }
 
 // ── Fuel pages
-// Fuel, then grade, then location, arranged as GOV.UK statistics services arrange topic, breakdown and place: an index
-// of fuels with a card each (the UKHSA "Health topics" page), grades drawn as lines of one chart (UKHSA's "by age"
-// charts), and location as an area type and area name pair ("Filter results by location") that moves between pages.
+// Fuel, then grade, then location, arranged as topic, breakdown and place: an index of fuels with a card each, grades
+// drawn as lines of one chart, and location as an area type and area name pair ("Filter results by location") that
+// moves between pages.
 const RANGES = [['365', '1 year'], ['1825', '5 years'], ['all', 'All']];
 const AREA_TYPES = [['us', 'United States'], ['padd', 'Region'], ['state', 'State'], ['city', 'City']];
 const AREA_GROUPS = { us: 'United States', padd: 'Regions', state: 'States', city: 'Cities' };
@@ -192,7 +192,7 @@ function Breadcrumbs({ items }) {
     {items.map((it) => <li className="govuk-breadcrumbs__list-item" key={it.label}>{it.href ? <a className="govuk-breadcrumbs__link" href={it.href}>{it.label}</a> : <span aria-current="page">{it.label}</span>}</li>)}
   </ol></nav>;
 }
-// The fuels as a sub navigation (the MOJ pattern GOV.UK services use for sibling sections): the current one marked.
+// The fuels as a sub navigation for sibling sections: the current one marked.
 function FuelNav({ current }) {
   return <nav className="sub-navigation" aria-label="Fuels"><ul className="sub-navigation__list">{FUELS.map(([slug, name]) => <li className="sub-navigation__item" key={slug}><a className="sub-navigation__link" href={fuelUrl(slug)} aria-current={slug === current ? 'page' : undefined}>{name}</a></li>)}</ul></nav>;
 }
@@ -952,7 +952,7 @@ function PjmPricesInsight({ page }) {
     { key: 'others', header: 'Not on PJM grid', align: 'right', render: (r) => pct1(r.others) },
   ];
   const source = <p className="chart-note">Source: <a href="https://www.eia.gov/electricity/monthly/" target="_blank" rel="noreferrer">EIA</a> state home electricity revenue and sales; <a href="https://www.pjm.com/markets-and-operations/rpm" target="_blank" rel="noreferrer">PJM</a> capacity auctions.</p>;
-  // The key sits inside the chart panel, above the bars, as on the GOV.UK dashboards; the card's description stays plain.
+  // The key sits inside the chart panel, above the bars; the card's description stays plain.
   const key = <div className="chart-legend" style={{ justifyContent: 'flex-start' }}>
     {[['pjm', 'On the PJM grid'], ['partial', 'Partly on it'], ['other', 'Not on it']].map(([k, label]) => <span className="chart-legend__item" key={k}><span className="chart-legend__swatch" style={{ width: 14, height: 14, background: PJM_COLOURS[k] }} />{label}</span>)}
     <span className="chart-legend__item"><span className="chart-legend__swatch chart-legend__swatch--compare" style={{ width: 0, height: 14, borderTop: 'none', borderLeft: '2px dashed #0b0c0c' }} />US average</span>

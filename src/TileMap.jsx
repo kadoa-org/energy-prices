@@ -88,8 +88,8 @@ export default function TileMap({ states, cpi, usChange, usPrice, month, href })
           );
         })}
       </ol>
-      {/* Phones: the tiles keep only the state code and colour, so the figures move to a ranked list, as the UKHSA
-          dashboard lists every region beside its map. Hidden from wider screens in styles.css. */}
+      {/* Phones: the tiles keep only the state code and colour, so the figures move to a ranked list beside the
+          map. Hidden from wider screens in styles.css. */}
       <ol className="tilemap__list">
         {[...placed].map(([code]) => byCode[code]).sort((a, b) => (isPrice ? b.price12 - a.price12 : b.priceSince2019 - a.priceSince2019)).map((s) => (
           <li key={s.code}>

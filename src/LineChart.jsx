@@ -15,7 +15,7 @@ function scale(values, count) {
   return { min: Math.max(0, min - pad), max: max + pad * 0.6, step };
 }
 const GREY = '#8a9195';
-// Kadoa sky-800 (10.2:1 on white), Kadoa orange (darkened to 4.7:1) and the Analysis Function turquoise (3.2:1). Blue and orange first because that pair stays apart for readers with red-green colour blindness. Used when
+// Kadoa sky-800 (10.2:1 on white), Kadoa orange (darkened to 4.7:1) and a turquoise (3.2:1). Blue and orange first because that pair stays apart for readers with red-green colour blindness. Used when
 // a chart shows a breakdown (gasoline grades, WTI and Brent) rather than a series and its comparison.
 export const SERIES_COLOURS = ['#154275', '#c84c04', '#28a197'];
 // Writes each line's name just right of its last point, in the line's colour, nudged apart when two lines end close.

@@ -1,8 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 
 // The oil price since 1970 with each shock labelled at its peak (Covid at its low), drawn as SVG at the card's own
-// width so text stays readable: a phone keeps the four most recent labels. Colours follow the UKHSA dashboard:
-// GOV.UK dark blue line, grey secondary text, 5% black gridlines.
+// width so text stays readable: a phone keeps the four most recent labels. Dark blue line, grey secondary text, 5%
+// black gridlines.
 const BLUE = '#12436d', MUTED = '#6b7276', INK = '#0b0c0c', GRID = 'rgba(0,0,0,0.05)', AXIS = 'rgba(0,0,0,0.35)';
 // Label offsets in pixels at full width: [above the point, sideways], or 'side' for a label to the left of a low.
 const PLACE = {
