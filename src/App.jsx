@@ -1018,7 +1018,7 @@ function CarFuelInsight({ page }) {
     <div className="title-block"><h1 className="dk-h1">{page.title}</h1><p className="lede">{s ? <>A diesel Chevrolet Silverado gets {s.diesel.use} mpg to the gas truck&apos;s {s.gas.use}, yet costs {usd(s.diesel.month)} a month to fuel against {usd(s.gas.month)}. Diesel is {gallon(p.diesel)} a gallon, regular {gallon(p.regular)}. </> : null}The cheapest best seller to run is the {c.low.name}, at {usd(c.low.month)} charged at home.</p></div>
     <ChartCard
       id="cars-title"
-      title="A month of fuel in the 25 best-selling models"
+      title="Monthly fuel cost per car model"
       description={`Fuel or home charging for ${number(c.miles)} miles, the average vehicle's month, at this week's prices. Best sellers first.`}
       tabs={[
         { label: 'Chart', content: <FuelDots rows={rows} keys={used.map((f) => ({ label: FUEL_LABELS[f], colour: FUEL_COLOURS[f] }))} format={usd} /> },
