@@ -1000,7 +1000,7 @@ function PjmPricesInsight({ page }) {
 const FUEL_COLOURS = { gas: '#b1b4b6', hybrid: SERIES_COLOURS[2], diesel: SERIES_COLOURS[1], electric: SERIES_COLOURS[0] };
 const FUEL_LABELS = { gas: 'Gas', hybrid: 'Hybrid', diesel: 'Diesel', electric: 'Electric, charged at home' };
 function CarFuelInsight({ page }) {
-  const c = page.cars, p = c.prices, s = c.silverado;
+  const c = page.cars, p = c.prices;
   const usd = (v) => `$${Math.round(v)}`;
   const gallon = (v) => `$${v.toFixed(2)}`;
   const use = (v) => (v.fuel === 'electric' ? `${v.use} kWh per 100 miles` : `${v.use} mpg`);
@@ -1013,9 +1013,9 @@ function CarFuelInsight({ page }) {
     { key: 'use', header: 'EPA rating', hideBelow: 'sm', render: (r) => r.use },
     { key: 'month', header: 'A month', align: 'right', render: (r) => usd(r.month) },
   ];
-  const source = <p className="chart-note">Source: <a href="https://www.fueleconomy.gov/feg/download.shtml" target="_blank" rel="noreferrer">EPA</a> fuel economy; <a href="https://www.eia.gov/petroleum/gasdiesel/" target="_blank" rel="noreferrer">EIA</a> pump and electricity prices; <a href="https://www.fhwa.dot.gov/policyinformation/statistics/2024/vm1.cfm" target="_blank" rel="noreferrer">FHWA</a> miles; carmaker sales via <a href="https://www.goodcarbadcar.net/2026-us-auto-sales-figures-by-model-all-vehicle-ranked/" target="_blank" rel="noreferrer">GoodCarBadCar</a>.</p>;
+  const source = <p className="chart-note">Source: <a href="https://www.fueleconomy.gov/feg/download.shtml" target="_blank" rel="noreferrer">EPA</a> fuel economy; <a href="https://www.eia.gov/petroleum/gasdiesel/" target="_blank" rel="noreferrer">EIA</a> pump and electricity prices; <a href="https://www.fhwa.dot.gov/policyinformation/statistics/2024/vm1.cfm" target="_blank" rel="noreferrer">FHWA</a> miles.</p>;
   return <>
-    <div className="title-block"><h1 className="dk-h1">{page.title}</h1><p className="lede">{s ? <>A diesel Chevrolet Silverado gets {s.diesel.use} mpg to the gas truck&apos;s {s.gas.use}, yet costs {usd(s.diesel.month)} a month to fuel against {usd(s.gas.month)}. Diesel is {gallon(p.diesel)} a gallon, regular {gallon(p.regular)}. </> : null}The cheapest best seller to run is the {c.low.name}, at {usd(c.low.month)} charged at home.</p></div>
+    <div className="title-block"><h1 className="dk-h1">{page.title}</h1><p className="lede">{c.top.fuel === 'diesel' ? 'Diesel pickups cost the most to run, despite better mileage. ' : ''}{c.low.fuel === 'electric' ? `A ${c.low.name} charged at home costs ${usd(c.low.month)} a month.` : `The cheapest to run is the ${c.low.name}, at ${usd(c.low.month)} a month.`}</p></div>
     <ChartCard
       id="cars-title"
       title="Monthly fuel cost per car model"
