@@ -101,7 +101,7 @@ function seo(page, path) {
     ld = [{ '@context': 'https://schema.org', '@type': 'ItemList', name: title, url: canonical, numberOfItems: page.insights.length, itemListElement: page.insights.map((i, n) => ({ '@type': 'ListItem', position: n + 1, name: i.title, url: `${SITE}/energy-prices/insights/${i.slug}` })) }];
   } else if (page.kind === 'insight' && page.slug === 'car-fuel-costs') {
     const c = page.cars, d = c.silverado, usd = (v) => `$${Math.round(v)}`;
-    title = `${page.title}: Monthly Fuel Cost of America's Best-Selling Cars`;
+    title = `${page.title}: Gas, Hybrid, Diesel and Electric`;
     description = `A month of fuel or home charging for the average vehicle's ${c.miles} miles in each version of the 25 best-selling US models, at this week's EIA prices.${d ? ` Diesel Silverado ${usd(d.diesel.month)}, gas Silverado ${usd(d.gas.month)}.` : ''} Cheapest: ${c.low.name} ${usd(c.low.month)}. EPA ratings, diesel $${c.prices.diesel.toFixed(2)} and regular $${c.prices.regular.toFixed(2)} a gallon.`;
     crumbs.push({ name: 'Insights', url: `${SITE}/energy-prices/insights` }, { name: 'Car fuel costs', url: canonical });
     ld = [dataset('Monthly fuel cost of the 25 best-selling US car models by version', description, { temporalCoverage: c.week, isBasedOn: ['https://www.fueleconomy.gov/feg/download.shtml', 'https://www.eia.gov/petroleum/gasdiesel/', 'https://www.fhwa.dot.gov/policyinformation/statistics/2024/vm1.cfm'], distribution: [{ '@type': 'DataDownload', encodingFormat: 'text/csv', contentUrl: `${absolute(dataPath)}/downloads/car-fuel-costs.csv.gz` }] })];
