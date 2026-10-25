@@ -14,6 +14,15 @@ const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 
 const month = (ym) => `${MONTHS[Number(ym.slice(5, 7)) - 1]} ${ym.slice(0, 4)}`;
 const images = [];
 
+const cars = load('car-fuel-costs');
+if (cars) {
+  const c = cars.cars, d = c.silverado, usd = (v) => `$${Math.round(v)}`;
+  images.push({
+    out: join(data, 'og-car-fuel-costs.png'), title: cars.title, source: 'EPA, EIA, FHWA',
+    key: `A month of fuel for ${c.miles} miles, the average vehicle's month, at this week's prices.`,
+    figures: [...(d ? [{ value: usd(d.diesel.month), label: 'Diesel Silverado', colour: ORANGE }, { value: usd(d.gas.month), label: 'Gas Silverado', colour: '#6f777b' }] : []), { value: usd(c.low.month), label: c.low.name, colour: BLUE }],
+  });
+}
 const pjm = load('pjm-power-prices');
 if (pjm) {
   const p = pjm.pjm;

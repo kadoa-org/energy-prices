@@ -6,6 +6,7 @@ import { createInterface } from 'node:readline';
 import { createGunzip, gzipSync } from 'node:zlib';
 import { BASE, addDays, addMonths, money, monthLabel, monthlySummary, pct, slugify, trailingMean, trailingPrice, weeklySummary } from '../src/model.mjs';
 import { utilityName } from '../src/names.mjs';
+import { CAR_SALES_PERIOD, MILES_A_YEAR, carCosts } from '../src/cars.mjs';
 
 const root = resolve(import.meta.dirname, '..');
 // The dataset pipeline lives outside this repository; point ENERGY_DATASET_DIR at its folder (a local .env works).
@@ -772,6 +773,40 @@ if (pjmPrices) {
   await page(`insights/${slug}`, `${BASE}/insights/${slug}`, { kind: 'insight', slug, title, pjm: p });
   const lines = ['state,name,grid,price_cents_kwh_jun2024_may2025,price_cents_kwh_jun2025_may2026,change_pct'];
   for (const r of p.rows) lines.push([r.code, /[",]/.test(r.name) ? `"${r.name}"` : r.name, { pjm: 'PJM', partial: 'partly PJM', other: 'not PJM' }[r.group], r.from, r.to, r.change].join(','));
+  await writeFile(join(out, `downloads/${slug}.csv.gz`), gzipSync(lines.join('\n') + '\n'));
+}
+// Car fuel costs: a month of the average light-duty vehicle's miles in each version of the best-selling models, at
+// this week's US pump prices and the latest US home electricity price (src/cars.mjs has the EPA and sales inputs).
+const carFuel = (() => {
+  const last = (id) => points.get(id)?.at(-1);
+  const grades = { regular: 'eia-pet:EMM_EPMR_PTE_NUS_DPG.W', midgrade: 'eia-pet:EMM_EPMM_PTE_NUS_DPG.W', premium: 'eia-pet:EMM_EPMP_PTE_NUS_DPG.W', diesel: 'eia-pet:EMD_EPD2D_PTE_NUS_DPG.W' };
+  const pump = Object.fromEntries(Object.entries(grades).map(([k, id]) => [k, last(id)]));
+  const power = series(elec('residential_price', 'US')).at(-1);
+  if (Object.values(pump).some((v) => !v)) return null;
+  const prices = { ...Object.fromEntries(Object.entries(pump).map(([k, [, v]]) => [k, v])), electricity: power[1] };
+  const miles = MILES_A_YEAR / 12;
+  const rows = carCosts(prices, miles);
+  const all = rows.flatMap((r) => r.versions.map((v) => ({ ...v, name: `${r.make} ${r.model}` })));
+  const top = all.reduce((a, b) => (b.month > a.month ? b : a)), low = all.reduce((a, b) => (b.month < a.month ? b : a));
+  const silverado = rows.find((r) => r.model === 'Silverado');
+  const pair = silverado && Object.fromEntries(silverado.versions.map((v) => [v.fuel, v]));
+  const hybridSavings = rows.filter((r) => r.versions.some((v) => v.fuel === 'hybrid') && r.versions.some((v) => v.fuel === 'gas'))
+    .map((r) => r.versions.find((v) => v.fuel === 'gas').month - r.versions.find((v) => v.fuel === 'hybrid').month);
+  return {
+    rows, prices: { ...prices }, week: pump.regular[0], powerMonth: power[0], miles: Math.round(miles), milesYear: MILES_A_YEAR, period: CAR_SALES_PERIOD,
+    top: { name: top.name, fuel: top.fuel, month: top.month }, low: { name: low.name, fuel: low.fuel, month: low.month },
+    silverado: pair?.diesel && pair?.gas ? { gas: pair.gas, diesel: pair.diesel } : null,
+    dieselPremium: round(pct(prices.diesel, prices.regular), 0),
+    hybridSavings: { min: Math.round(Math.min(...hybridSavings)), max: Math.round(Math.max(...hybridSavings)), models: hybridSavings.length },
+  };
+})();
+if (carFuel) {
+  const c = carFuel, slug = 'car-fuel-costs';
+  const title = c.top.fuel === 'diesel' && c.silverado && c.silverado.diesel.use > c.silverado.gas.use ? 'Diesel pickups get better mileage but cost the most to fill up' : `A month of driving costs $${Math.round(c.low.month)} to $${Math.round(c.top.month)} in America's best-selling cars`;
+  INSIGHTS.unshift({ slug, title, summary: `A month of fuel or home charging for the average vehicle's ${c.miles} miles, in each version of the 25 best-selling US models.` });
+  await page(`insights/${slug}`, `${BASE}/insights/${slug}`, { kind: 'insight', slug, title, cars: c });
+  const lines = ['make,model,sold_jan_sep_2026,fuel,epa_combined_mpg_or_kwh_per_100mi,epa_configurations,monthly_cost_usd'];
+  for (const r of c.rows) for (const v of r.versions) lines.push([r.make, r.model, r.sold, v.fuel, v.use, v.configs, v.month].join(','));
   await writeFile(join(out, `downloads/${slug}.csv.gz`), gzipSync(lines.join('\n') + '\n'));
 }
 if (INSIGHTS.length) await page('insights', `${BASE}/insights`, { kind: 'insights', insights: INSIGHTS });

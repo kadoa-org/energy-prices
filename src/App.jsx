@@ -10,6 +10,7 @@ import FuelWork from './FuelWork';
 import PriceSpread from './PriceSpread';
 import GapDots from './GapDots';
 import PriceGaps from './PriceGaps';
+import FuelDots from './FuelDots';
 import { StapleChart, StapleRanking, ValueRanking, monthTime, stapleScales } from './StaplesChart';
 import { BASE, HOME, addDays, addMonths, cents, dataPath, dateLabel, money, monthLabel, number, pctLabel } from './model.mjs';
 import { priceText } from './format.mjs';
@@ -994,7 +995,53 @@ function PjmPricesInsight({ page }) {
   </>;
 }
 
-const INSIGHT_VIEWS = { 'pjm-power-prices': PjmPricesInsight, 'investor-owned-utilities': UtilityOwnershipInsight, 'gold-top-export': GoldExportsInsight, 'fuel-minutes-of-work': FuelWorkInsight };
+
+// ── Car fuel costs: a month of driving in each version of the best-selling US models, at this week's prices.
+const FUEL_COLOURS = { gas: '#b1b4b6', hybrid: SERIES_COLOURS[2], diesel: SERIES_COLOURS[1], electric: SERIES_COLOURS[0] };
+const FUEL_LABELS = { gas: 'Gas', hybrid: 'Hybrid', diesel: 'Diesel', electric: 'Electric, charged at home' };
+function CarFuelInsight({ page }) {
+  const c = page.cars, p = c.prices, s = c.silverado;
+  const usd = (v) => `$${Math.round(v)}`;
+  const gallon = (v) => `$${v.toFixed(2)}`;
+  const use = (v) => (v.fuel === 'electric' ? `${v.use} kWh per 100 miles` : `${v.use} mpg`);
+  const rows = c.rows.map((r) => ({ name: `${r.make} ${r.model}`, dots: r.versions.map((v) => ({ label: FUEL_LABELS[v.fuel], value: v.month, colour: FUEL_COLOURS[v.fuel] })) }));
+  const used = ['gas', 'hybrid', 'diesel', 'electric'].filter((f) => c.rows.some((r) => r.versions.some((v) => v.fuel === f)));
+  const table = c.rows.flatMap((r) => r.versions.map((v) => ({ key: `${r.model}-${v.fuel}`, name: `${r.make} ${r.model}`, fuel: FUEL_LABELS[v.fuel], use: use(v), month: v.month })));
+  const columns = [
+    { key: 'name', header: 'Model', render: (r) => r.name },
+    { key: 'fuel', header: 'Version', render: (r) => r.fuel },
+    { key: 'use', header: 'EPA rating', hideBelow: 'sm', render: (r) => r.use },
+    { key: 'month', header: 'A month', align: 'right', render: (r) => usd(r.month) },
+  ];
+  const source = <p className="chart-note">Source: <a href="https://www.fueleconomy.gov/feg/download.shtml" target="_blank" rel="noreferrer">EPA</a> fuel economy; <a href="https://www.eia.gov/petroleum/gasdiesel/" target="_blank" rel="noreferrer">EIA</a> pump and electricity prices; <a href="https://www.fhwa.dot.gov/policyinformation/statistics/2024/vm1.cfm" target="_blank" rel="noreferrer">FHWA</a> miles; carmaker sales via <a href="https://www.goodcarbadcar.net/2026-us-auto-sales-figures-by-model-all-vehicle-ranked/" target="_blank" rel="noreferrer">GoodCarBadCar</a>.</p>;
+  return <>
+    <div className="title-block"><h1 className="dk-h1">{page.title}</h1><p className="lede">{s ? <>A diesel Chevrolet Silverado gets {s.diesel.use} mpg to the gas truck&apos;s {s.gas.use}, yet costs {usd(s.diesel.month)} a month to fuel against {usd(s.gas.month)}. Diesel is {gallon(p.diesel)} a gallon, regular {gallon(p.regular)}. </> : null}The cheapest best seller to run is the {c.low.name}, at {usd(c.low.month)} charged at home.</p></div>
+    <ChartCard
+      id="cars-title"
+      title="A month of fuel in the 25 best-selling models"
+      description={`Fuel or home charging for ${number(c.miles)} miles, the average vehicle's month, at this week's prices. Best sellers first.`}
+      tabs={[
+        { label: 'Chart', content: <FuelDots rows={rows} keys={used.map((f) => ({ label: FUEL_LABELS[f], colour: FUEL_COLOURS[f] }))} format={usd} /> },
+        { label: 'Tabular data', short: 'Tabular', content: <DataTable rows={table} columns={columns} rowKey={(r) => r.key} /> },
+        { label: 'Download', content: <><p className="download-intro">Every version: sales, EPA rating, number of EPA configurations and the monthly cost, as a gzipped CSV.</p><Download file="car-fuel-costs.csv.gz" common={page.common} /></> },
+      ]}
+      footer={source}
+    />
+    <section className="insight-notes">
+      <SectionHeading>About the data</SectionHeading>
+      <ul>
+        <li>Prices are US averages: regular {gallon(p.regular)}, premium {gallon(p.premium)} and diesel {gallon(p.diesel)} a gallon in the week of {dateLabel(c.week)}, and {cents(p.electricity)} a kWh for home electricity in {monthLabel(c.powerMonth)}. Diesel costs {c.dieselPremium}% more than regular.</li>
+        <li>Every car drives {number(c.milesYear)} miles a year, the average for cars, SUVs and pickups on US roads in 2024.</li>
+        <li>Mileage is EPA&apos;s combined rating for the {c.rows[0].epaYear} models, the middle of each version&apos;s configurations. Gas and hybrid versions count only those that run on regular, so a Raptor does not set the F-150&apos;s figure. Real-world mileage is usually a little worse.</li>
+        <li>Best sellers are January to September 2026, from the carmakers&apos; own reports. The F-Series uses F-150 ratings, since EPA does not rate Super Duty trucks. The Silverado EV and Equinox EV are left out because they are sold as separate models, and the Ford Transit van because EPA does not rate it.</li>
+        <li>Electric cars are charged at home. Public fast chargers cost several times more per kWh.</li>
+        <li>Hybrids save {usd(c.hybridSavings.min)} to {usd(c.hybridSavings.max)} a month on all {c.hybridSavings.models} models sold both ways.</li>
+      </ul>
+    </section>
+  </>;
+}
+
+const INSIGHT_VIEWS = { 'car-fuel-costs': CarFuelInsight, 'pjm-power-prices': PjmPricesInsight, 'investor-owned-utilities': UtilityOwnershipInsight, 'gold-top-export': GoldExportsInsight, 'fuel-minutes-of-work': FuelWorkInsight };
 function Insight({ page }) {
   const View = INSIGHT_VIEWS[page.slug];
   return <View page={page} />;
