@@ -802,7 +802,7 @@ const carFuel = (() => {
 })();
 if (carFuel) {
   const c = carFuel, slug = 'car-fuel-costs';
-  const title = c.top.fuel === 'diesel' && c.silverado && c.silverado.diesel.use > c.silverado.gas.use ? 'Diesel pickups get better mileage but cost the most to fill up' : `A month of driving costs $${Math.round(c.low.month)} to $${Math.round(c.top.month)} in America's best-selling cars`;
+  const title = `A month of fuel costs $${Math.round(c.low.month)} to $${Math.round(c.top.month)} in America's best-selling cars`;
   INSIGHTS.unshift({ slug, title, summary: `A month of fuel or home charging for the average vehicle's ${c.miles} miles, in each version of the 25 best-selling US models.` });
   await page(`insights/${slug}`, `${BASE}/insights/${slug}`, { kind: 'insight', slug, title, cars: c });
   const lines = ['make,model,sold_jan_sep_2026,fuel,epa_combined_mpg_or_kwh_per_100mi,epa_configurations,monthly_cost_usd'];
