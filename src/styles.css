@@ -9,7 +9,8 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,su
 .skip-link{position:absolute;top:-100px;left:15px;background:var(--dk-focus);color:var(--dk-ink);padding:10px;z-index:20}.skip-link:focus{top:8px}
 .main{padding-top:40px;padding-bottom:60px;min-height:65vh}
 .hero{display:flex;justify-content:space-between;align-items:flex-start;gap:24px;margin-bottom:24px}.hero>div{max-width:760px}
-.lede{font-size:19px;line-height:1.45;color:var(--dk-muted);margin-bottom:0}.detail-hero .dk-hint{margin:10px 0 0}
+/* The lede is the kit's lead paragraph (.dk-lede): 24px, 21px on phones, in the text colour, in the heading's column. */
+.lede{font-size:24px;line-height:30px;color:var(--dk-ink,#0b0c0c);margin-bottom:0;max-width:var(--dk-text-column,720px);text-wrap:pretty}@media (max-width:640px){.lede{font-size:21px;line-height:25px}}.detail-hero .dk-hint{margin:10px 0 0}
 
 .dk-btn{text-decoration:none;min-height:36px;height:auto;padding-top:7px;padding-bottom:7px}
 .dk-section-head{align-items:flex-end}.dk-section-head .dk-hint{max-width:70ch}
@@ -383,8 +384,8 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,su
 .spread__band{display:flex;align-items:flex-end}.spread__bar{display:block;width:100%}
 .spread__axis{position:relative;height:24px;margin-left:44px;font-size:14px;color:var(--dk-muted,#505a5f)}.spread__axis span{position:absolute;top:6px;transform:translateX(-50%);white-space:nowrap}
 
-/* Running text keeps to the GOV.UK two-thirds column, about 640px, so lines stay short on a wide screen. */
-.title-block .lede,.insight-notes,.key-figures__context,.chart-panel-card__desc{max-width:640px}
+/* Running text keeps to about 640px, so lines stay short on a wide screen. */
+.insight-notes,.key-figures__context,.chart-panel-card__desc{max-width:640px}
 
 /* Price dumbbells (PriceGaps.jsx): name, track, gap. Values sit beside their dots, the comparison on the left. */
 .pgaps{--pgaps-name:24ch}
