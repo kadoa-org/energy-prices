@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { CARS, carCosts, carRange } from '../src/cars.mjs';
+import { CARS, carCosts, carFullRange, carRange } from '../src/cars.mjs';
 import { CAR_SHAPES, carSvg } from '../src/carShapes.mjs';
 
 describe('carCosts', () => {
@@ -27,6 +27,17 @@ describe('carRange', () => {
     expect(range).toHaveLength(rows.reduce((n, r) => n + r.versions.length, 0));
     const diesel = range.find((r) => r.model === 'Silverado' && r.fuel === 'diesel');
     expect(diesel.miles).toBeCloseTo((100 / 6) * 23, 0);
+    expect(range.every((r, i) => i === 0 || range[i - 1].miles >= r.miles)).toBe(true);
+  });
+});
+
+describe('carFullRange', () => {
+  test('gives every version a range: EPA range for electric ones, standard tank times middle mpg for the rest', () => {
+    const range = carFullRange();
+    expect(range).toHaveLength(carCosts({ regular: 4, midgrade: 4.5, premium: 5, diesel: 6, electricity: 20 }).reduce((n, r) => n + r.versions.length, 0));
+    const silverado = CARS.find((c) => c.model === 'Silverado');
+    expect(range.find((r) => r.model === 'Silverado' && r.fuel === 'diesel').miles).toBe(23 * silverado.tanks.diesel);
+    expect(range.find((r) => r.model === 'Model Y').miles).toBe((306 + 321) / 2);
     expect(range.every((r, i) => i === 0 || range[i - 1].miles >= r.miles)).toBe(true);
   });
 });

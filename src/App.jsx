@@ -12,7 +12,7 @@ import GapDots from './GapDots';
 import PriceGaps from './PriceGaps';
 import FuelDots from './FuelDots';
 import CarRange from './CarRange';
-import { NEW_YORK_TO, carCosts, carRange } from './cars.mjs';
+import { NEW_YORK_TO, carCosts, carFullRange, carRange } from './cars.mjs';
 import { StapleChart, StapleRanking, ValueRanking, monthTime, stapleScales } from './StaplesChart';
 import { BASE, HOME, addDays, addMonths, cents, dataPath, dateLabel, money, monthLabel, number, pctLabel } from './model.mjs';
 import { priceText } from './format.mjs';
@@ -1015,6 +1015,8 @@ function CarFuelInsight({ page }) {
   const style = (r) => ({ ...r, key: `${r.model}-${r.fuel}`.replace(/\W/g, ''), name: `${r.make} ${r.model}`, fuelLabel: r.fuel, colour: FUEL_COLOURS[r.fuel], textColour: FUEL_TEXT[r.fuel], text: number(Math.round(r.miles)) });
   const range = carRange(costs, c.milesYear / 12).map(style);
   const usRange = carRange(c.rows, c.milesYear / 12).map(style);
+  // Range on a full tank or charge does not depend on prices, so it ignores the state picker.
+  const full = carFullRange().map(style);
   // The lede's shortest and furthest runs at US prices: "diesel Chevrolet Silverado", "Tesla Model Y charged at home".
   const near = usRange.at(-1), far = usRange[0];
   const runName = (r) => (r.fuel === 'electric' ? `${r.name} charged at home` : `${r.fuel} ${r.name}`);
@@ -1033,6 +1035,8 @@ function CarFuelInsight({ page }) {
     : place.gasArea && place.gasArea === place.dieselArea ? `Gas and diesel are ${place.gasArea} averages, since EIA doesn't survey pump prices in ${place.name}.`
       : place.dieselArea ? `Diesel is the ${place.dieselArea} average.` : null;
   const picker = <FilterSelect label="Prices in" value={code} options={[['US', 'United States (average)'], ...c.places.map((s) => [s.code, s.name])]} onChange={setCode} />;
+  const fullKeys = ['gas', 'hybrid', 'diesel', 'electric'].map((f) => ({ label: f[0].toUpperCase() + f.slice(1), value: f === 'electric' ? 'EPA range' : 'Standard tank', colour: FUEL_COLOURS[f], textColour: FUEL_TEXT[f] }));
+  const fullColumns = [...rangeColumns.slice(0, 2), { key: 'miles', header: 'Miles on a full tank', align: 'right', render: (r) => miles(r.miles) }];
   const use = (v) => (v.fuel === 'electric' ? `${v.use} kWh per 100 miles` : `${v.use} mpg`);
   const rows = costs.map((r) => ({ name: `${r.make} ${r.model}`, dots: r.versions.map((v) => ({ label: FUEL_LABELS[v.fuel], value: v.month, colour: FUEL_COLOURS[v.fuel] })) }));
   const used = ['gas', 'hybrid', 'diesel', 'electric'].filter((f) => costs.some((r) => r.versions.some((v) => v.fuel === f)));
@@ -1057,6 +1061,16 @@ function CarFuelInsight({ page }) {
       footer={<p className="chart-note">Source: <a href="https://www.fueleconomy.gov/feg/download.shtml" target="_blank" rel="noreferrer">EPA</a> fuel economy; <a href="https://www.eia.gov/petroleum/gasdiesel/" target="_blank" rel="noreferrer">EIA</a> pump and <a href="https://www.eia.gov/electricity/monthly/epm_table_grapher.php?t=epmt_5_3" target="_blank" rel="noreferrer">home electricity</a> prices; <a href={COX_EV_SALES} target="_blank" rel="noreferrer">Cox Automotive</a> electric car sales.</p>}
     />
     <ChartCard
+      id="tank-title"
+      title="Miles on a full tank or charge"
+      description="The same versions. Electric cars go furthest on $100 but stop soonest."
+      tabs={[
+        { label: 'Chart', content: <CarRange runs={full} places={NEW_YORK_TO} start="For scale: road miles from New York" keys={fullKeys} /> },
+        { label: 'Tabular data', short: 'Tabular', content: <DataTable rows={full} columns={fullColumns} rowKey={(r) => r.key} /> },
+      ]}
+      footer={<p className="chart-note">Source: <a href="https://www.fueleconomy.gov/feg/download.shtml" target="_blank" rel="noreferrer">EPA</a> range and fuel economy; carmakers&apos; spec sheets for tank sizes.</p>}
+    />
+    <ChartCard
       id="cars-title"
       title="Monthly fuel cost per car model"
       description={`Fuel or home charging for ${number(c.miles)} miles, the average vehicle's month, at this week's prices${place ? ` in ${place.name}` : ''}. Best sellers first, then the best-selling electric models.`}
@@ -1074,6 +1088,7 @@ function CarFuelInsight({ page }) {
         <li>Mileage is EPA&apos;s combined rating for {c.rows[0].epaYear} models, taking the middle configuration of each version. Real-world mileage is usually a little worse.</li>
         <li>Hybrids run on gas only, as they&apos;re regular hybrids you can&apos;t plug in. Plug-in versions are left out because their cost depends on how often they&apos;re charged.</li>
         <li>Cars are the {c.lists.top} best sellers from January to September 2026, plus the next {c.lists.electric} best-selling electric models (Cox Automotive estimates), since the Model Y is the only EV in the top {c.lists.top}.</li>
+        <li>A full tank is the version&apos;s standard tank times its EPA combined mpg. Some pickups come with other tank sizes. Electric cars use EPA&apos;s range for a full charge.</li>
         <li>A month is {number(c.miles)} miles, the US average. Road distances from New York are rounded.</li>
       </ul>
     </section>

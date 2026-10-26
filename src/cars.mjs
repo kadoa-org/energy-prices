@@ -1,7 +1,8 @@
 // What a month of driving costs in each version of the 25 best-selling US models and the 5 best-selling electric ones,
 // at this week's pump prices and the latest home electricity price. Sales are January to September 2026 as the
 // carmakers report them (compiled by GoodCarBadCar; Tesla and GM monthly figures are estimates). Each version lists
-// its EPA configurations as [combined mpg, fuel grade], or [kWh per 100 miles, 'electricity'] for electric ones. Gas
+// its EPA configurations as [combined mpg, fuel grade], or [kWh per 100 miles, 'electricity', EPA range in miles] for
+// electric ones; `tanks` gives the standard fuel tank of each other version in US gallons, from the carmakers. Gas
 // and hybrid versions keep only the regular-fuel configurations where a model has them, so premium high-output trims
 // (Raptor, Ram RHO) do not set the figure. Electric models sold under their own name (Silverado EV, Equinox EV) are
 // not versions of the gas ones. Left out: Ram's eTorque mild hybrid, rated no better than the gas truck; Super Duty
@@ -11,40 +12,40 @@ export const CAR_SALES_PERIOD = { from: '2026-01', to: '2026-09' };
 // FHWA Highway Statistics 2024, table VM-1: average miles a year per light-duty vehicle.
 export const MILES_A_YEAR = 10787;
 export const CARS = [
-  { make: 'Ford', model: 'F-Series', sold: 561508, epaYear: 2026, versions: { gas: [[16, 'regular'], [17, 'regular'], [18, 'regular'], [19, 'regular'], [19, 'regular'], [19, 'regular'], [20, 'regular'], [20, 'regular'], [21, 'regular']], hybrid: [[23, 'regular'], [24, 'regular']] } },
-  { make: 'Chevrolet', model: 'Silverado', sold: 422713, epaYear: 2026, versions: { gas: [[15, 'regular'], [16, 'regular'], [16, 'regular'], [16, 'regular'], [17, 'regular'], [17, 'regular'], [17, 'regular'], [17, 'regular'], [17, 'regular'], [17, 'regular'], [17, 'regular'], [18, 'regular'], [18, 'regular'], [19, 'regular'], [19, 'regular'], [20, 'regular']], diesel: [[21, 'diesel'], [23, 'diesel'], [23, 'diesel'], [23, 'diesel'], [24, 'diesel'], [25, 'diesel']] } },
-  { make: 'Honda', model: 'CR-V', sold: 336844, epaYear: 2026, versions: { gas: [[29, 'regular'], [30, 'regular']], hybrid: [[35, 'regular'], [37, 'regular'], [40, 'regular']] } },
-  { make: 'Ram', model: 'Pickup', sold: 325348, epaYear: 2026, versions: { gas: [[20, 'regular'], [21, 'regular']] } },
-  { make: 'Tesla', model: 'Model Y', sold: 265000, epaYear: 2026, versions: { electric: [[24.3, 'electricity'], [25.2, 'electricity'], [25.7, 'electricity'], [26.5, 'electricity'], [27.5, 'electricity'], [32.0, 'electricity']] } },
-  { make: 'Toyota', model: 'Camry', sold: 260684, epaYear: 2026, versions: { hybrid: [[43, 'regular'], [46, 'regular'], [46, 'regular'], [50, 'regular'], [51, 'regular']] } },
-  { make: 'GMC', model: 'Sierra', sold: 257344, epaYear: 2026, versions: { gas: [[15, 'regular'], [16, 'regular'], [16, 'regular'], [16, 'regular'], [16, 'regular'], [17, 'regular'], [17, 'regular'], [17, 'regular'], [17, 'regular'], [17, 'regular'], [17, 'regular'], [18, 'regular'], [18, 'regular'], [19, 'regular'], [20, 'regular']], diesel: [[19, 'diesel'], [23, 'diesel'], [24, 'diesel'], [25, 'diesel']] } },
-  { make: 'Toyota', model: 'RAV4', sold: 253664, epaYear: 2026, versions: { hybrid: [[38, 'regular'], [41, 'regular'], [41, 'regular'], [41, 'regular'], [42, 'regular'], [43, 'regular']] } },
-  { make: 'Toyota', model: 'Tacoma', sold: 214875, epaYear: 2026, versions: { gas: [[20, 'regular'], [21, 'regular'], [21, 'regular'], [21, 'regular'], [21, 'regular'], [22, 'regular'], [23, 'regular'], [23, 'regular']], hybrid: [[23, 'regular'], [23, 'regular']] } },
-  { make: 'Nissan', model: 'Rogue', sold: 201991, epaYear: 2026, versions: { gas: [[29, 'regular'], [31, 'regular'], [32, 'regular']] } },
-  { make: 'Toyota', model: 'Corolla', sold: 195141, epaYear: 2026, versions: { hybrid: [[44, 'regular'], [47, 'regular'], [48, 'regular'], [50, 'regular']], gas: [[33, 'regular'], [33, 'regular'], [34, 'regular'], [34, 'regular'], [35, 'regular'], [35, 'regular']] } },
-  { make: 'Honda', model: 'Civic', sold: 195135, epaYear: 2026, versions: { gas: [[34, 'regular'], [34, 'regular'], [36, 'regular']], hybrid: [[48, 'regular'], [49, 'regular']] } },
-  { make: 'Chevrolet', model: 'Equinox', sold: 191578, epaYear: 2026, versions: { gas: [[26, 'regular'], [27, 'regular']] } },
-  { make: 'Ford', model: 'Explorer', sold: 189210, epaYear: 2026, versions: { gas: [[19, 'regular'], [20, 'regular'], [21, 'regular'], [21, 'regular'], [23, 'regular'], [24, 'regular']] } },
-  { make: 'Hyundai', model: 'Tucson', sold: 181687, epaYear: 2026, versions: { gas: [[26, 'regular'], [28, 'regular']], hybrid: [[36, 'regular'], [38, 'regular']] } },
-  { make: 'Chevrolet', model: 'Trax', sold: 167910, epaYear: 2026, versions: { gas: [[29, 'regular'], [30, 'regular']] } },
-  { make: 'Subaru', model: 'Forester', sold: 156476, epaYear: 2026, versions: { gas: [[26, 'regular'], [28, 'regular'], [29, 'regular']], hybrid: [[35, 'regular']] } },
-  { make: 'Kia', model: 'Sportage', sold: 145746, epaYear: 2026, versions: { gas: [[24, 'regular'], [26, 'regular'], [28, 'regular']], hybrid: [[35, 'regular'], [42, 'regular']] } },
-  { make: 'Honda', model: 'Accord', sold: 145521, epaYear: 2026, versions: { gas: [[31, 'regular'], [32, 'regular']], hybrid: [[44, 'regular'], [48, 'regular']] } },
-  { make: 'Jeep', model: 'Grand Cherokee', sold: 139764, epaYear: 2026, versions: { gas: [[21, 'regular'], [21, 'regular'], [22, 'regular'], [22, 'regular'], [22, 'regular'], [22, 'regular'], [23, 'regular'], [23, 'regular']] } },
-  { make: 'Subaru', model: 'Crosstrek', sold: 138249, epaYear: 2026, versions: { gas: [[26, 'regular'], [29, 'regular']], hybrid: [[36, 'regular']] } },
-  { make: 'Jeep', model: 'Wrangler', sold: 131011, epaYear: 2026, versions: { gas: [[19, 'regular'], [19, 'regular'], [20, 'regular'], [21, 'regular'], [21, 'regular']] } },
-  { make: 'Hyundai', model: 'Elantra', sold: 128603, epaYear: 2026, versions: { gas: [[31, 'regular'], [34, 'regular'], [35, 'regular']], hybrid: [[50, 'regular'], [54, 'regular']] } },
-  { make: 'Ford', model: 'Maverick', sold: 123681, epaYear: 2026, versions: { gas: [[23, 'regular'], [24, 'regular'], [25, 'regular'], [26, 'regular']], hybrid: [[36, 'regular'], [37, 'regular'], [38, 'regular']] } },
-  { make: 'Chevrolet', model: 'Traverse', sold: 120171, epaYear: 2026, versions: { gas: [[21, 'regular'], [22, 'regular']] } },
+  { make: 'Ford', model: 'F-Series', sold: 561508, epaYear: 2026, tanks: { gas: 36, hybrid: 30.6 }, versions: { gas: [[16, 'regular'], [17, 'regular'], [18, 'regular'], [19, 'regular'], [19, 'regular'], [19, 'regular'], [20, 'regular'], [20, 'regular'], [21, 'regular']], hybrid: [[23, 'regular'], [24, 'regular']] } },
+  { make: 'Chevrolet', model: 'Silverado', sold: 422713, epaYear: 2026, tanks: { gas: 24, diesel: 24 }, versions: { gas: [[15, 'regular'], [16, 'regular'], [16, 'regular'], [16, 'regular'], [17, 'regular'], [17, 'regular'], [17, 'regular'], [17, 'regular'], [17, 'regular'], [17, 'regular'], [17, 'regular'], [18, 'regular'], [18, 'regular'], [19, 'regular'], [19, 'regular'], [20, 'regular']], diesel: [[21, 'diesel'], [23, 'diesel'], [23, 'diesel'], [23, 'diesel'], [24, 'diesel'], [25, 'diesel']] } },
+  { make: 'Honda', model: 'CR-V', sold: 336844, epaYear: 2026, tanks: { gas: 14, hybrid: 14 }, versions: { gas: [[29, 'regular'], [30, 'regular']], hybrid: [[35, 'regular'], [37, 'regular'], [40, 'regular']] } },
+  { make: 'Ram', model: 'Pickup', sold: 325348, epaYear: 2026, tanks: { gas: 26 }, versions: { gas: [[20, 'regular'], [21, 'regular']] } },
+  { make: 'Tesla', model: 'Model Y', sold: 265000, epaYear: 2026, versions: { electric: [[24.3, 'electricity', 321], [25.2, 'electricity', 357], [25.7, 'electricity', 303], [26.5, 'electricity', 294], [27.5, 'electricity', 327], [32.0, 'electricity', 306]] } },
+  { make: 'Toyota', model: 'Camry', sold: 260684, epaYear: 2026, tanks: { hybrid: 13 }, versions: { hybrid: [[43, 'regular'], [46, 'regular'], [46, 'regular'], [50, 'regular'], [51, 'regular']] } },
+  { make: 'GMC', model: 'Sierra', sold: 257344, epaYear: 2026, tanks: { gas: 24, diesel: 24 }, versions: { gas: [[15, 'regular'], [16, 'regular'], [16, 'regular'], [16, 'regular'], [16, 'regular'], [17, 'regular'], [17, 'regular'], [17, 'regular'], [17, 'regular'], [17, 'regular'], [17, 'regular'], [18, 'regular'], [18, 'regular'], [19, 'regular'], [20, 'regular']], diesel: [[19, 'diesel'], [23, 'diesel'], [24, 'diesel'], [25, 'diesel']] } },
+  { make: 'Toyota', model: 'RAV4', sold: 253664, epaYear: 2026, tanks: { hybrid: 14.5 }, versions: { hybrid: [[38, 'regular'], [41, 'regular'], [41, 'regular'], [41, 'regular'], [42, 'regular'], [43, 'regular']] } },
+  { make: 'Toyota', model: 'Tacoma', sold: 214875, epaYear: 2026, tanks: { gas: 18.2, hybrid: 18.2 }, versions: { gas: [[20, 'regular'], [21, 'regular'], [21, 'regular'], [21, 'regular'], [21, 'regular'], [22, 'regular'], [23, 'regular'], [23, 'regular']], hybrid: [[23, 'regular'], [23, 'regular']] } },
+  { make: 'Nissan', model: 'Rogue', sold: 201991, epaYear: 2026, tanks: { gas: 14.5 }, versions: { gas: [[29, 'regular'], [31, 'regular'], [32, 'regular']] } },
+  { make: 'Toyota', model: 'Corolla', sold: 195141, epaYear: 2026, tanks: { gas: 13.2, hybrid: 11.3 }, versions: { hybrid: [[44, 'regular'], [47, 'regular'], [48, 'regular'], [50, 'regular']], gas: [[33, 'regular'], [33, 'regular'], [34, 'regular'], [34, 'regular'], [35, 'regular'], [35, 'regular']] } },
+  { make: 'Honda', model: 'Civic', sold: 195135, epaYear: 2026, tanks: { gas: 12.4, hybrid: 10.6 }, versions: { gas: [[34, 'regular'], [34, 'regular'], [36, 'regular']], hybrid: [[48, 'regular'], [49, 'regular']] } },
+  { make: 'Chevrolet', model: 'Equinox', sold: 191578, epaYear: 2026, tanks: { gas: 14.8 }, versions: { gas: [[26, 'regular'], [27, 'regular']] } },
+  { make: 'Ford', model: 'Explorer', sold: 189210, epaYear: 2026, tanks: { gas: 17.9 }, versions: { gas: [[19, 'regular'], [20, 'regular'], [21, 'regular'], [21, 'regular'], [23, 'regular'], [24, 'regular']] } },
+  { make: 'Hyundai', model: 'Tucson', sold: 181687, epaYear: 2026, tanks: { gas: 14.3, hybrid: 13.7 }, versions: { gas: [[26, 'regular'], [28, 'regular']], hybrid: [[36, 'regular'], [38, 'regular']] } },
+  { make: 'Chevrolet', model: 'Trax', sold: 167910, epaYear: 2026, tanks: { gas: 13.2 }, versions: { gas: [[29, 'regular'], [30, 'regular']] } },
+  { make: 'Subaru', model: 'Forester', sold: 156476, epaYear: 2026, tanks: { gas: 16.6, hybrid: 16.6 }, versions: { gas: [[26, 'regular'], [28, 'regular'], [29, 'regular']], hybrid: [[35, 'regular']] } },
+  { make: 'Kia', model: 'Sportage', sold: 145746, epaYear: 2026, tanks: { gas: 14.3, hybrid: 13.7 }, versions: { gas: [[24, 'regular'], [26, 'regular'], [28, 'regular']], hybrid: [[35, 'regular'], [42, 'regular']] } },
+  { make: 'Honda', model: 'Accord', sold: 145521, epaYear: 2026, tanks: { gas: 14.8, hybrid: 12.8 }, versions: { gas: [[31, 'regular'], [32, 'regular']], hybrid: [[44, 'regular'], [48, 'regular']] } },
+  { make: 'Jeep', model: 'Grand Cherokee', sold: 139764, epaYear: 2026, tanks: { gas: 23 }, versions: { gas: [[21, 'regular'], [21, 'regular'], [22, 'regular'], [22, 'regular'], [22, 'regular'], [22, 'regular'], [23, 'regular'], [23, 'regular']] } },
+  { make: 'Subaru', model: 'Crosstrek', sold: 138249, epaYear: 2026, tanks: { gas: 16.6, hybrid: 16.6 }, versions: { gas: [[26, 'regular'], [29, 'regular']], hybrid: [[36, 'regular']] } },
+  { make: 'Jeep', model: 'Wrangler', sold: 131011, epaYear: 2026, tanks: { gas: 21.5 }, versions: { gas: [[19, 'regular'], [19, 'regular'], [20, 'regular'], [21, 'regular'], [21, 'regular']] } },
+  { make: 'Hyundai', model: 'Elantra', sold: 128603, epaYear: 2026, tanks: { gas: 12.4, hybrid: 11 }, versions: { gas: [[31, 'regular'], [34, 'regular'], [35, 'regular']], hybrid: [[50, 'regular'], [54, 'regular']] } },
+  { make: 'Ford', model: 'Maverick', sold: 123681, epaYear: 2026, tanks: { gas: 16.5, hybrid: 13.8 }, versions: { gas: [[23, 'regular'], [24, 'regular'], [25, 'regular'], [26, 'regular']], hybrid: [[36, 'regular'], [37, 'regular'], [38, 'regular']] } },
+  { make: 'Chevrolet', model: 'Traverse', sold: 120171, epaYear: 2026, tanks: { gas: 19.4 }, versions: { gas: [[21, 'regular'], [22, 'regular']] } },
   // The Model Y is the only electric model in the top 25, so the five best-selling electric models after it follow,
   // with January to September 2026 sales from Cox Automotive's estimates (Kelley Blue Book EV Sales Report, Q3 2026),
   // leaving out delivery vans. Every consumer configuration counts, as for the Model Y; the Ioniq 5 robotaxi does not,
   // nor the bZ Woodland, which Cox counts as its own model.
-  { make: 'Tesla', model: 'Model 3', sold: 106962, epaYear: 2026, list: 'electric', versions: { electric: [[24.3, 'electricity'], [24.6, 'electricity'], [26.4, 'electricity'], [29.6, 'electricity'], [30.2, 'electricity']] } },
-  { make: 'Hyundai', model: 'Ioniq 5', sold: 31112, epaYear: 2026, list: 'electric', versions: { electric: [[29.0, 'electricity'], [30.0, 'electricity'], [31.7, 'electricity'], [34.5, 'electricity'], [35.8, 'electricity'], [43.0, 'electricity']] } },
-  { make: 'Toyota', model: 'bZ', sold: 24944, epaYear: 2026, list: 'electric', versions: { electric: [[25.5, 'electricity'], [25.8, 'electricity'], [26.9, 'electricity'], [27.5, 'electricity'], [28.0, 'electricity'], [28.9, 'electricity']] } },
-  { make: 'Chevrolet', model: 'Equinox EV', sold: 18154, epaYear: 2026, list: 'electric', versions: { electric: [[31.1, 'electricity'], [32.6, 'electricity'], [35.1, 'electricity']] } },
-  { make: 'Rivian', model: 'R1S', sold: 17259, epaYear: 2026, list: 'electric', versions: { electric: [[39.5, 'electricity'], [39.5, 'electricity'], [39.9, 'electricity'], [39.9, 'electricity'], [39.9, 'electricity'], [40.9, 'electricity'], [40.9, 'electricity'], [42.0, 'electricity'], [42.0, 'electricity'], [42.9, 'electricity'], [42.9, 'electricity'], [42.9, 'electricity'], [43.1, 'electricity'], [43.1, 'electricity'], [43.2, 'electricity'], [43.2, 'electricity'], [44.4, 'electricity'], [44.4, 'electricity'], [44.4, 'electricity'], [44.6, 'electricity'], [46.9, 'electricity'], [46.9, 'electricity'], [47.3, 'electricity'], [49.8, 'electricity'], [50.1, 'electricity']] } },
+  { make: 'Tesla', model: 'Model 3', sold: 106962, epaYear: 2026, list: 'electric', versions: { electric: [[24.3, 'electricity', 321], [24.6, 'electricity', 363], [26.4, 'electricity', 346], [29.6, 'electricity', 309], [30.2, 'electricity', 314]] } },
+  { make: 'Hyundai', model: 'Ioniq 5', sold: 31112, epaYear: 2026, list: 'electric', versions: { electric: [[29.0, 'electricity', 245], [30.0, 'electricity', 318], [31.7, 'electricity', 290], [34.5, 'electricity', 269], [35.8, 'electricity', 259], [43.0, 'electricity', 221]] } },
+  { make: 'Toyota', model: 'bZ', sold: 24944, epaYear: 2026, list: 'electric', versions: { electric: [[25.5, 'electricity', 314], [25.8, 'electricity', 236], [26.9, 'electricity', 299], [27.5, 'electricity', 296], [28.0, 'electricity', 288], [28.9, 'electricity', 278]] } },
+  { make: 'Chevrolet', model: 'Equinox EV', sold: 18154, epaYear: 2026, list: 'electric', versions: { electric: [[31.1, 'electricity', 319], [32.6, 'electricity', 307], [35.1, 'electricity', 288]] } },
+  { make: 'Rivian', model: 'R1S', sold: 17259, epaYear: 2026, list: 'electric', versions: { electric: [[39.5, 'electricity', 329], [39.5, 'electricity', 329], [39.9, 'electricity', 410], [39.9, 'electricity', 270], [39.9, 'electricity', 410], [40.9, 'electricity', 330], [40.9, 'electricity', 330], [42.0, 'electricity', 380], [42.0, 'electricity', 380], [42.9, 'electricity', 300], [42.9, 'electricity', 258], [42.9, 'electricity', 300], [43.1, 'electricity', 317], [43.1, 'electricity', 317], [43.2, 'electricity', 370], [43.2, 'electricity', 370], [44.4, 'electricity', 289], [44.4, 'electricity', 289], [44.4, 'electricity', 374], [44.6, 'electricity', 371], [46.9, 'electricity', 292], [46.9, 'electricity', 292], [47.3, 'electricity', 338], [49.8, 'electricity', 329], [50.1, 'electricity', 325]] } },
 ];
 // How many models the best-seller list holds, and how many electric models follow it.
 export const CAR_LISTS = { top: CARS.filter((c) => !c.list).length, electric: CARS.filter((c) => c.list === 'electric').length };
@@ -68,4 +69,14 @@ export const NEW_YORK_TO = [{ place: 'Washington', miles: 226 }, { place: 'Chica
 export function carRange(rows, miles, dollars = 100) {
   return rows.flatMap((r) => r.versions.map((v) => ({ make: r.make, model: r.model, fuel: v.fuel, miles: (dollars * miles) / v.month })))
     .sort((a, b) => b.miles - a.miles);
+}
+// How far each version goes on a full tank or charge, furthest first: the middle of its configurations' EPA ranges for
+// electric versions, and its standard tank times its middle EPA combined mpg for the rest.
+export function carFullRange() {
+  return CARS.flatMap((c) => FUEL_ORDER.filter((f) => c.versions[f]).map((fuel) => {
+    const configs = c.versions[fuel];
+    const miles = fuel === 'electric' ? median(configs.map(([, , range]) => range)) : median(configs.map(([mpg]) => mpg)) * c.tanks?.[fuel];
+    if (!(miles > 0)) throw new Error(`No full-tank range for the ${fuel} ${c.make} ${c.model}`);
+    return { make: c.make, model: c.model, fuel, miles };
+  })).sort((a, b) => b.miles - a.miles);
 }
