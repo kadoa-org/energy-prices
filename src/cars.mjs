@@ -54,14 +54,19 @@ export const CARS = [
 ];
 // How many models the best-seller list holds, how many electric models follow it, and the models added for comparison.
 export const CAR_LISTS = { top: CARS.filter((c) => !c.list).length, electric: CARS.filter((c) => c.list === 'electric').length, comparison: CARS.filter((c) => c.list === 'comparison').map((c) => c.model) };
-export const FUEL_ORDER = ['gas', 'hybrid', 'plugin', 'diesel', 'electric'];
+// The US average price at public DC fast chargers with per-kWh pricing, from Paren's quarterly report. Updated by hand
+// each quarter: no collector fetches it.
+export const FAST_CHARGING = { cents: 54.0, quarter: 'Q3 2026', url: 'https://www.paren.app/reports/us-ev-fast-charging-q3-2026' };
+export const FUEL_ORDER =['gas', 'hybrid', 'plugin', 'diesel', 'electric'];
 const median = (a) => { const s = [...a].sort((x, y) => x - y), m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
 const round = (v, d = 2) => Math.round(v * 10 ** d) / 10 ** d;
 // prices: dollars a gallon for regular, midgrade, premium and diesel; cents a kWh for electricity.
-export function carCosts(prices, miles = MILES_A_YEAR / 12) {
-  const power = (kwh, m) => (m * kwh) / 100 * (prices.electricity / 100);
-  const cost = ([use, grade, kwh, uf]) => (grade === 'electricity' ? power(use, miles)
-    : kwh ? power(kwh, miles * uf) + (miles * (1 - uf) / use) * prices[grade] : (miles / use) * prices[grade]);
+// charging: cents a kWh for electric versions, home power unless given (FAST_CHARGING for a trip). Plug-in hybrids
+// always charge at home, since most cannot use fast chargers.
+export function carCosts(prices, miles = MILES_A_YEAR / 12, charging = prices.electricity) {
+  const power = (kwh, m, cents) => (m * kwh) / 100 * (cents / 100);
+  const cost = ([use, grade, kwh, uf]) => (grade === 'electricity' ? power(use, miles, charging)
+    : kwh ? power(kwh, miles * uf, prices.electricity) + (miles * (1 - uf) / use) * prices[grade] : (miles / use) * prices[grade]);
   return CARS.map((c) => ({
     make: c.make, model: c.model, sold: c.sold, epaYear: c.epaYear, list: c.list ?? 'top',
     versions: FUEL_ORDER.filter((f) => c.versions[f]).map((fuel) => ({ fuel, month: round(median(c.versions[fuel].map(cost))), use: median(c.versions[fuel].map(([u]) => u)), configs: c.versions[fuel].length })),

@@ -18,6 +18,13 @@ describe('carCosts', () => {
     expect(plugin.month).toBeCloseTo(1000 * 0.487 * 0.68 * 0.2 + ((1000 * 0.513) / 20) * 4, 2);
     expect(carFullRange().find((r) => r.model === 'Wrangler' && r.fuel === 'plugin').miles).toBe(370);
   });
+  test('prices only electric versions at the charging price, so plug-in hybrids keep home power', () => {
+    const rows = carCosts(prices, 1000, 60);
+    const y = rows.find((c) => c.model === 'Model Y').versions[0];
+    expect(y.month).toBeCloseTo(1000 * (y.use / 100) * 0.6, 2);
+    const plugin = rows.find((c) => c.model === 'Wrangler').versions.find((v) => v.fuel === 'plugin');
+    expect(plugin.month).toBeCloseTo(1000 * 0.487 * 0.68 * 0.2 + ((1000 * 0.513) / 20) * 4, 2);
+  });
   test('lists versions in a fixed fuel order and keeps every best seller', () => {
     const rows = carCosts(prices);
     expect(rows).toHaveLength(CARS.length);
