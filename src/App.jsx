@@ -1090,11 +1090,11 @@ function CarFuelInsight({ page }) {
     <section className="insight-notes">
       <SectionHeading>About the data</SectionHeading>
       <ul>
-        <li>Gas and diesel are US averages for the week of {dateLabel(c.week)}. Electricity is the average home price in {monthLabel(c.powerMonth)}. Public fast chargers cost several times more.</li>
+        <li>Prices are US averages unless you pick a state: gas and diesel for the week of {dateLabel(c.week)}, home electricity for {monthLabel(c.powerMonth)}. EIA surveys pump prices in only {c.places.filter((s) => !s.gasArea).length} states, so the others use their region&apos;s average. Public fast chargers cost several times more than home power.</li>
         <li>Mileage is EPA&apos;s combined rating for {c.rows[0].epaYear} models, taking the middle configuration of each version. Real-world mileage is usually a little worse.</li>
-        <li>Hybrids are the regular kind you can&apos;t plug in, so they run on gas alone. Plug-in hybrids drive {pct(Math.min(...ufs))} to {pct(Math.max(...ufs))} of their miles on the battery, EPA&apos;s estimate for an owner who charges every night.</li>
+        <li>Hybrids are the regular kind you can&apos;t plug in, so they run on gas alone. Plug-in hybrids drive {pct(Math.min(...ufs))} to {pct(Math.max(...ufs))} of their miles on the battery, EPA&apos;s estimate for an owner who charges every night. Plug-in versions without a {c.rows[0].epaYear} EPA rating, like the RAV4&apos;s, are left out.</li>
         <li>Cars are the {c.lists.top} best sellers from January to September 2026, plus the next {c.lists.electric} best-selling electric models (Cox Automotive estimates), since the Model Y is the only EV in the top {c.lists.top}.{c.rows.filter((r) => r.list === 'comparison').map((r) => ` The ${r.model} is added for comparison, with ${number(r.sold)} sold.`).join('')}</li>
-        <li>A full tank is the version&apos;s standard tank times its EPA combined mpg. Some pickups come with other tank sizes. Electric cars use EPA&apos;s range for a full charge.</li>
+        <li>A full tank is the version&apos;s standard tank times its EPA combined mpg. Some pickups come with other tank sizes. Electric cars and plug-in hybrids use EPA&apos;s range on a full charge and tank.</li>
         <li>A month is {number(c.miles)} miles, the US average. Road distances from New York are rounded.</li>
       </ul>
     </section>
