@@ -1071,7 +1071,8 @@ function CarFuelInsight({ page }) {
       <SectionHeading>About the data</SectionHeading>
       <ul>
         <li>Gas and diesel are US averages for the week of {dateLabel(c.week)}. Electricity is the average home price in {monthLabel(c.powerMonth)}. Public fast chargers cost several times more.</li>
-        <li>Mileage is EPA&apos;s combined rating for {c.rows[0].epaYear} models, taking the middle configuration of each version. Real-world mileage is usually a little worse. Hybrids are the kind you can&apos;t plug in, so they run on gas alone.</li>
+        <li>Mileage is EPA&apos;s combined rating for {c.rows[0].epaYear} models, taking the middle configuration of each version. Real-world mileage is usually a little worse.</li>
+        <li>Hybrids run on gas only, as they&apos;re regular hybrids you can&apos;t plug in. Plug-in versions are left out because their cost depends on how often they&apos;re charged.</li>
         <li>Cars are the {c.lists.top} best sellers from January to September 2026, plus the next {c.lists.electric} best-selling electric models (Cox Automotive estimates), since the Model Y is the only EV in the top {c.lists.top}.</li>
         <li>A month is {number(c.miles)} miles, the US average. Road distances from New York are rounded.</li>
       </ul>
