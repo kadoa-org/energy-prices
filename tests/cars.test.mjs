@@ -13,6 +13,11 @@ describe('carCosts', () => {
     expect(y.fuel).toBe('electric');
     expect(y.month).toBeCloseTo(1000 * (y.use / 100) * 0.2, 2);
   });
+  test('splits a plug-in hybrid between battery and gas by its utility factor', () => {
+    const plugin = carCosts(prices, 1000).find((c) => c.model === 'Wrangler').versions.find((v) => v.fuel === 'plugin');
+    expect(plugin.month).toBeCloseTo(1000 * 0.487 * 0.68 * 0.2 + ((1000 * 0.513) / 20) * 4, 2);
+    expect(carFullRange().find((r) => r.model === 'Wrangler' && r.fuel === 'plugin').miles).toBe(370);
+  });
   test('lists versions in a fixed fuel order and keeps every best seller', () => {
     const rows = carCosts(prices);
     expect(rows).toHaveLength(CARS.length);

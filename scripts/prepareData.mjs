@@ -840,7 +840,7 @@ if (carFuel) {
   INSIGHTS.unshift({ slug, title, summary: `Miles on $100 of fuel or home charging, and a month's fuel cost, in each version of the ${c.lists.top} best-selling US models and the ${c.lists.electric} best-selling electric ones.` });
   await page(`insights/${slug}`, `${BASE}/insights/${slug}`, { kind: 'insight', slug, title, cars: c });
   const lines = ['make,model,sold_jan_sep_2026,fuel,epa_combined_mpg_or_kwh_per_100mi,epa_configurations,monthly_cost_usd,list'];
-  for (const r of c.rows) for (const v of r.versions) lines.push([r.make, r.model, r.sold, v.fuel, v.use, v.configs, v.month, r.list === 'electric' ? 'top electric' : 'top 25'].join(','));
+  for (const r of c.rows) for (const v of r.versions) lines.push([r.make, r.model, r.sold, v.fuel, v.use, v.configs, v.month, { electric: 'top electric', comparison: 'comparison' }[r.list] ?? 'top 25'].join(','));
   await writeFile(join(out, `downloads/${slug}.csv.gz`), gzipSync(lines.join('\n') + '\n'));
 }
 if (INSIGHTS.length) await page('insights', `${BASE}/insights`, { kind: 'insights', insights: INSIGHTS });
