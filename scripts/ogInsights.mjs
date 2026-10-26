@@ -3,6 +3,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { renderOgImages } from './og-insight.mjs';
+import { carRange } from '../src/cars.mjs';
 
 const root = resolve(import.meta.dirname, '..');
 const data = join(root, 'public/data');
@@ -16,11 +17,13 @@ const images = [];
 
 const cars = load('car-fuel-costs');
 if (cars) {
-  const c = cars.cars, d = c.silverado, usd = (v) => `$${Math.round(v)}`;
+  // The furthest and shortest runs on $100, with the furthest hybrid between them.
+  const c = cars.cars, range = carRange(c.rows, c.milesYear / 12), hybrid = range.find((r) => r.fuel === 'hybrid');
+  const run = (r) => ({ value: Math.round(r.miles).toLocaleString('en-US'), label: `${r.make} ${r.model}, ${r.fuel}`, colour: { electric: BLUE, hybrid: TEAL, diesel: ORANGE, gas: '#6f777b' }[r.fuel] });
   images.push({
-    out: join(data, 'og-car-fuel-costs.png'), title: cars.title, source: 'EPA, EIA, FHWA',
-    key: `A month of fuel for ${c.miles} miles, the average vehicle's month, at this week's prices.`,
-    figures: [...(d ? [{ value: usd(d.diesel.month), label: 'Diesel Silverado', colour: ORANGE }, { value: usd(d.gas.month), label: 'Gas Silverado', colour: '#6f777b' }] : []), { value: usd(c.low.month), label: c.low.name, colour: BLUE }],
+    out: join(data, 'og-car-fuel-costs.png'), title: cars.title, source: 'EPA, EIA',
+    key: 'Miles on $100 of fuel or home charging at this week\'s prices.',
+    figures: [range[0], ...(hybrid && hybrid !== range[0] ? [hybrid] : []), range.at(-1)].map(run),
   });
 }
 const pjm = load('pjm-power-prices');

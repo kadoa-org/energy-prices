@@ -6,6 +6,7 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { createServer } from 'vite';
 import { SITE, cents, dateLabel, money, monthLabel, pctLabel } from '../src/model.mjs';
+import { carRange } from '../src/cars.mjs';
 
 const root = resolve(import.meta.dirname, '..'); const dist = join(root, 'dist/energy-prices');
 const template = await readFile(join(dist, 'index.html'), 'utf8');
@@ -100,9 +101,10 @@ function seo(page, path) {
     crumbs.push({ name: 'Insights', url: canonical });
     ld = [{ '@context': 'https://schema.org', '@type': 'ItemList', name: title, url: canonical, numberOfItems: page.insights.length, itemListElement: page.insights.map((i, n) => ({ '@type': 'ListItem', position: n + 1, name: i.title, url: `${SITE}/energy-prices/insights/${i.slug}` })) }];
   } else if (page.kind === 'insight' && page.slug === 'car-fuel-costs') {
-    const c = page.cars, d = c.silverado, usd = (v) => `$${Math.round(v)}`;
-    title = `${page.title}: Gas, Hybrid, Diesel and Electric`;
-    description = `A month of fuel or home charging for the average vehicle's ${c.miles} miles in each version of the 25 best-selling US models, at this week's EIA prices.${d ? ` Diesel Silverado ${usd(d.diesel.month)}, gas Silverado ${usd(d.gas.month)}.` : ''} Cheapest: ${c.low.name} ${usd(c.low.month)}. EPA ratings, diesel $${c.prices.diesel.toFixed(2)} and regular $${c.prices.regular.toFixed(2)} a gallon.`;
+    const c = page.cars, range = carRange(c.rows, c.milesYear / 12), far = range[0], near = range.at(-1), mi = (r) => Math.round(r.miles).toLocaleString('en-US');
+    const name = (r) => (r.fuel === 'electric' ? `${r.make} ${r.model} charged at home` : `${r.fuel} ${r.make} ${r.model}`);
+    title = page.title;
+    description = `Miles on $100 of gas, diesel or home charging in each version of the ${c.rows.length} best-selling US models, at this week's EIA prices. A ${name(far)} goes ${mi(far)} miles, a ${name(near)} ${mi(near)}. Plus a month's fuel cost for ${c.miles} miles. EPA ratings, diesel $${c.prices.diesel.toFixed(2)} and regular $${c.prices.regular.toFixed(2)} a gallon.`;
     crumbs.push({ name: 'Insights', url: `${SITE}/energy-prices/insights` }, { name: 'Car fuel costs', url: canonical });
     ld = [dataset('Monthly fuel cost of the 25 best-selling US car models by version', description, { temporalCoverage: c.week, isBasedOn: ['https://www.fueleconomy.gov/feg/download.shtml', 'https://www.eia.gov/petroleum/gasdiesel/', 'https://www.fhwa.dot.gov/policyinformation/statistics/2024/vm1.cfm'], distribution: [{ '@type': 'DataDownload', encodingFormat: 'text/csv', contentUrl: `${absolute(dataPath)}/downloads/car-fuel-costs.csv.gz` }] })];
   } else if (page.kind === 'insight' && page.slug === 'gold-top-export') {

@@ -802,8 +802,8 @@ const carFuel = (() => {
 })();
 if (carFuel) {
   const c = carFuel, slug = 'car-fuel-costs';
-  const title = `Costs for a month of fuel in the ${c.rows.length} top-selling car models`;
-  INSIGHTS.unshift({ slug, title, summary: `A month of fuel or home charging for the average vehicle's ${c.miles} miles, in each version of the 25 best-selling US models.` });
+  const title = "How far $100 of fuel takes you in America's best-selling cars";
+  INSIGHTS.unshift({ slug, title, summary: `Miles on $100 of fuel or home charging, and a month's fuel cost, in each version of the ${c.rows.length} best-selling US models.` });
   await page(`insights/${slug}`, `${BASE}/insights/${slug}`, { kind: 'insight', slug, title, cars: c });
   const lines = ['make,model,sold_jan_sep_2026,fuel,epa_combined_mpg_or_kwh_per_100mi,epa_configurations,monthly_cost_usd'];
   for (const r of c.rows) for (const v of r.versions) lines.push([r.make, r.model, r.sold, v.fuel, v.use, v.configs, v.month].join(','));

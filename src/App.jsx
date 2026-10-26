@@ -1007,6 +1007,9 @@ function CarFuelInsight({ page }) {
   const c = page.cars, p = c.prices;
   const miles = (v) => `${number(Math.round(v))} mi`;
   const range = carRange(c.rows, c.milesYear / 12).map((r) => ({ ...r, key: `${r.model}-${r.fuel}`.replace(/\W/g, ''), name: `${r.make} ${r.model}`, fuelLabel: r.fuel, colour: FUEL_COLOURS[r.fuel], textColour: FUEL_TEXT[r.fuel], text: number(Math.round(r.miles)) }));
+  // The lede's shortest and furthest runs: "diesel Chevrolet Silverado", "Tesla Model Y charged at home".
+  const near = range.at(-1), far = range[0];
+  const runName = (r) => (r.fuel === 'electric' ? `${r.name} charged at home` : `${r.fuel} ${r.name}`);
   const rangeColumns = [
     { key: 'name', header: 'Model', render: (r) => r.name },
     { key: 'fuel', header: 'Version', render: (r) => FUEL_LABELS[r.fuel] },
@@ -1026,7 +1029,17 @@ function CarFuelInsight({ page }) {
   ];
   const source = <p className="chart-note">Source: <a href="https://www.fueleconomy.gov/feg/download.shtml" target="_blank" rel="noreferrer">EPA</a> fuel economy; <a href="https://www.eia.gov/petroleum/gasdiesel/" target="_blank" rel="noreferrer">EIA</a> pump and electricity prices; <a href="https://www.fhwa.dot.gov/policyinformation/statistics/2024/vm1.cfm" target="_blank" rel="noreferrer">FHWA</a> miles.</p>;
   return <>
-    <div className="title-block"><h1 className="dk-h1">{page.title}</h1><p className="lede">{c.top.fuel === 'diesel' ? 'Diesel pickups cost the most to run, despite better mileage. ' : ''}{c.low.fuel === 'electric' ? `A ${c.low.name} charged at home costs ${usd(c.low.month)} a month.` : `The cheapest to run is the ${c.low.name}, at ${usd(c.low.month)} a month.`}</p></div>
+    <div className="title-block"><h1 className="dk-h1">{page.title}</h1><p className="lede">$100 of fuel takes a {runName(near)} {number(Math.round(near.miles))} miles, and a {runName(far)} {number(Math.round(far.miles))}.</p></div>
+    <ChartCard
+      id="range-title"
+      title="Miles on $100 of fuel"
+      description="Fuel or home charging at this week's prices, furthest first. Cars are drawn to scale."
+      tabs={[
+        { label: 'Chart', content: <CarRange runs={range} places={NEW_YORK_TO} start="Driving from New York to" /> },
+        { label: 'Tabular data', short: 'Tabular', content: <DataTable rows={range} columns={rangeColumns} rowKey={(r) => r.key} /> },
+      ]}
+      footer={<p className="chart-note">Source: <a href="https://www.fueleconomy.gov/feg/download.shtml" target="_blank" rel="noreferrer">EPA</a> fuel economy; <a href="https://www.eia.gov/petroleum/gasdiesel/" target="_blank" rel="noreferrer">EIA</a> pump and electricity prices.</p>}
+    />
     <ChartCard
       id="cars-title"
       title="Monthly fuel cost per car model"
@@ -1037,16 +1050,6 @@ function CarFuelInsight({ page }) {
         { label: 'Download', content: <><p className="download-intro">Every version: sales, EPA rating, number of EPA configurations and the monthly cost, as a gzipped CSV.</p><Download file="car-fuel-costs.csv.gz" common={page.common} /></> },
       ]}
       footer={source}
-    />
-    <ChartCard
-      id="range-title"
-      title="How far $100 of fuel takes you"
-      description="Miles on $100 of fuel or home charging at this week's prices, furthest first. Cars are drawn to scale."
-      tabs={[
-        { label: 'Chart', content: <CarRange runs={range} places={NEW_YORK_TO} start="Driving from New York to" /> },
-        { label: 'Tabular data', short: 'Tabular', content: <DataTable rows={range} columns={rangeColumns} rowKey={(r) => r.key} /> },
-      ]}
-      footer={<p className="chart-note">Source: <a href="https://www.fueleconomy.gov/feg/download.shtml" target="_blank" rel="noreferrer">EPA</a> fuel economy; <a href="https://www.eia.gov/petroleum/gasdiesel/" target="_blank" rel="noreferrer">EIA</a> pump and electricity prices.</p>}
     />
     <section className="insight-notes">
       <SectionHeading>About the data</SectionHeading>
