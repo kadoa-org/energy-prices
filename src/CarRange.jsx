@@ -3,17 +3,16 @@ import { CAR_BOX_HEIGHT, CAR_SHAPES, carSvg } from './carShapes.mjs';
 
 // How far a sum of fuel money takes each version: one lane per version, furthest first, with model and fuel in two
 // aligned columns. The version's car, drawn to scale and coloured by fuel, is parked with its nose at the miles
-// reached, behind a dashed trail from the start. Dashed lines mark places at road distances from the start, so the
-// lengths read as trips; places without `phone` are left off on phones. Car size follows --range-car (px per inch),
-// smaller on phones.
+// reached, behind a dashed trail from the start. Every car carries its miles, so there is no mile grid: the scale is
+// the start line and a dashed line for each place, labelled with its road distance from the start. Places without
+// `phone` are left off on phones. Car size follows --range-car (px per inch), smaller on phones.
 export default function CarRange({ runs, places, start, step = 500 }) {
-  // A tenth of headroom past the furthest car.
+  // A tenth of headroom past the furthest car, rounded up to a whole step.
   const max = Math.ceil((runs[0].miles * 1.1) / step) * step;
-  const ticks = Array.from({ length: max / step + 1 }, (_, i) => i * step);
   const at = (v) => `${(v / max) * 100}%`;
   const nameWidth = `${Math.min(Math.max(...runs.map((r) => r.name.length), 8) + 1, 22)}ch`;
   const lines = <>
-    {ticks.map((t) => <span className="dots__grid" key={`t${t}`} style={{ left: at(t) }} aria-hidden="true" />)}
+    <span className="crange__zero" aria-hidden="true" />
     {places.map((p) => <span className={`crange__place${p.phone ? '' : ' crange__wide'}`} key={p.place} style={{ left: at(p.miles) }} aria-hidden="true" />)}
   </>;
   // The start's name sits right above the place labels, at the left edge of the lanes where every trail begins.
@@ -21,7 +20,7 @@ export default function CarRange({ runs, places, start, step = 500 }) {
     <div className="crange__row crange__row--start" aria-hidden="true"><span /><span /><span className="crange__track">{start}</span></div>
     <div className="crange__row crange__row--head" aria-hidden="true">
       <span /><span />
-      <span className="crange__track">{places.map((p) => <span className={`crange__label${p.phone ? '' : ' crange__wide'}`} key={p.place} style={{ left: at(p.miles) }}>{p.place}</span>)}</span>
+      <span className="crange__track">{places.map((p) => <span className={`crange__label${p.phone ? '' : ' crange__wide'}`} key={p.place} style={{ left: at(p.miles) }}><b>{p.place}</b>{p.miles.toLocaleString('en-US')}</span>)}</span>
     </div>
     <ol className="crange__list">
       {runs.map((r) => {
@@ -39,9 +38,5 @@ export default function CarRange({ runs, places, start, step = 500 }) {
         </li>;
       })}
     </ol>
-    <div className="crange__row crange__row--axis" aria-hidden="true">
-      <span /><span />
-      <span className="crange__track">{ticks.map((t, i) => <span className="dots__tick" key={t} style={{ left: at(t) }}>{t.toLocaleString('en-US')}{i === ticks.length - 1 ? ' mi' : ''}</span>)}</span>
-    </div>
   </div>;
 }
