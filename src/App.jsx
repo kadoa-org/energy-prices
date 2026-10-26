@@ -1019,6 +1019,9 @@ function CarFuelInsight({ page }) {
   ];
   const usd = (v) => `$${Math.round(v)}`;
   const gallon = (v) => `$${v.toFixed(2)}`;
+  // The $100 chart's legend: each fuel in its colour with the price it is bought at.
+  const fuelPrice = { gas: `${gallon(p.regular)} a gallon`, hybrid: `${gallon(p.regular)} a gallon`, diesel: `${gallon(p.diesel)} a gallon`, electric: `${cents(p.electricity)} a kWh at home` };
+  const rangeKeys = ['gas', 'hybrid', 'diesel', 'electric'].map((f) => ({ label: f[0].toUpperCase() + f.slice(1), value: fuelPrice[f], colour: FUEL_COLOURS[f], textColour: FUEL_TEXT[f] }));
   const use = (v) => (v.fuel === 'electric' ? `${v.use} kWh per 100 miles` : `${v.use} mpg`);
   const rows = c.rows.map((r) => ({ name: `${r.make} ${r.model}`, dots: r.versions.map((v) => ({ label: FUEL_LABELS[v.fuel], value: v.month, colour: FUEL_COLOURS[v.fuel] })) }));
   const used = ['gas', 'hybrid', 'diesel', 'electric'].filter((f) => c.rows.some((r) => r.versions.some((v) => v.fuel === f)));
@@ -1035,9 +1038,9 @@ function CarFuelInsight({ page }) {
     <ChartCard
       id="range-title"
       title="Miles on $100 of fuel"
-      description={`Gas and hybrid ${gallon(p.regular)} a gallon · Diesel ${gallon(p.diesel)} a gallon · Home charging ${cents(p.electricity)} a kWh`}
+      description={`Each version of the ${c.lists.top} best-selling models and the ${c.lists.electric} best-selling electric ones.`}
       tabs={[
-        { label: 'Chart', content: <CarRange runs={range} places={NEW_YORK_TO} start="Road miles from New York" /> },
+        { label: 'Chart', content: <CarRange runs={range} places={NEW_YORK_TO} start="Road miles from New York" keys={rangeKeys} /> },
         { label: 'Tabular data', short: 'Tabular', content: <DataTable rows={range} columns={rangeColumns} rowKey={(r) => r.key} /> },
       ]}
       footer={<p className="chart-note">Source: <a href="https://www.fueleconomy.gov/feg/download.shtml" target="_blank" rel="noreferrer">EPA</a> fuel economy; <a href="https://www.eia.gov/petroleum/gasdiesel/" target="_blank" rel="noreferrer">EIA</a> pump and electricity prices; <a href={COX_EV_SALES} target="_blank" rel="noreferrer">Cox Automotive</a> electric car sales.</p>}

@@ -6,7 +6,8 @@ import { CAR_BOX_HEIGHT, CAR_SHAPES, carSvg } from './carShapes.mjs';
 // reached, behind a dashed trail from the start. Every car carries its miles, so there is no mile grid: the scale is
 // the start line and a dashed line for each place, labelled with its road distance from the start. Places without
 // `phone` are left off on phones. Car size follows --range-car (px per inch), smaller on phones.
-export default function CarRange({ runs, places, start, step = 500 }) {
+// keys: the legend above the lanes, [{ label, value, colour, textColour }], one per fuel with its price.
+export default function CarRange({ runs, places, start, keys, step = 500 }) {
   // A tenth of headroom past the furthest car, rounded up to a whole step.
   const max = Math.ceil((runs[0].miles * 1.1) / step) * step;
   const at = (v) => `${(v / max) * 100}%`;
@@ -15,11 +16,12 @@ export default function CarRange({ runs, places, start, step = 500 }) {
     <span className="crange__zero" aria-hidden="true" />
     {places.map((p) => <span className={`crange__place${p.phone ? '' : ' crange__wide'}`} key={p.place} style={{ left: at(p.miles) }} aria-hidden="true" />)}
   </>;
-  // The start's name sits right above the place labels, at the left edge of the lanes where every trail begins.
+  // The distances' title is a header, not a row: muted and right-aligned against the distances it names, with a rule
+  // under the header row to separate it from the models.
   return <div className="crange" style={{ '--range-name': nameWidth }}>
-    <div className="crange__row crange__row--start" aria-hidden="true"><span /><span /><span className="crange__track">{start}</span></div>
+    <ul className="crange__key">{keys.map((k) => <li key={k.label}><b style={{ color: k.textColour }}><i style={{ background: k.colour }} />{k.label}</b><span>{k.value}</span></li>)}</ul>
     <div className="crange__row crange__row--head" aria-hidden="true">
-      <span /><span />
+      <span className="crange__start">{start}</span>
       <span className="crange__track">{places.map((p) => <span className={`crange__label${p.phone ? '' : ' crange__wide'}`} key={p.place} style={{ left: at(p.miles) }}><b>{p.place}</b>{p.miles.toLocaleString('en-US')}</span>)}</span>
     </div>
     <ol className="crange__list">
