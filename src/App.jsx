@@ -1035,7 +1035,7 @@ function CarFuelInsight({ page }) {
     <ChartCard
       id="range-title"
       title="Miles on $100 of fuel"
-      description={`At ${gallon(p.regular)} a gallon for gas, ${gallon(p.diesel)} for diesel and ${cents(p.electricity)} a kWh for home charging. Cars are drawn to scale.`}
+      description={`At ${gallon(p.regular)} a gallon for gas, ${gallon(p.diesel)} for diesel and ${cents(p.electricity)} a kWh for home charging.`}
       tabs={[
         { label: 'Chart', content: <CarRange runs={range} places={NEW_YORK_TO} start="Road miles from New York" /> },
         { label: 'Tabular data', short: 'Tabular', content: <DataTable rows={range} columns={rangeColumns} rowKey={(r) => r.key} /> },
