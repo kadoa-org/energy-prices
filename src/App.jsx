@@ -12,7 +12,7 @@ import GapDots from './GapDots';
 import PriceGaps from './PriceGaps';
 import FuelDots from './FuelDots';
 import CarRange from './CarRange';
-import { CARS, FAST_CHARGING, FUEL_ORDER, NEW_YORK_TO, UNITS, carCosts, carFullRange, carRange } from './cars.mjs';
+import { CARS, FAST_CHARGING, FUEL_ORDER, UNITS, carCosts, carFullRange, carRange } from './cars.mjs';
 import { StapleChart, StapleRanking, ValueRanking, monthTime, stapleScales } from './StaplesChart';
 import { BASE, HOME, addDays, addMonths, cents, dataPath, dateLabel, money, monthLabel, number, pctLabel } from './model.mjs';
 import { priceText } from './format.mjs';
@@ -1033,8 +1033,6 @@ function CarFuelInsight({ page }) {
   const usRange = carRange(c.rows, c.milesYear / 12).map(style(1));
   // Range on a full tank or charge does not depend on prices, so it ignores the price pickers.
   const full = carFullRange().map(style(U.distance));
-  const places = NEW_YORK_TO.map((pl) => ({ ...pl, miles: Math.round(pl.miles * U.distance) }));
-  const start = `For scale: road ${U.long} from New York`;
   // The lede's shortest and furthest runs at US prices: "diesel Chevrolet Silverado", "Tesla Model Y charged at home".
   const near = usRange.at(-1), far = usRange[0];
   const runName = (r) => (r.fuel === 'electric' ? `${r.name} charged at home` : `${r.fuel} ${r.name}`);
@@ -1095,7 +1093,7 @@ function CarFuelInsight({ page }) {
       title={`${U.title} on $100 of fuel`}
       description={`Each version of the ${c.lists.top} best-selling models and the ${c.lists.electric} best-selling electric ones, plus the ${c.lists.comparison.join(' and ')}.`}
       tabs={[
-        { label: 'Chart', content: <>{picker}<CarRange runs={range} places={places} start={start} keys={rangeKeys} note={note} /></> },
+        { label: 'Chart', content: <>{picker}<CarRange runs={range} unit={U.title} keys={rangeKeys} note={note} /></> },
         { label: 'Tabular data', short: 'Tabular', content: <>{picker}<DataTable rows={range} columns={rangeColumns} rowKey={(r) => r.key} /></> },
       ]}
       footer={<p className="chart-note">Source: <a href="https://www.fueleconomy.gov/feg/download.shtml" target="_blank" rel="noreferrer">EPA</a> fuel economy; <a href="https://www.eia.gov/petroleum/gasdiesel/" target="_blank" rel="noreferrer">EIA</a> pump and <a href="https://www.eia.gov/electricity/monthly/epm_table_grapher.php?t=epmt_5_3" target="_blank" rel="noreferrer">home electricity</a> prices; <a href={FAST_CHARGING.url} target="_blank" rel="noreferrer">Paren</a> fast charging; <a href={COX_EV_SALES} target="_blank" rel="noreferrer">Cox Automotive</a> electric car sales.</p>}
@@ -1105,7 +1103,7 @@ function CarFuelInsight({ page }) {
       title={`${U.title} on a full tank or charge`}
       description="The same versions. Electric cars go furthest on $100 but stop soonest."
       tabs={[
-        { label: 'Chart', content: <CarRange runs={full} places={places} start={start} keys={fullKeys} /> },
+        { label: 'Chart', content: <CarRange runs={full} unit={U.title} keys={fullKeys} /> },
         { label: 'Tabular data', short: 'Tabular', content: <DataTable rows={full} columns={fullColumns} rowKey={(r) => r.key} /> },
       ]}
       footer={<p className="chart-note">Source: <a href="https://www.fueleconomy.gov/feg/download.shtml" target="_blank" rel="noreferrer">EPA</a> range and fuel economy; carmakers&apos; spec sheets for tank sizes.</p>}
@@ -1129,7 +1127,7 @@ function CarFuelInsight({ page }) {
         <li>Hybrids are the regular kind you can&apos;t plug in, so they run on gas alone. Plug-in hybrids drive {pct(Math.min(...ufs))} to {pct(Math.max(...ufs))} of their miles on the battery, EPA&apos;s estimate for an owner who charges every night. Plug-in versions without a {c.rows[0].epaYear} EPA rating, like the RAV4&apos;s, are left out.</li>
         <li>Cars are the {c.lists.top} best sellers from January to September 2026, plus the next {c.lists.electric} best-selling electric models (Cox Automotive estimates), since the Model Y is the only EV in the top {c.lists.top}.{c.rows.filter((r) => r.list === 'comparison').map((r) => ` The ${r.model} is added for comparison, with ${number(r.sold)} sold.`).join('')}</li>
         <li>A full tank is the version&apos;s standard tank times its EPA combined mpg. Some pickups come with other tank sizes. Electric cars and plug-in hybrids use EPA&apos;s range on a full charge and tank.</li>
-        <li>A month is {number(c.miles)} miles, the US average. Road distances from New York are rounded.</li>
+        <li>A month is {number(c.miles)} miles, the US average.</li>
       </ul>
     </section>
   </>;
