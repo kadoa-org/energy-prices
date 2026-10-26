@@ -411,3 +411,29 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,su
 .fdots__val--right{transform:translate(10px,-50%)}
 @media (max-width:640px){.fdots .dots__tick:nth-child(even){display:none}.fdots__val{font-size:13px;transform:translate(calc(-100% - 8px),-50%)}.fdots__val--right{transform:translate(9px,-50%)}.fdots .dots__tick:last-child{transform:translateX(-100%)}}
 @media (max-width:640px){.fdots .ranking__row{grid-template-columns:min(var(--ranking-name),34%) minmax(0,1fr) 14px}}
+/* Car range (CarRange): model and fuel columns, then one lane per version with its car parked at the miles reached.
+   --range-car sets the cars' scale in px per inch, so they keep their real proportions to each other. */
+.crange{--range-car:.3px}
+.crange__list{list-style:none;margin:0;padding:0}
+.crange__row{display:grid;grid-template-columns:min(var(--range-name),30%) 4.6em minmax(0,1fr);gap:10px;align-items:end;min-height:30px}
+.crange__name{font-size:16px;font-weight:700;line-height:22px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-bottom:3px}
+.crange__fuel{font-size:16px;line-height:22px;padding-bottom:3px}
+.crange__track{position:relative;height:30px}
+.crange__place{position:absolute;top:-3px;bottom:-3px;border-left:1px dashed rgba(80,90,95,.5)}
+.crange__trail{position:absolute;left:0;bottom:4px;border-top:2px dashed;opacity:.6}
+.crange__car{position:absolute;bottom:0;transform:translateX(-100%);height:auto;display:block;overflow:visible}
+.crange__val{position:absolute;bottom:6px;padding-left:8px;font-size:14px;font-weight:700;line-height:1;white-space:nowrap;font-variant-numeric:tabular-nums;text-shadow:0 0 3px #fff,0 0 3px #fff,0 0 3px #fff}
+.crange__val--behind{padding:0 8px 0 0;transform:translateX(-100%)}
+.crange__row--head .crange__start{grid-column:1/3;font-size:16px;font-weight:700;line-height:20px;padding-bottom:3px}
+.crange__row--head .crange__track,.crange__row--axis .crange__track{height:24px}
+.crange__label{position:absolute;bottom:4px;transform:translateX(-50%);font-size:14px;font-weight:700;line-height:1;color:var(--dk-muted,#505a5f);white-space:nowrap}
+.crange__row--axis .dots__tick{bottom:auto;top:6px}.crange__row--axis .dots__tick:last-child{transform:translateX(-100%)}
+@media (max-width:640px){
+  .crange{--range-car:.17px}
+  .crange__row{grid-template-columns:min(var(--range-name),32%) 3.9em minmax(0,1fr);gap:6px;min-height:26px}
+  .crange__name{white-space:normal;font-size:14px;line-height:16px}
+  .crange__fuel{font-size:14px;line-height:16px}
+  .crange__track{height:26px}
+  .crange__wide{display:none}
+  .crange__row--axis .dots__tick:nth-child(even){display:none}
+}

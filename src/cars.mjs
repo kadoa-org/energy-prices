@@ -47,3 +47,13 @@ export function carCosts(prices, miles = MILES_A_YEAR / 12) {
     versions: FUEL_ORDER.filter((f) => c.versions[f]).map((fuel) => ({ fuel, month: round(median(c.versions[fuel].map(cost))), use: median(c.versions[fuel].map(([u]) => u)), configs: c.versions[fuel].length })),
   }));
 }
+
+// Road miles from New York by the main interstate route, rounded: the marks on the $100 chart. Phones drop the marks
+// without `phone`, which sit too close to the start to label.
+export const NEW_YORK_TO = [{ place: 'Washington', miles: 226 }, { place: 'Chicago', miles: 790, phone: true }, { place: 'Denver', miles: 1780, phone: true }];
+// How far a sum of fuel money takes each version of carCosts' rows: the sum over the version's cost per mile, where a
+// month of driving is `miles` miles. Furthest first.
+export function carRange(rows, miles, dollars = 100) {
+  return rows.flatMap((r) => r.versions.map((v) => ({ make: r.make, model: r.model, fuel: v.fuel, miles: (dollars * miles) / v.month })))
+    .sort((a, b) => b.miles - a.miles);
+}

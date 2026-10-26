@@ -11,6 +11,8 @@ import PriceSpread from './PriceSpread';
 import GapDots from './GapDots';
 import PriceGaps from './PriceGaps';
 import FuelDots from './FuelDots';
+import CarRange from './CarRange';
+import { NEW_YORK_TO, carRange } from './cars.mjs';
 import { StapleChart, StapleRanking, ValueRanking, monthTime, stapleScales } from './StaplesChart';
 import { BASE, HOME, addDays, addMonths, cents, dataPath, dateLabel, money, monthLabel, number, pctLabel } from './model.mjs';
 import { priceText } from './format.mjs';
@@ -999,8 +1001,17 @@ function PjmPricesInsight({ page }) {
 // ── Car fuel costs: a month of driving in each version of the best-selling US models, at this week's prices.
 const FUEL_COLOURS = { gas: '#b1b4b6', hybrid: SERIES_COLOURS[2], diesel: SERIES_COLOURS[1], electric: SERIES_COLOURS[0] };
 const FUEL_LABELS = { gas: 'Gas', hybrid: 'Hybrid', diesel: 'Diesel', electric: 'Electric, charged at home' };
+// Darker shades of the fuel colours for text, each at least 4.5:1 on white.
+const FUEL_TEXT = { gas: '#505a5f', hybrid: '#1b7a72', diesel: '#a8420a', electric: '#154275' };
 function CarFuelInsight({ page }) {
   const c = page.cars, p = c.prices;
+  const miles = (v) => `${number(Math.round(v))} mi`;
+  const range = carRange(c.rows, c.milesYear / 12).map((r) => ({ ...r, key: `${r.model}-${r.fuel}`.replace(/\W/g, ''), name: `${r.make} ${r.model}`, fuelLabel: r.fuel, colour: FUEL_COLOURS[r.fuel], textColour: FUEL_TEXT[r.fuel], text: number(Math.round(r.miles)) }));
+  const rangeColumns = [
+    { key: 'name', header: 'Model', render: (r) => r.name },
+    { key: 'fuel', header: 'Version', render: (r) => FUEL_LABELS[r.fuel] },
+    { key: 'miles', header: 'Miles on $100', align: 'right', render: (r) => miles(r.miles) },
+  ];
   const usd = (v) => `$${Math.round(v)}`;
   const gallon = (v) => `$${v.toFixed(2)}`;
   const use = (v) => (v.fuel === 'electric' ? `${v.use} kWh per 100 miles` : `${v.use} mpg`);
@@ -1027,6 +1038,16 @@ function CarFuelInsight({ page }) {
       ]}
       footer={source}
     />
+    <ChartCard
+      id="range-title"
+      title="How far $100 of fuel takes you"
+      description="Miles on $100 of fuel or home charging at this week's prices, furthest first. Cars are drawn to scale."
+      tabs={[
+        { label: 'Chart', content: <CarRange runs={range} places={NEW_YORK_TO} start="Driving from New York to" /> },
+        { label: 'Tabular data', short: 'Tabular', content: <DataTable rows={range} columns={rangeColumns} rowKey={(r) => r.key} /> },
+      ]}
+      footer={<p className="chart-note">Source: <a href="https://www.fueleconomy.gov/feg/download.shtml" target="_blank" rel="noreferrer">EPA</a> fuel economy; <a href="https://www.eia.gov/petroleum/gasdiesel/" target="_blank" rel="noreferrer">EIA</a> pump and electricity prices.</p>}
+    />
     <section className="insight-notes">
       <SectionHeading>About the data</SectionHeading>
       <ul>
@@ -1036,6 +1057,7 @@ function CarFuelInsight({ page }) {
         <li>Best sellers are January to September 2026, from the carmakers&apos; own reports. The F-Series uses F-150 ratings, since EPA does not rate Super Duty trucks. The Silverado EV and Equinox EV are left out because they are sold as separate models, and the Ford Transit van because EPA does not rate it.</li>
         <li>Electric cars are charged at home. Public fast chargers cost several times more per kWh.</li>
         <li>Hybrids save {usd(c.hybridSavings.min)} to {usd(c.hybridSavings.max)} a month on all {c.hybridSavings.models} models sold both ways.</li>
+        <li>Miles on $100 are $100 divided by each version&apos;s cost per mile. Road distances from New York are rounded: {NEW_YORK_TO.map((t) => `${number(t.miles)} miles to ${t.place}`).join(', ').replace(/, ([^,]*)$/, ' and $1')}. The cars are drawn from each model&apos;s published length, height and wheelbase.</li>
       </ul>
     </section>
   </>;

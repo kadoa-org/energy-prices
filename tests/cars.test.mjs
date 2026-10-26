@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'bun:test';
-import { CARS, carCosts } from '../src/cars.mjs';
+import { CARS, carCosts, carRange } from '../src/cars.mjs';
+import { CAR_SHAPES, carSvg } from '../src/carShapes.mjs';
 
 describe('carCosts', () => {
   const prices = { regular: 4, midgrade: 4.5, premium: 5, diesel: 6, electricity: 20 };
@@ -16,5 +17,25 @@ describe('carCosts', () => {
     const rows = carCosts(prices);
     expect(rows).toHaveLength(CARS.length);
     expect(rows.find((c) => c.model === 'Civic').versions.map((v) => v.fuel)).toEqual(['gas', 'hybrid']);
+  });
+});
+
+describe('carRange', () => {
+  const prices = { regular: 4, midgrade: 4.5, premium: 5, diesel: 6, electricity: 20 };
+  test('gives every version the miles $100 buys at its cost per mile, furthest first', () => {
+    const rows = carCosts(prices, 1000), range = carRange(rows, 1000);
+    expect(range).toHaveLength(rows.reduce((n, r) => n + r.versions.length, 0));
+    const diesel = range.find((r) => r.model === 'Silverado' && r.fuel === 'diesel');
+    expect(diesel.miles).toBeCloseTo((100 / 6) * 23, 0);
+    expect(range.every((r, i) => i === 0 || range[i - 1].miles >= r.miles)).toBe(true);
+  });
+});
+
+describe('carSvg', () => {
+  test('draws every best seller, so a new model cannot reach the page without a silhouette', () => {
+    for (const c of CARS) {
+      expect(CAR_SHAPES[c.model]).toBeDefined();
+      expect(carSvg(c.model, { body: '#000', id: 'car' })).toContain('<path');
+    }
   });
 });
