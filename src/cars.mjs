@@ -75,6 +75,15 @@ export function carCosts(prices, miles = MILES_A_YEAR / 12, charging = prices.el
 
 // Road miles from New York by the main interstate route, rounded: the marks on the $100 chart. Phones drop the marks
 // without `phone`, which sit too close to the start to label.
+// Units for display. Costs are worked out in miles and US gallons; metric shows kilometres, litres, litres per 100 km
+// and kWh per 100 km. A US gallon is 3.785411784 litres; 235.215 / mpg is litres per 100 km.
+export const KM_PER_MILE = 1.609344, LITRES_PER_GALLON = 3.785411784;
+export const UNITS = {
+  us: { label: 'Miles and gallons', distance: 1, short: 'mi', long: 'miles', title: 'Miles', volume: 1, perVolume: 'a gallon',
+    fuelUse: (mpg) => `${mpg} mpg`, powerUse: (kwh) => `${kwh} kWh per 100 miles` },
+  metric: { label: 'Kilometres and litres', distance: KM_PER_MILE, short: 'km', long: 'kilometres', title: 'Kilometres', volume: LITRES_PER_GALLON, perVolume: 'a litre',
+    fuelUse: (mpg) => `${(100 * LITRES_PER_GALLON / (mpg * KM_PER_MILE)).toFixed(1)} L per 100 km`, powerUse: (kwh) => `${(kwh / KM_PER_MILE).toFixed(1)} kWh per 100 km` },
+};
 export const NEW_YORK_TO = [{ place: 'Washington', miles: 226 }, { place: 'Chicago', miles: 790, phone: true }, { place: 'Denver', miles: 1780, phone: true }];
 // How far a sum of fuel money takes each version of carCosts' rows: the sum over the version's cost per mile, where a
 // month of driving is `miles` miles. Furthest first.

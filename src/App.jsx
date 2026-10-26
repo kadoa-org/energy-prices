@@ -12,7 +12,7 @@ import GapDots from './GapDots';
 import PriceGaps from './PriceGaps';
 import FuelDots from './FuelDots';
 import CarRange from './CarRange';
-import { CARS, FAST_CHARGING, FUEL_ORDER, NEW_YORK_TO, carCosts, carFullRange, carRange } from './cars.mjs';
+import { CARS, FAST_CHARGING, FUEL_ORDER, NEW_YORK_TO, UNITS, carCosts, carFullRange, carRange } from './cars.mjs';
 import { StapleChart, StapleRanking, ValueRanking, monthTime, stapleScales } from './StaplesChart';
 import { BASE, HOME, addDays, addMonths, cents, dataPath, dateLabel, money, monthLabel, number, pctLabel } from './model.mjs';
 import { priceText } from './format.mjs';
@@ -1010,44 +1010,71 @@ const FUEL_TEXT = { gas: '#505a5f', hybrid: '#1b7a72', plugin: '#5b5e9c', diesel
 function CarFuelInsight({ page }) {
   const c = page.cars;
   // Prices in: the US averages by default, or a state's. Charging: home power, or the US fast charger average for
-  // electric versions on a trip. Either recomputes every version's cost.
+  // electric versions on a trip. Typed prices override either, until the place changes. Each recomputes every cost.
+  // Units only change what is shown: costs are worked in miles and US gallons.
   const [code, setCode] = useState('US');
   const [charging, setCharging] = useState('home');
+  const [unit, setUnit] = useState('us');
+  const [typed, setTyped] = useState({});
+  const U = UNITS[unit];
   const place = c.places.find((s) => s.code === code), fast = charging === 'fast';
-  const p = place?.prices ?? c.prices, costs = place || fast ? carCosts(p, c.milesYear / 12, fast ? FAST_CHARGING.cents : p.electricity) : c.rows;
+  const base = { ...(place?.prices ?? c.prices), fast: FAST_CHARGING.cents };
+  // A typed price is kept with the units it was typed in; fuel prices per litre are turned back into per gallon.
+  const PRICE_FIELDS = [['regular', 'Gas', true], ['diesel', 'Diesel', true], ['electricity', 'Home power', false], ['fast', 'Fast charging', false]];
+  const typedValue = (k, perVolume) => { const t = typed[k], v = t && Number(t.raw); return v > 0 ? (perVolume ? v * UNITS[t.unit].volume : v) : null; };
+  const own = Object.fromEntries(PRICE_FIELDS.map(([k, , perVolume]) => [k, typedValue(k, perVolume)]).filter(([, v]) => v != null));
+  const p = { ...base, ...own }, custom = Object.keys(own).length > 0;
+  const costs = carCosts(p, c.milesYear / 12, fast ? p.fast : p.electricity);
+  const pickPlace = (v) => { setCode(v); setTyped({}); };
   const fuelName = (f) => (f === 'electric' && fast ? 'Electric, fast charged' : FUEL_LABELS[f]);
-  const miles = (v) => `${number(Math.round(v))} mi`;
-  const style = (r) => ({ ...r, key: `${r.model}-${r.fuel}`.replace(/\W/g, ''), name: `${r.make} ${r.model}`, fuelLabel: FUEL_SHORT[r.fuel], colour: FUEL_COLOURS[r.fuel], textColour: FUEL_TEXT[r.fuel], text: number(Math.round(r.miles)) });
-  const range = carRange(costs, c.milesYear / 12).map(style);
-  const usRange = carRange(c.rows, c.milesYear / 12).map(style);
-  // Range on a full tank or charge does not depend on prices, so it ignores the state picker.
-  const full = carFullRange().map(style);
+  const distance = (v) => `${number(Math.round(v))} ${U.short}`;
+  const style = (k) => (r) => ({ ...r, miles: r.miles * k, key: `${r.model}-${r.fuel}`.replace(/\W/g, ''), name: `${r.make} ${r.model}`, fuelLabel: FUEL_SHORT[r.fuel], colour: FUEL_COLOURS[r.fuel], textColour: FUEL_TEXT[r.fuel], text: number(Math.round(r.miles * k)) });
+  const range = carRange(costs, c.milesYear / 12).map(style(U.distance));
+  const usRange = carRange(c.rows, c.milesYear / 12).map(style(1));
+  // Range on a full tank or charge does not depend on prices, so it ignores the price pickers.
+  const full = carFullRange().map(style(U.distance));
+  const places = NEW_YORK_TO.map((pl) => ({ ...pl, miles: Math.round(pl.miles * U.distance) }));
+  const start = `For scale: road ${U.long} from New York`;
   // The lede's shortest and furthest runs at US prices: "diesel Chevrolet Silverado", "Tesla Model Y charged at home".
   const near = usRange.at(-1), far = usRange[0];
   const runName = (r) => (r.fuel === 'electric' ? `${r.name} charged at home` : `${r.fuel} ${r.name}`);
   const rangeColumns = [
     { key: 'name', header: 'Model', render: (r) => r.name },
     { key: 'fuel', header: 'Version', render: (r) => fuelName(r.fuel) },
-    { key: 'miles', header: 'Miles on $100', align: 'right', render: (r) => miles(r.miles) },
+    { key: 'miles', header: `${U.title} on $100`, align: 'right', render: (r) => distance(r.miles) },
   ];
   const usd = (v) => `$${Math.round(v)}`;
   const gallon = (v) => `$${v.toFixed(2)}`;
   // The $100 chart's legend: each fuel in its colour with the price it is bought at.
-  const fuelPrice = { gas: `${gallon(p.regular)} a gallon`, hybrid: `${gallon(p.regular)} a gallon`, plugin: `${gallon(p.regular)} and ${cents(p.electricity)}`, diesel: `${gallon(p.diesel)} a gallon`, electric: fast ? `${cents(FAST_CHARGING.cents)} a kWh at fast chargers` : `${cents(p.electricity)} a kWh at home` };
+  const volume = (v) => gallon(v / U.volume);
+  const fuelPrice = { gas: `${volume(p.regular)} ${U.perVolume}`, hybrid: `${volume(p.regular)} ${U.perVolume}`, plugin: `${volume(p.regular)} and ${cents(p.electricity)}`, diesel: `${volume(p.diesel)} ${U.perVolume}`, electric: fast ? `${cents(p.fast)} a kWh at fast chargers` : `${cents(p.electricity)} a kWh at home` };
   const keyLabel = (f) => FUEL_SHORT[f][0].toUpperCase() + FUEL_SHORT[f].slice(1);
   const rangeKeys = FUEL_ORDER.map((f) => ({ label: keyLabel(f), value: fuelPrice[f], colour: FUEL_COLOURS[f], textColour: FUEL_TEXT[f] }));
   // EIA surveys pump prices in nine states; the others take their region's, which the chart says.
   const regional = !place ? null
     : place.gasArea && place.gasArea === place.dieselArea ? `Gas and diesel are ${place.gasArea} averages, since EIA doesn't survey pump prices in ${place.name}.`
       : place.dieselArea ? `Diesel is the ${place.dieselArea} average.` : null;
-  const note = [regional, fast && place && 'Fast charging uses the US average.'].filter(Boolean).join(' ') || null;
-  const picker = <div className="chart-filters">
-    <FilterSelect label="Prices in" value={code} options={[['US', 'United States (average)'], ...c.places.map((s) => [s.code, s.name])]} onChange={setCode} />
-    <FilterSelect label="Electric cars charge" value={charging} options={[['home', 'At home'], ['fast', 'At fast chargers, on a trip']]} onChange={setCharging} />
-  </div>;
+  const note = [custom ? 'Using your prices.' : regional, !custom && fast && place && 'Fast charging uses the US average.'].filter(Boolean).join(' ') || null;
+  // Each price box shows the typed text in its own units, or the current price in the chosen units.
+  const shown = (k, perVolume) => (typed[k] && typed[k].unit === unit ? typed[k].raw : perVolume ? (p[k] / U.volume).toFixed(2) : p[k].toFixed(1));
+  const picker = <>
+    <div className="chart-filters">
+      <FilterSelect label="Prices in" value={code} options={[['US', 'United States (average)'], ...c.places.map((s) => [s.code, s.name])]} onChange={pickPlace} />
+      <FilterSelect label="Electric cars charge" value={charging} options={[['home', 'At home'], ['fast', 'At fast chargers, on a trip']]} onChange={setCharging} />
+      <FilterSelect label="Units" value={unit} options={Object.entries(UNITS).map(([k, u]) => [k, u.label])} onChange={setUnit} />
+    </div>
+    <details className="price-edit" open={custom || undefined}>
+      <summary>Use your own prices</summary>
+      <div className="price-edit__fields">
+        {PRICE_FIELDS.map(([k, label, perVolume]) => <label key={k}><span>{label}, {perVolume ? `$ ${U.perVolume}` : '¢ a kWh'}</span>
+          <input type="number" inputMode="decimal" min="0" step={perVolume ? '0.01' : '0.1'} value={shown(k, perVolume)} onChange={(e) => setTyped((t) => ({ ...t, [k]: { raw: e.target.value, unit } }))} /></label>)}
+        {custom && <button type="button" className="text-button" onClick={() => setTyped({})}>Reset to {place ? place.name : 'US average'} prices</button>}
+      </div>
+    </details>
+  </>;
   const fullKeys = FUEL_ORDER.map((f) => ({ label: keyLabel(f), value: f === 'electric' || f === 'plugin' ? 'EPA range' : 'Standard tank', colour: FUEL_COLOURS[f], textColour: FUEL_TEXT[f] }));
-  const fullColumns = [...rangeColumns.slice(0, 2), { key: 'miles', header: 'Miles on a full tank', align: 'right', render: (r) => miles(r.miles) }];
-  const use = (v) => (v.fuel === 'electric' ? `${v.use} kWh per 100 miles` : v.fuel === 'plugin' ? `${v.use} mpg on gas` : `${v.use} mpg`);
+  const fullColumns = [...rangeColumns.slice(0, 2), { key: 'miles', header: `${U.title} on a full tank`, align: 'right', render: (r) => distance(r.miles) }];
+  const use = (v) => (v.fuel === 'electric' ? U.powerUse(v.use) : v.fuel === 'plugin' ? `${U.fuelUse(v.use)} on gas` : U.fuelUse(v.use));
   // The share of miles on battery EPA assumes for the plug-in hybrids, lowest and highest.
   const ufs = CARS.flatMap((m) => (m.versions.plugin ?? []).map((x) => x[3]));
   const pct = (v) => `${Math.round(v * 100)}%`;
@@ -1065,20 +1092,20 @@ function CarFuelInsight({ page }) {
     <div className="title-block"><h1 className="dk-h1">{page.title}</h1><p className="lede">$100 of fuel takes a {runName(near)} {number(Math.round(near.miles))} miles, and a {runName(far)} {number(Math.round(far.miles))}.</p></div>
     <ChartCard
       id="range-title"
-      title="Miles on $100 of fuel"
+      title={`${U.title} on $100 of fuel`}
       description={`Each version of the ${c.lists.top} best-selling models and the ${c.lists.electric} best-selling electric ones, plus the ${c.lists.comparison.join(' and ')}.`}
       tabs={[
-        { label: 'Chart', content: <>{picker}<CarRange runs={range} places={NEW_YORK_TO} start="For scale: road miles from New York" keys={rangeKeys} note={note} /></> },
+        { label: 'Chart', content: <>{picker}<CarRange runs={range} places={places} start={start} keys={rangeKeys} note={note} /></> },
         { label: 'Tabular data', short: 'Tabular', content: <>{picker}<DataTable rows={range} columns={rangeColumns} rowKey={(r) => r.key} /></> },
       ]}
       footer={<p className="chart-note">Source: <a href="https://www.fueleconomy.gov/feg/download.shtml" target="_blank" rel="noreferrer">EPA</a> fuel economy; <a href="https://www.eia.gov/petroleum/gasdiesel/" target="_blank" rel="noreferrer">EIA</a> pump and <a href="https://www.eia.gov/electricity/monthly/epm_table_grapher.php?t=epmt_5_3" target="_blank" rel="noreferrer">home electricity</a> prices; <a href={FAST_CHARGING.url} target="_blank" rel="noreferrer">Paren</a> fast charging; <a href={COX_EV_SALES} target="_blank" rel="noreferrer">Cox Automotive</a> electric car sales.</p>}
     />
     <ChartCard
       id="tank-title"
-      title="Miles on a full tank or charge"
+      title={`${U.title} on a full tank or charge`}
       description="The same versions. Electric cars go furthest on $100 but stop soonest."
       tabs={[
-        { label: 'Chart', content: <CarRange runs={full} places={NEW_YORK_TO} start="For scale: road miles from New York" keys={fullKeys} /> },
+        { label: 'Chart', content: <CarRange runs={full} places={places} start={start} keys={fullKeys} /> },
         { label: 'Tabular data', short: 'Tabular', content: <DataTable rows={full} columns={fullColumns} rowKey={(r) => r.key} /> },
       ]}
       footer={<p className="chart-note">Source: <a href="https://www.fueleconomy.gov/feg/download.shtml" target="_blank" rel="noreferrer">EPA</a> range and fuel economy; carmakers&apos; spec sheets for tank sizes.</p>}
@@ -1086,7 +1113,7 @@ function CarFuelInsight({ page }) {
     <ChartCard
       id="cars-title"
       title="Monthly fuel cost per car model"
-      description={`Fuel or ${fast ? 'fast' : 'home'} charging for ${number(c.miles)} miles, the average vehicle's month, at this week's prices${place ? ` in ${place.name}` : ''}. Best sellers first, then the best-selling electric models and the ${c.lists.comparison.join(' and ')}.`}
+      description={`Fuel or ${fast ? 'fast' : 'home'} charging for ${number(Math.round(c.miles * U.distance))} ${U.long}, the average vehicle's month, at ${custom ? 'your prices' : `this week's prices${place ? ` in ${place.name}` : ''}`}. Best sellers first, then the best-selling electric models and the ${c.lists.comparison.join(' and ')}.`}
       tabs={[
         { label: 'Chart', content: <FuelDots rows={rows} keys={used.map((f) => ({ label: fuelName(f), colour: FUEL_COLOURS[f] }))} format={usd} /> },
         { label: 'Tabular data', short: 'Tabular', content: <DataTable rows={table} columns={columns} rowKey={(r) => r.key} /> },
@@ -1097,7 +1124,7 @@ function CarFuelInsight({ page }) {
     <section className="insight-notes">
       <SectionHeading>About the data</SectionHeading>
       <ul>
-        <li>Prices are US averages unless you pick a state: gas and diesel for the week of {dateLabel(c.week)}, home electricity for {monthLabel(c.powerMonth)}. EIA surveys pump prices in only {c.places.filter((s) => !s.gasArea).length} states, so the others use their region&apos;s average. Fast charging is <a href={FAST_CHARGING.url} target="_blank" rel="noreferrer">Paren</a>&apos;s US average for {FAST_CHARGING.quarter}, {cents(FAST_CHARGING.cents)} a kWh, about {Math.round(FAST_CHARGING.cents / c.prices.electricity)} times the home price.</li>
+        <li>Prices are US averages unless you pick a state: gas and diesel for the week of {dateLabel(c.week)}, home electricity for {monthLabel(c.powerMonth)}. EIA surveys pump prices in only {c.places.filter((s) => !s.gasArea).length} states, so the others use their region&apos;s average. Fast charging is <a href={FAST_CHARGING.url} target="_blank" rel="noreferrer">Paren</a>&apos;s US average for {FAST_CHARGING.quarter}, {cents(FAST_CHARGING.cents)} a kWh, about {Math.round(FAST_CHARGING.cents / c.prices.electricity)} times the home price. You can also type in your own prices above the chart.</li>
         <li>Mileage is EPA&apos;s combined rating for {c.rows[0].epaYear} models, taking the middle configuration of each version. Real-world mileage is usually a little worse.</li>
         <li>Hybrids are the regular kind you can&apos;t plug in, so they run on gas alone. Plug-in hybrids drive {pct(Math.min(...ufs))} to {pct(Math.max(...ufs))} of their miles on the battery, EPA&apos;s estimate for an owner who charges every night. Plug-in versions without a {c.rows[0].epaYear} EPA rating, like the RAV4&apos;s, are left out.</li>
         <li>Cars are the {c.lists.top} best sellers from January to September 2026, plus the next {c.lists.electric} best-selling electric models (Cox Automotive estimates), since the Model Y is the only EV in the top {c.lists.top}.{c.rows.filter((r) => r.list === 'comparison').map((r) => ` The ${r.model} is added for comparison, with ${number(r.sold)} sold.`).join('')}</li>

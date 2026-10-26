@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { CARS, carCosts, carFullRange, carRange } from '../src/cars.mjs';
+import { CARS, UNITS, carCosts, carFullRange, carRange } from '../src/cars.mjs';
 import { CAR_SHAPES, carSvg } from '../src/carShapes.mjs';
 
 describe('carCosts', () => {
@@ -51,6 +51,14 @@ describe('carFullRange', () => {
     expect(range.find((r) => r.model === 'Silverado' && r.fuel === 'diesel').miles).toBe(23 * silverado.tanks.diesel);
     expect(range.find((r) => r.model === 'Model Y').miles).toBe((306 + 321) / 2);
     expect(range.every((r, i) => i === 0 || range[i - 1].miles >= r.miles)).toBe(true);
+  });
+});
+
+describe('UNITS', () => {
+  test('metric turns mpg into litres per 100 km and kWh per 100 miles into kWh per 100 km', () => {
+    expect(UNITS.metric.fuelUse(50)).toBe('4.7 L per 100 km');
+    expect(UNITS.metric.powerUse(26.1)).toBe('16.2 kWh per 100 km');
+    expect(UNITS.us.fuelUse(50)).toBe('50 mpg');
   });
 });
 
