@@ -32,6 +32,12 @@ export const CAR_SHAPES = {
   Civic: { cls: 'sedan', L: 184.8, WB: 107.7, FO: 36, R: 13, gc: 5, hoodF: 29, hoodR: 35, noseDrop: 5.5, cowlX: 121, wsTopX: 95, roofF: 55.3, roofR: 52, roofRearX: 60, deckFrontX: 22, deckH: 38.5, beltF: 35, beltR: 37.5, pillars: [87], arch: 'round' },
   Accord: { cls: 'sedan', L: 195.7, WB: 111.4, FO: 38, R: 13.5, gc: 5.5, hoodF: 29.5, hoodR: 36, noseDrop: 5.5, cowlX: 129, wsTopX: 100, roofF: 56.7, roofR: 52.5, roofRearX: 64, deckFrontX: 24, deckH: 39.5, beltF: 36, beltR: 39, pillars: [94], arch: 'round' },
   Elantra: { cls: 'sedan', L: 184.1, WB: 107.1, FO: 36, R: 13, gc: 5.3, hoodF: 28.5, hoodR: 35, noseDrop: 6, cowlX: 125, wsTopX: 99, roofF: 55.3, roofMid: [80, 55.6], roofR: 51, roofRearX: 56, deckFrontX: 20, deckH: 38.5, beltF: 35, beltR: 38.8, pillars: [91], arch: 'round' },
+  // The best-selling electric models after the Model Y.
+  'Model 3': { cls: 'sedan', L: 184.8, WB: 113.2, FO: 34, R: 13.3, gc: 5.5, hoodF: 27.5, hoodR: 33.5, noseDrop: 7, cowlX: 133, wsTopX: 99, roofF: 56.2, roofMid: [74, 56.7], roofR: 51.5, roofRearX: 50, deckFrontX: 19, deckH: 37.5, beltF: 34, beltR: 37, pillars: [92], arch: 'round' },
+  'Ioniq 5': { cls: 'suv', L: 182.5, WB: 118.1, FO: 31.5, R: 14.6, gc: 6.5, hoodF: 35, hoodR: 39.5, noseDrop: 4, cowlX: 128, wsTopX: 104, roofF: 62.6, roofR: 61.5, roofRearX: 9, bumperH: 33, hatchBaseX: 1.5, hatchBaseY: 41, beltF: 39.5, beltR: 40.5, dPillar: 9, pillars: [92, 55], arch: 'square', clad: true },
+  bZ: { cls: 'suv', L: 184.6, WB: 112.2, FO: 36, R: 14.6, gc: 7.5, hoodF: 35.5, hoodR: 40, noseDrop: 5, cowlX: 126, wsTopX: 101, roofF: 64.6, roofR: 61.5, roofRearX: 22, bumperH: 32, hatchBaseX: 4, hatchBaseY: 41.5, beltF: 40.5, beltR: 44, dPillar: 9, pillars: [88, 55], arch: 'square', clad: true },
+  'Equinox EV': { cls: 'suv', L: 190.7, WB: 116.3, FO: 37, R: 14.8, gc: 7, hoodF: 37, hoodR: 41.5, noseDrop: 4, cowlX: 130, wsTopX: 105, roofF: 64.2, roofR: 61, roofRearX: 20, bumperH: 33, hatchBaseX: 4, hatchBaseY: 42, beltF: 41.5, beltR: 44.5, dPillar: 9, pillars: [93, 57], arch: 'round' },
+  R1S: { cls: 'suv', L: 200.8, WB: 121.1, FO: 38, R: 17, gc: 10, hoodF: 43, hoodR: 46, noseDrop: 3, noseR: 6, cowlX: 139, wsTopX: 117, roofF: 71.5, roofR: 70.5, roofRearX: 9, bumperH: 38, hatchBaseX: 1.5, hatchBaseY: 47.5, beltF: 46.5, beltR: 48, dPillar: 6, pillars: [101, 63], arch: 'round' },
 };
 
 const f = (n) => Math.round(n * 100) / 100;

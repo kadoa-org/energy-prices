@@ -1,11 +1,11 @@
-// What a month of driving costs in each version of the 25 best-selling US models, at this week's pump prices and the
-// latest home electricity price. Sales are January to September 2026 as the carmakers report them (compiled by
-// GoodCarBadCar; Tesla and GM monthly figures are estimates). Each version lists its EPA configurations as [combined
-// mpg, fuel grade], or [kWh per 100 miles, 'electricity'] for electric ones. Gas and hybrid versions keep only the
-// regular-fuel configurations where a model has them, so premium high-output trims (Raptor, Ram RHO) do not set the
-// figure. Left out: the Silverado EV and Equinox EV, sold as separate models; Ram's eTorque mild hybrid, rated no
-// better than the gas truck; Super Duty pickups and the Ford Transit van, which EPA does not rate. F-Series uses the
-// F-150's figures.
+// What a month of driving costs in each version of the 25 best-selling US models and the 5 best-selling electric ones,
+// at this week's pump prices and the latest home electricity price. Sales are January to September 2026 as the
+// carmakers report them (compiled by GoodCarBadCar; Tesla and GM monthly figures are estimates). Each version lists
+// its EPA configurations as [combined mpg, fuel grade], or [kWh per 100 miles, 'electricity'] for electric ones. Gas
+// and hybrid versions keep only the regular-fuel configurations where a model has them, so premium high-output trims
+// (Raptor, Ram RHO) do not set the figure. Electric models sold under their own name (Silverado EV, Equinox EV) are
+// not versions of the gas ones. Left out: Ram's eTorque mild hybrid, rated no better than the gas truck; Super Duty
+// pickups and the Ford Transit van, which EPA does not rate. F-Series uses the F-150's figures.
 export const CAR_SALES_PERIOD = { from: '2026-01', to: '2026-09' };
 // FHWA Highway Statistics 2024, table VM-1: average miles a year per light-duty vehicle.
 export const MILES_A_YEAR = 10787;
@@ -35,7 +35,18 @@ export const CARS = [
   { make: 'Hyundai', model: 'Elantra', sold: 128603, epaYear: 2026, versions: { gas: [[31, 'regular'], [34, 'regular'], [35, 'regular']], hybrid: [[50, 'regular'], [54, 'regular']] } },
   { make: 'Ford', model: 'Maverick', sold: 123681, epaYear: 2026, versions: { gas: [[23, 'regular'], [24, 'regular'], [25, 'regular'], [26, 'regular']], hybrid: [[36, 'regular'], [37, 'regular'], [38, 'regular']] } },
   { make: 'Chevrolet', model: 'Traverse', sold: 120171, epaYear: 2026, versions: { gas: [[21, 'regular'], [22, 'regular']] } },
+  // The Model Y is the only electric model in the top 25, so the five best-selling electric models after it follow,
+  // with January to September 2026 sales from Cox Automotive's estimates (Kelley Blue Book EV Sales Report, Q3 2026),
+  // leaving out delivery vans. Every consumer configuration counts, as for the Model Y; the Ioniq 5 robotaxi does not,
+  // nor the bZ Woodland, which Cox counts as its own model.
+  { make: 'Tesla', model: 'Model 3', sold: 106962, epaYear: 2026, list: 'electric', versions: { electric: [[24.3, 'electricity'], [24.6, 'electricity'], [26.4, 'electricity'], [29.6, 'electricity'], [30.2, 'electricity']] } },
+  { make: 'Hyundai', model: 'Ioniq 5', sold: 31112, epaYear: 2026, list: 'electric', versions: { electric: [[29.0, 'electricity'], [30.0, 'electricity'], [31.7, 'electricity'], [34.5, 'electricity'], [35.8, 'electricity'], [43.0, 'electricity']] } },
+  { make: 'Toyota', model: 'bZ', sold: 24944, epaYear: 2026, list: 'electric', versions: { electric: [[25.5, 'electricity'], [25.8, 'electricity'], [26.9, 'electricity'], [27.5, 'electricity'], [28.0, 'electricity'], [28.9, 'electricity']] } },
+  { make: 'Chevrolet', model: 'Equinox EV', sold: 18154, epaYear: 2026, list: 'electric', versions: { electric: [[31.1, 'electricity'], [32.6, 'electricity'], [35.1, 'electricity']] } },
+  { make: 'Rivian', model: 'R1S', sold: 17259, epaYear: 2026, list: 'electric', versions: { electric: [[39.5, 'electricity'], [39.5, 'electricity'], [39.9, 'electricity'], [39.9, 'electricity'], [39.9, 'electricity'], [40.9, 'electricity'], [40.9, 'electricity'], [42.0, 'electricity'], [42.0, 'electricity'], [42.9, 'electricity'], [42.9, 'electricity'], [42.9, 'electricity'], [43.1, 'electricity'], [43.1, 'electricity'], [43.2, 'electricity'], [43.2, 'electricity'], [44.4, 'electricity'], [44.4, 'electricity'], [44.4, 'electricity'], [44.6, 'electricity'], [46.9, 'electricity'], [46.9, 'electricity'], [47.3, 'electricity'], [49.8, 'electricity'], [50.1, 'electricity']] } },
 ];
+// How many models the best-seller list holds, and how many electric models follow it.
+export const CAR_LISTS = { top: CARS.filter((c) => !c.list).length, electric: CARS.filter((c) => c.list === 'electric').length };
 export const FUEL_ORDER = ['gas', 'hybrid', 'diesel', 'electric'];
 const median = (a) => { const s = [...a].sort((x, y) => x - y), m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
 const round = (v, d = 2) => Math.round(v * 10 ** d) / 10 ** d;
@@ -43,7 +54,7 @@ const round = (v, d = 2) => Math.round(v * 10 ** d) / 10 ** d;
 export function carCosts(prices, miles = MILES_A_YEAR / 12) {
   const cost = ([use, grade]) => (grade === 'electricity' ? (miles * use) / 100 * (prices.electricity / 100) : (miles / use) * prices[grade]);
   return CARS.map((c) => ({
-    make: c.make, model: c.model, sold: c.sold, epaYear: c.epaYear,
+    make: c.make, model: c.model, sold: c.sold, epaYear: c.epaYear, list: c.list ?? 'top',
     versions: FUEL_ORDER.filter((f) => c.versions[f]).map((fuel) => ({ fuel, month: round(median(c.versions[fuel].map(cost))), use: median(c.versions[fuel].map(([u]) => u)), configs: c.versions[fuel].length })),
   }));
 }

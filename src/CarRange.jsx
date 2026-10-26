@@ -7,7 +7,7 @@ import { CAR_BOX_HEIGHT, CAR_SHAPES, carSvg } from './carShapes.mjs';
 // lengths read as trips; places without `phone` are left off on phones. Car size follows --range-car (px per inch),
 // smaller on phones.
 export default function CarRange({ runs, places, start, step = 500 }) {
-  // A tenth of headroom past the furthest car; its value sits behind it, so it never runs off the chart.
+  // A tenth of headroom past the furthest car.
   const max = Math.ceil((runs[0].miles * 1.1) / step) * step;
   const ticks = Array.from({ length: max / step + 1 }, (_, i) => i * step);
   const at = (v) => `${(v / max) * 100}%`;
@@ -16,14 +16,17 @@ export default function CarRange({ runs, places, start, step = 500 }) {
     {ticks.map((t) => <span className="dots__grid" key={`t${t}`} style={{ left: at(t) }} aria-hidden="true" />)}
     {places.map((p) => <span className={`crange__place${p.phone ? '' : ' crange__wide'}`} key={p.place} style={{ left: at(p.miles) }} aria-hidden="true" />)}
   </>;
+  // The start's name sits right above the place labels, at the left edge of the lanes where every trail begins.
   return <div className="crange" style={{ '--range-name': nameWidth }}>
+    <div className="crange__row crange__row--start" aria-hidden="true"><span /><span /><span className="crange__track">{start}</span></div>
     <div className="crange__row crange__row--head" aria-hidden="true">
-      <span className="crange__start">{start}</span>
+      <span /><span />
       <span className="crange__track">{places.map((p) => <span className={`crange__label${p.phone ? '' : ' crange__wide'}`} key={p.place} style={{ left: at(p.miles) }}>{p.place}</span>)}</span>
     </div>
     <ol className="crange__list">
-      {runs.map((r, i) => {
-        const len = CAR_SHAPES[r.model].L, car = `${len} * var(--range-car)`, behind = i === 0;
+      {runs.map((r) => {
+        // Cars in the last stretch of the axis carry their value behind them, so it stays inside on a phone.
+        const len = CAR_SHAPES[r.model].L, car = `${len} * var(--range-car)`, behind = r.miles / max > 0.7;
         return <li className="crange__row" key={r.key} title={`${r.name}, ${r.fuelLabel}: ${r.text}`}>
           <span className="crange__name">{r.name}</span>
           <span className="crange__fuel" style={{ color: r.textColour }}>{r.fuelLabel}</span>

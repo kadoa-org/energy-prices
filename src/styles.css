@@ -424,7 +424,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,su
 .crange__car{position:absolute;bottom:0;transform:translateX(-100%);height:auto;display:block;overflow:visible}
 .crange__val{position:absolute;bottom:6px;padding-left:8px;font-size:14px;font-weight:700;line-height:1;white-space:nowrap;font-variant-numeric:tabular-nums;text-shadow:0 0 3px #fff,0 0 3px #fff,0 0 3px #fff}
 .crange__val--behind{padding:0 8px 0 0;transform:translateX(-100%)}
-.crange__row--head .crange__start{grid-column:1/3;font-size:16px;font-weight:700;line-height:20px;padding-bottom:3px}
+.crange__row--start{min-height:0}.crange__row--start .crange__track{height:auto;font-size:14px;font-weight:700;line-height:18px;color:var(--gov-text,#0b0c0c)}
 .crange__row--head .crange__track,.crange__row--axis .crange__track{height:24px}
 .crange__label{position:absolute;bottom:4px;transform:translateX(-50%);font-size:14px;font-weight:700;line-height:1;color:var(--dk-muted,#505a5f);white-space:nowrap}
 .crange__row--axis .dots__tick{bottom:auto;top:6px}.crange__row--axis .dots__tick:last-child{transform:translateX(-100%)}

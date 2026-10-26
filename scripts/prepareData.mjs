@@ -6,7 +6,7 @@ import { createInterface } from 'node:readline';
 import { createGunzip, gzipSync } from 'node:zlib';
 import { BASE, addDays, addMonths, money, monthLabel, monthlySummary, pct, slugify, trailingMean, trailingPrice, weeklySummary } from '../src/model.mjs';
 import { utilityName } from '../src/names.mjs';
-import { CAR_SALES_PERIOD, MILES_A_YEAR, carCosts } from '../src/cars.mjs';
+import { CAR_LISTS, CAR_SALES_PERIOD, MILES_A_YEAR, carCosts } from '../src/cars.mjs';
 
 const root = resolve(import.meta.dirname, '..');
 // The dataset pipeline lives outside this repository; point ENERGY_DATASET_DIR at its folder (a local .env works).
@@ -793,7 +793,7 @@ const carFuel = (() => {
   const hybridSavings = rows.filter((r) => r.versions.some((v) => v.fuel === 'hybrid') && r.versions.some((v) => v.fuel === 'gas'))
     .map((r) => r.versions.find((v) => v.fuel === 'gas').month - r.versions.find((v) => v.fuel === 'hybrid').month);
   return {
-    rows, prices: { ...prices }, week: pump.regular[0], powerMonth: power[0], miles: Math.round(miles), milesYear: MILES_A_YEAR, period: CAR_SALES_PERIOD,
+    rows, lists: CAR_LISTS, prices: { ...prices }, week: pump.regular[0], powerMonth: power[0], miles: Math.round(miles), milesYear: MILES_A_YEAR, period: CAR_SALES_PERIOD,
     top: { name: top.name, fuel: top.fuel, month: top.month }, low: { name: low.name, fuel: low.fuel, month: low.month },
     silverado: pair?.diesel && pair?.gas ? { gas: pair.gas, diesel: pair.diesel } : null,
     dieselPremium: round(pct(prices.diesel, prices.regular), 0),
@@ -803,10 +803,10 @@ const carFuel = (() => {
 if (carFuel) {
   const c = carFuel, slug = 'car-fuel-costs';
   const title = "How far $100 of fuel takes you in America's best-selling cars";
-  INSIGHTS.unshift({ slug, title, summary: `Miles on $100 of fuel or home charging, and a month's fuel cost, in each version of the ${c.rows.length} best-selling US models.` });
+  INSIGHTS.unshift({ slug, title, summary: `Miles on $100 of fuel or home charging, and a month's fuel cost, in each version of the ${c.lists.top} best-selling US models and the ${c.lists.electric} best-selling electric ones.` });
   await page(`insights/${slug}`, `${BASE}/insights/${slug}`, { kind: 'insight', slug, title, cars: c });
-  const lines = ['make,model,sold_jan_sep_2026,fuel,epa_combined_mpg_or_kwh_per_100mi,epa_configurations,monthly_cost_usd'];
-  for (const r of c.rows) for (const v of r.versions) lines.push([r.make, r.model, r.sold, v.fuel, v.use, v.configs, v.month].join(','));
+  const lines = ['make,model,sold_jan_sep_2026,fuel,epa_combined_mpg_or_kwh_per_100mi,epa_configurations,monthly_cost_usd,list'];
+  for (const r of c.rows) for (const v of r.versions) lines.push([r.make, r.model, r.sold, v.fuel, v.use, v.configs, v.month, r.list === 'electric' ? 'top electric' : 'top 25'].join(','));
   await writeFile(join(out, `downloads/${slug}.csv.gz`), gzipSync(lines.join('\n') + '\n'));
 }
 if (INSIGHTS.length) await page('insights', `${BASE}/insights`, { kind: 'insights', insights: INSIGHTS });
