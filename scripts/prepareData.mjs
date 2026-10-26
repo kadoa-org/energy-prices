@@ -775,6 +775,18 @@ if (pjmPrices) {
   for (const r of p.rows) lines.push([r.code, /[",]/.test(r.name) ? `"${r.name}"` : r.name, { pjm: 'PJM', partial: 'partly PJM', other: 'not PJM' }[r.group], r.from, r.to, r.change].join(','));
   await writeFile(join(out, `downloads/${slug}.csv.gz`), gzipSync(lines.join('\n') + '\n'));
 }
+// EIA's pump price region (PADD) for each state, by the names EIA gives the regions. West Coast states take the region
+// without California, which EIA surveys on its own.
+const REGION_OF = Object.fromEntries(Object.entries({
+  'New England (PADD 1A)': 'CT ME MA NH RI VT',
+  'Central Atlantic (PADD 1B)': 'DE DC MD NJ NY PA',
+  'Lower Atlantic (PADD 1C)': 'FL GA NC SC VA WV',
+  'Midwest (PADD 2)': 'IL IN IA KS KY MI MN MO NE ND SD OH OK TN WI',
+  'Gulf Coast (PADD 3)': 'AL AR LA MS NM TX',
+  'Rocky Mountain (PADD 4)': 'CO ID MT UT WY',
+  'West Coast except California': 'AK AZ HI NV OR WA',
+  'West Coast (PADD 5)': 'CA',
+}).flatMap(([region, codes]) => codes.split(' ').map((code) => [code, region])));
 // Car fuel costs: a month of the average light-duty vehicle's miles in each version of the best-selling models, at
 // this week's US pump prices and the latest US home electricity price (src/cars.mjs has the EPA and sales inputs).
 const carFuel = (() => {
@@ -792,7 +804,29 @@ const carFuel = (() => {
   const pair = silverado && Object.fromEntries(silverado.versions.map((v) => [v.fuel, v]));
   const hybridSavings = rows.filter((r) => r.versions.some((v) => v.fuel === 'hybrid') && r.versions.some((v) => v.fuel === 'gas'))
     .map((r) => r.versions.find((v) => v.fuel === 'gas').month - r.versions.find((v) => v.fuel === 'hybrid').month);
+  // The same prices for each state, for the page's state picker: its own home power price, and its own pump prices
+  // where EIA surveys the state (nine do), otherwise its EIA region's. Every price is from the same week or month as
+  // the US one, or the build stops.
+  const areasOf = (slug) => new Map(fuelData.find((f) => f.fuel.slug === slug).locations.map((l) => [`${l.type}:${l.name}`, l]));
+  const gasAreas = areasOf('gasoline'), dieselAreas = areasOf('diesel');
+  const pumpArea = (areas, s) => areas.get(`state:${s.name}`) ?? areas.get(`padd:${REGION_OF[s.code]}`);
+  const priceIn = (area, grade, s) => {
+    const g = area?.grades.find((x) => x.grade === grade);
+    if (g?.summary.date !== pump.regular[0]) throw new Error(`Car fuel: no ${grade} price for ${s.name} in the week of ${pump.regular[0]}`);
+    return g.summary.value;
+  };
+  const places = states.map((s) => {
+    if (s.price.date !== power[0]) throw new Error(`Car fuel: ${s.name} has no home power price for ${power[0]}`);
+    const gas = pumpArea(gasAreas, s), diesel = pumpArea(dieselAreas, s);
+    return {
+      code: s.code, name: s.name,
+      gasArea: gas?.type === 'state' ? null : gas?.name.replace(/\s*\(PADD [^)]*\)/, ''),
+      dieselArea: diesel?.type === 'state' ? null : diesel?.name.replace(/\s*\(PADD [^)]*\)/, ''),
+      prices: { regular: priceIn(gas, 'Regular', s), midgrade: priceIn(gas, 'Midgrade', s), premium: priceIn(gas, 'Premium', s), diesel: priceIn(diesel, 'On-highway diesel', s), electricity: s.price.value },
+    };
+  });
   return {
+    places,
     rows, lists: CAR_LISTS, prices: { ...prices }, week: pump.regular[0], powerMonth: power[0], miles: Math.round(miles), milesYear: MILES_A_YEAR, period: CAR_SALES_PERIOD,
     top: { name: top.name, fuel: top.fuel, month: top.month }, low: { name: low.name, fuel: low.fuel, month: low.month },
     silverado: pair?.diesel && pair?.gas ? { gas: pair.gas, diesel: pair.diesel } : null,

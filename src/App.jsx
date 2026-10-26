@@ -12,7 +12,7 @@ import GapDots from './GapDots';
 import PriceGaps from './PriceGaps';
 import FuelDots from './FuelDots';
 import CarRange from './CarRange';
-import { NEW_YORK_TO, carRange } from './cars.mjs';
+import { NEW_YORK_TO, carCosts, carRange } from './cars.mjs';
 import { StapleChart, StapleRanking, ValueRanking, monthTime, stapleScales } from './StaplesChart';
 import { BASE, HOME, addDays, addMonths, cents, dataPath, dateLabel, money, monthLabel, number, pctLabel } from './model.mjs';
 import { priceText } from './format.mjs';
@@ -1006,11 +1006,17 @@ const COX_EV_SALES = 'https://www.coxautoinc.com/insights/q3-2026-ev-sales-repor
 // Darker shades of the fuel colours for text, each at least 4.5:1 on white.
 const FUEL_TEXT = { gas: '#505a5f', hybrid: '#1b7a72', diesel: '#a8420a', electric: '#154275' };
 function CarFuelInsight({ page }) {
-  const c = page.cars, p = c.prices;
+  const c = page.cars;
+  // Prices in: the US averages by default, or a state's, which recompute every version's cost.
+  const [code, setCode] = useState('US');
+  const place = c.places.find((s) => s.code === code);
+  const p = place?.prices ?? c.prices, costs = place ? carCosts(p, c.milesYear / 12) : c.rows;
   const miles = (v) => `${number(Math.round(v))} mi`;
-  const range = carRange(c.rows, c.milesYear / 12).map((r) => ({ ...r, key: `${r.model}-${r.fuel}`.replace(/\W/g, ''), name: `${r.make} ${r.model}`, fuelLabel: r.fuel, colour: FUEL_COLOURS[r.fuel], textColour: FUEL_TEXT[r.fuel], text: number(Math.round(r.miles)) }));
-  // The lede's shortest and furthest runs: "diesel Chevrolet Silverado", "Tesla Model Y charged at home".
-  const near = range.at(-1), far = range[0];
+  const style = (r) => ({ ...r, key: `${r.model}-${r.fuel}`.replace(/\W/g, ''), name: `${r.make} ${r.model}`, fuelLabel: r.fuel, colour: FUEL_COLOURS[r.fuel], textColour: FUEL_TEXT[r.fuel], text: number(Math.round(r.miles)) });
+  const range = carRange(costs, c.milesYear / 12).map(style);
+  const usRange = carRange(c.rows, c.milesYear / 12).map(style);
+  // The lede's shortest and furthest runs at US prices: "diesel Chevrolet Silverado", "Tesla Model Y charged at home".
+  const near = usRange.at(-1), far = usRange[0];
   const runName = (r) => (r.fuel === 'electric' ? `${r.name} charged at home` : `${r.fuel} ${r.name}`);
   const rangeColumns = [
     { key: 'name', header: 'Model', render: (r) => r.name },
@@ -1022,17 +1028,22 @@ function CarFuelInsight({ page }) {
   // The $100 chart's legend: each fuel in its colour with the price it is bought at.
   const fuelPrice = { gas: `${gallon(p.regular)} a gallon`, hybrid: `${gallon(p.regular)} a gallon`, diesel: `${gallon(p.diesel)} a gallon`, electric: `${cents(p.electricity)} a kWh at home` };
   const rangeKeys = ['gas', 'hybrid', 'diesel', 'electric'].map((f) => ({ label: f[0].toUpperCase() + f.slice(1), value: fuelPrice[f], colour: FUEL_COLOURS[f], textColour: FUEL_TEXT[f] }));
+  // EIA surveys pump prices in nine states; the others take their region's, which the chart says.
+  const regional = !place ? null
+    : place.gasArea && place.gasArea === place.dieselArea ? `Gas and diesel are ${place.gasArea} averages, since EIA doesn't survey pump prices in ${place.name}.`
+      : place.dieselArea ? `Diesel is the ${place.dieselArea} average.` : null;
+  const picker = <FilterSelect label="Prices in" value={code} options={[['US', 'United States (average)'], ...c.places.map((s) => [s.code, s.name])]} onChange={setCode} />;
   const use = (v) => (v.fuel === 'electric' ? `${v.use} kWh per 100 miles` : `${v.use} mpg`);
-  const rows = c.rows.map((r) => ({ name: `${r.make} ${r.model}`, dots: r.versions.map((v) => ({ label: FUEL_LABELS[v.fuel], value: v.month, colour: FUEL_COLOURS[v.fuel] })) }));
-  const used = ['gas', 'hybrid', 'diesel', 'electric'].filter((f) => c.rows.some((r) => r.versions.some((v) => v.fuel === f)));
-  const table = c.rows.flatMap((r) => r.versions.map((v) => ({ key: `${r.model}-${v.fuel}`, name: `${r.make} ${r.model}`, fuel: FUEL_LABELS[v.fuel], use: use(v), month: v.month })));
+  const rows = costs.map((r) => ({ name: `${r.make} ${r.model}`, dots: r.versions.map((v) => ({ label: FUEL_LABELS[v.fuel], value: v.month, colour: FUEL_COLOURS[v.fuel] })) }));
+  const used = ['gas', 'hybrid', 'diesel', 'electric'].filter((f) => costs.some((r) => r.versions.some((v) => v.fuel === f)));
+  const table = costs.flatMap((r) => r.versions.map((v) => ({ key: `${r.model}-${v.fuel}`, name: `${r.make} ${r.model}`, fuel: FUEL_LABELS[v.fuel], use: use(v), month: v.month })));
   const columns = [
     { key: 'name', header: 'Model', render: (r) => r.name },
     { key: 'fuel', header: 'Version', render: (r) => r.fuel },
     { key: 'use', header: 'EPA rating', hideBelow: 'sm', render: (r) => r.use },
     { key: 'month', header: 'A month', align: 'right', render: (r) => usd(r.month) },
   ];
-  const source = <p className="chart-note">Source: <a href="https://www.fueleconomy.gov/feg/download.shtml" target="_blank" rel="noreferrer">EPA</a> fuel economy; <a href="https://www.eia.gov/petroleum/gasdiesel/" target="_blank" rel="noreferrer">EIA</a> pump and electricity prices; <a href="https://www.fhwa.dot.gov/policyinformation/statistics/2024/vm1.cfm" target="_blank" rel="noreferrer">FHWA</a> miles; <a href={COX_EV_SALES} target="_blank" rel="noreferrer">Cox Automotive</a> electric car sales.</p>;
+  const source = <p className="chart-note">Source: <a href="https://www.fueleconomy.gov/feg/download.shtml" target="_blank" rel="noreferrer">EPA</a> fuel economy; <a href="https://www.eia.gov/petroleum/gasdiesel/" target="_blank" rel="noreferrer">EIA</a> pump and <a href="https://www.eia.gov/electricity/monthly/epm_table_grapher.php?t=epmt_5_3" target="_blank" rel="noreferrer">home electricity</a> prices; <a href="https://www.fhwa.dot.gov/policyinformation/statistics/2024/vm1.cfm" target="_blank" rel="noreferrer">FHWA</a> miles; <a href={COX_EV_SALES} target="_blank" rel="noreferrer">Cox Automotive</a> electric car sales.</p>;
   return <>
     <div className="title-block"><h1 className="dk-h1">{page.title}</h1><p className="lede">$100 of fuel takes a {runName(near)} {number(Math.round(near.miles))} miles, and a {runName(far)} {number(Math.round(far.miles))}.</p></div>
     <ChartCard
@@ -1040,15 +1051,15 @@ function CarFuelInsight({ page }) {
       title="Miles on $100 of fuel"
       description={`Each version of the ${c.lists.top} best-selling models and the ${c.lists.electric} best-selling electric ones.`}
       tabs={[
-        { label: 'Chart', content: <CarRange runs={range} places={NEW_YORK_TO} start="Road miles from New York" keys={rangeKeys} /> },
-        { label: 'Tabular data', short: 'Tabular', content: <DataTable rows={range} columns={rangeColumns} rowKey={(r) => r.key} /> },
+        { label: 'Chart', content: <>{picker}<CarRange runs={range} places={NEW_YORK_TO} start="For scale: road miles from New York" keys={rangeKeys} note={regional} /></> },
+        { label: 'Tabular data', short: 'Tabular', content: <>{picker}<DataTable rows={range} columns={rangeColumns} rowKey={(r) => r.key} /></> },
       ]}
-      footer={<p className="chart-note">Source: <a href="https://www.fueleconomy.gov/feg/download.shtml" target="_blank" rel="noreferrer">EPA</a> fuel economy; <a href="https://www.eia.gov/petroleum/gasdiesel/" target="_blank" rel="noreferrer">EIA</a> pump and electricity prices; <a href={COX_EV_SALES} target="_blank" rel="noreferrer">Cox Automotive</a> electric car sales.</p>}
+      footer={<p className="chart-note">Source: <a href="https://www.fueleconomy.gov/feg/download.shtml" target="_blank" rel="noreferrer">EPA</a> fuel economy; <a href="https://www.eia.gov/petroleum/gasdiesel/" target="_blank" rel="noreferrer">EIA</a> pump and <a href="https://www.eia.gov/electricity/monthly/epm_table_grapher.php?t=epmt_5_3" target="_blank" rel="noreferrer">home electricity</a> prices; <a href={COX_EV_SALES} target="_blank" rel="noreferrer">Cox Automotive</a> electric car sales.</p>}
     />
     <ChartCard
       id="cars-title"
       title="Monthly fuel cost per car model"
-      description={`Fuel or home charging for ${number(c.miles)} miles, the average vehicle's month, at this week's prices. Best sellers first, then the best-selling electric models.`}
+      description={`Fuel or home charging for ${number(c.miles)} miles, the average vehicle's month, at this week's prices${place ? ` in ${place.name}` : ''}. Best sellers first, then the best-selling electric models.`}
       tabs={[
         { label: 'Chart', content: <FuelDots rows={rows} keys={used.map((f) => ({ label: FUEL_LABELS[f], colour: FUEL_COLOURS[f] }))} format={usd} /> },
         { label: 'Tabular data', short: 'Tabular', content: <DataTable rows={table} columns={columns} rowKey={(r) => r.key} /> },
@@ -1060,7 +1071,7 @@ function CarFuelInsight({ page }) {
       <SectionHeading>About the data</SectionHeading>
       <ul>
         <li>Gas and diesel are US averages for the week of {dateLabel(c.week)}. Electricity is the average home price in {monthLabel(c.powerMonth)}. Public fast chargers cost several times more.</li>
-        <li>Mileage is EPA&apos;s combined rating for {c.rows[0].epaYear} models, taking the middle configuration of each version. Real-world mileage is usually a little worse.</li>
+        <li>Mileage is EPA&apos;s combined rating for {c.rows[0].epaYear} models, taking the middle configuration of each version. Real-world mileage is usually a little worse. Hybrids are the kind you can&apos;t plug in, so they run on gas alone.</li>
         <li>Cars are the {c.lists.top} best sellers from January to September 2026, plus the next {c.lists.electric} best-selling electric models (Cox Automotive estimates), since the Model Y is the only EV in the top {c.lists.top}.</li>
         <li>A month is {number(c.miles)} miles, the US average. Road distances from New York are rounded.</li>
       </ul>

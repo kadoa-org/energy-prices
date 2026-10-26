@@ -5,7 +5,8 @@
 // and hybrid versions keep only the regular-fuel configurations where a model has them, so premium high-output trims
 // (Raptor, Ram RHO) do not set the figure. Electric models sold under their own name (Silverado EV, Equinox EV) are
 // not versions of the gas ones. Left out: Ram's eTorque mild hybrid, rated no better than the gas truck; Super Duty
-// pickups and the Ford Transit van, which EPA does not rate. F-Series uses the F-150's figures.
+// pickups and the Ford Transit van, which EPA does not rate; plug-in hybrids, whose cost depends on how often they are
+// charged. F-Series uses the F-150's figures.
 export const CAR_SALES_PERIOD = { from: '2026-01', to: '2026-09' };
 // FHWA Highway Statistics 2024, table VM-1: average miles a year per light-duty vehicle.
 export const MILES_A_YEAR = 10787;
