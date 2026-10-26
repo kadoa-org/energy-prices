@@ -1059,14 +1059,10 @@ function CarFuelInsight({ page }) {
     <section className="insight-notes">
       <SectionHeading>About the data</SectionHeading>
       <ul>
-        <li>Prices are US averages: regular {gallon(p.regular)}, premium {gallon(p.premium)} and diesel {gallon(p.diesel)} a gallon in the week of {dateLabel(c.week)}, and {cents(p.electricity)} a kWh for home electricity in {monthLabel(c.powerMonth)}. Diesel costs {c.dieselPremium}% more than regular.</li>
-        <li>Every car drives {number(c.milesYear)} miles a year, the average for cars, SUVs and pickups on US roads in 2024.</li>
-        <li>Mileage is EPA&apos;s combined rating for the {c.rows[0].epaYear} models, the middle of each version&apos;s configurations. Gas and hybrid versions count only those that run on regular, so a Raptor does not set the F-150&apos;s figure. Real-world mileage is usually a little worse.</li>
-        <li>Best sellers are January to September 2026, from the carmakers&apos; own reports. The F-Series uses F-150 ratings, since EPA does not rate Super Duty trucks, and the Ford Transit van is left out because EPA does not rate it.</li>
-        <li>The Model Y is the only electric model among the {c.lists.top} best sellers, so the next {c.lists.electric} best-selling electric models are added, from Cox Automotive&apos;s estimates for the same months, leaving out delivery vans.</li>
-        <li>Electric cars are charged at home. Public fast chargers cost several times more per kWh.</li>
-        <li>Hybrids save {usd(c.hybridSavings.min)} to {usd(c.hybridSavings.max)} a month on all {c.hybridSavings.models} models sold both ways.</li>
-        <li>Miles on $100 are $100 divided by each version&apos;s cost per mile. Road distances from New York are rounded: {NEW_YORK_TO.map((t) => `${number(t.miles)} miles to ${t.place}`).join(', ').replace(/, ([^,]*)$/, ' and $1')}. The cars are drawn from each model&apos;s published length, height and wheelbase.</li>
+        <li>Gas and diesel are US averages for the week of {dateLabel(c.week)}. Electricity is the average home price in {monthLabel(c.powerMonth)}. Public fast chargers cost several times more.</li>
+        <li>Mileage is EPA&apos;s combined rating for {c.rows[0].epaYear} models, taking the middle configuration of each version. Real-world mileage is usually a little worse.</li>
+        <li>Cars are the {c.lists.top} best sellers from January to September 2026, plus the next {c.lists.electric} best-selling electric models (Cox Automotive estimates), since the Model Y is the only EV in the top {c.lists.top}.</li>
+        <li>A month is {number(c.miles)} miles, the US average. Road distances from New York are rounded.</li>
       </ul>
     </section>
   </>;
