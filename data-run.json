@@ -1,8 +1,8 @@
 {
-  "runId": "2026-11-10T08-57-13-909e4cb0",
-  "base": "/energy-prices/data/2026-11-10T08-57-13-909e4cb0",
-  "generatedAt": "2026-11-10T08:57:13.072Z",
-  "lastWeek": "2026-11-02",
+  "runId": "2026-11-11T01-54-14-79589cfb",
+  "base": "/energy-prices/data/2026-11-11T01-54-14-79589cfb",
+  "generatedAt": "2026-11-11T01:54:14.680Z",
+  "lastWeek": "2026-11-09",
   "lastMonth": "2026-08-01",
-  "publishedAt": "2026-11-10T08:57:56.049Z"
+  "publishedAt": "2026-11-11T01:54:58.025Z"
 }
