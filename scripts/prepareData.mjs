@@ -852,7 +852,7 @@ const gridCosts = (() => {
     const total = CLASSES.reduce((t, k) => t + caused[k], 0);
     const billedTotal = CLASSES.reduce((t, k) => t + billed[k], 0);
     if (Math.abs(billedTotal - total) > total * 0.01) throw new Error(`Grid costs: ${name} bills ${billedTotal} of ${total} caused`);
-    return { name, total: round(total, 1), ...Object.fromEntries(CLASSES.map((k) => [k, { caused: round(caused[k], 1), billed: round(billed[k], 1), causedShare: round((caused[k] / total) * 100, 1), billedShare: round((billed[k] / total) * 100, 1) }])) };
+    return { name, total: round(total, 1), ...Object.fromEntries(CLASSES.map((k) => [k, { caused: round(caused[k], 1), billed: round(billed[k], 1), causedShare: round((caused[k] / total) * 100), billedShare: round((billed[k] / total) * 100) }])) };
   };
   const sum = (key) => Object.fromEntries(CLASSES.map((k) => [k, GRID_COSTS.reduce((t, g) => t + g[key][k], 0)]));
   return {
