@@ -15,6 +15,15 @@ const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 
 const month = (ym) => `${MONTHS[Number(ym.slice(5, 7)) - 1]} ${ym.slice(0, 4)}`;
 const images = [];
 
+const grid = load('data-center-grid-costs');
+if (grid) {
+  const a = grid.grid.all, b = (v) => `$${(v / 1000).toFixed(2)}B`;
+  images.push({
+    out: join(data, 'og-data-center-grid-costs.png'), title: grid.title, source: 'Feng and You, Nature Energy',
+    key: `Cost of new power lines for data center demand on four US grids, ${grid.grid.year}.`,
+    figures: [{ value: b(a.dataCenters.caused), label: 'Caused by data centers', colour: BLUE }, { value: b(a.dataCenters.billed), label: 'Billed to data centers', colour: ORANGE }],
+  });
+}
 const cars = load('car-fuel-costs');
 if (cars) {
   // The furthest and shortest runs on $100, with the furthest hybrid between them.

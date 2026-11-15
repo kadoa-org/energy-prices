@@ -10,6 +10,7 @@ import FuelWork from './FuelWork';
 import PriceSpread from './PriceSpread';
 import GapDots from './GapDots';
 import PriceGaps from './PriceGaps';
+import CausedBilled from './CausedBilled';
 import FuelDots from './FuelDots';
 import CarRange from './CarRange';
 import { CARS, FAST_CHARGING, FUEL_ORDER, UNITS, carCosts, carFullRange, carRange } from './cars.mjs';
@@ -1134,7 +1135,72 @@ function CarFuelInsight({ page }) {
   </>;
 }
 
-const INSIGHT_VIEWS = { 'car-fuel-costs': CarFuelInsight, 'pjm-power-prices': PjmPricesInsight, 'investor-owned-utilities': UtilityOwnershipInsight, 'gold-top-export': GoldExportsInsight, 'fuel-minutes-of-work': FuelWorkInsight };
+// ── Data center grid costs: who caused 2025's new power lines on four grids, and who is billed, from a study's data.
+const GRID_CLASS_COLOURS = { dataCenters: SERIES_COLOURS[0], homes: SERIES_COLOURS[1] };
+function DataCenterGridInsight({ page }) {
+  const g = page.grid, a = g.all;
+  const bn = (v) => `$${(v / 1000).toFixed(v >= 10000 ? 1 : 2)}B`;
+  const mn = (v) => (v >= 1000 ? `$${(v / 1000).toFixed(2)}B` : `$${Math.round(v)}M`);
+  const share = (v) => `${Math.round(v)}%`;
+  const classRows = (r) => [['dataCenters', 'Data centers'], ['homes', 'Homes']].map(([k, name]) => ({ name, caused: r[k].causedShare, billed: r[k].billedShare, colour: GRID_CLASS_COLOURS[k] }));
+  const groups = [a, ...g.grids].map((r) => ({ label: r.name, note: bn(r.total), rows: classRows(r) }));
+  const texas = g.grids.find((r) => r.grid === 'ERCOT');
+  const zones = g.zones.map((z) => ({ name: z.name, caused: z.caused, billed: z.billed, colour: z.billed > z.caused ? SERIES_COLOURS[1] : SERIES_COLOURS[0] }));
+  const more = g.zones.filter((z) => z.billed > z.caused);
+  const dom = g.zones.find((z) => z.zone === 'DOM'), pepco = g.zones.find((z) => z.zone === 'PEPCO');
+  const shareColumns = [
+    { key: 'name', header: 'Grid', render: (r) => r.name },
+    { key: 'dcC', header: 'Data centers caused', align: 'right', render: (r) => `${mn(r.dataCenters.caused)} (${share(r.dataCenters.causedShare)})` },
+    { key: 'dcB', header: 'Data centers billed', align: 'right', render: (r) => `${mn(r.dataCenters.billed)} (${share(r.dataCenters.billedShare)})` },
+    { key: 'hC', header: 'Homes caused', align: 'right', hideBelow: 'sm', render: (r) => `${mn(r.homes.caused)} (${share(r.homes.causedShare)})` },
+    { key: 'hB', header: 'Homes billed', align: 'right', hideBelow: 'sm', render: (r) => `${mn(r.homes.billed)} (${share(r.homes.billedShare)})` },
+  ];
+  const zoneColumns = [
+    { key: 'name', header: 'Utility zone', render: (r) => r.name },
+    { key: 'caused', header: 'Caused', align: 'right', render: (r) => mn(r.caused) },
+    { key: 'dataCenters', header: 'Of which data centers', align: 'right', hideBelow: 'sm', render: (r) => mn(r.dataCenters) },
+    { key: 'billed', header: 'Billed', align: 'right', render: (r) => mn(r.billed) },
+  ];
+  const source = <p className="chart-note">Source: Feng and You, <a href={g.study.url} target="_blank" rel="noreferrer">Nature Energy</a> ({g.study.year + 1}), <a href={g.study.data} target="_blank" rel="noreferrer">source data</a>. Estimates.</p>;
+  return <>
+    <div className="title-block"><h1 className="dk-h1">{page.title}</h1><p className="lede">Four US grids approved {bn(a.total)} of power lines for new demand in {g.year}. A study traced each line to the demand that needed it. Data centers caused {share(a.dataCenters.causedShare)} of the cost and are billed {share(a.dataCenters.billedShare)}. Homes caused {share(a.homes.causedShare)} and are billed {share(a.homes.billedShare)}.</p></div>
+    <ChartCard
+      id="grids-title"
+      title="Share of new power line costs, caused and billed"
+      description={`Share of each grid's ${g.year} cost that new demand from data centers and homes caused, and the share billed to them.`}
+      tabs={[
+        { label: 'Chart', content: <CausedBilled groups={groups} format={share} tick={(t) => `${t}%`} step={20} /> },
+        { label: 'Tabular data', short: 'Tabular', content: <DataTable rows={[a, ...g.grids]} columns={shareColumns} rowKey={(r) => r.name} /> },
+        { label: 'Download', content: <><p className="download-intro">Costs caused and billed by grid and customer group, and by PJM utility zone, in US$ million, as a gzipped CSV.</p><Download file="data-center-grid-costs.csv.gz" common={page.common} /></> },
+      ]}
+      footer={source}
+    />
+    <ChartCard
+      id="zones-title"
+      title="PJM utilities, costs caused and billed"
+      description={`${g.year} cost of PJM's new power lines caused by new demand in each utility's area, and billed to it. ${more.length} of ${g.zones.length} are billed more than they caused.`}
+      tabs={[
+        { label: 'Chart', content: <CausedBilled groups={[{ rows: zones }]} format={mn} tick={(t) => (t ? `$${t / 1000}B` : '0')} step={1000} /> },
+        { label: 'Tabular data', short: 'Tabular', content: <DataTable rows={g.zones} columns={zoneColumns} rowKey={(r) => r.zone} /> },
+      ]}
+      footer={source}
+    />
+    <section className="insight-notes">
+      <SectionHeading>About the data</SectionHeading>
+      <ul>
+        <li>From Feng and You, &quot;Data centres asymmetrically exacerbate energy burdens through wholesale price increases and regressive grid cost shifting&quot;, <a href={g.study.url} target="_blank" rel="noreferrer">Nature Energy</a>, November {g.year + 1}. The charts use the study&apos;s published source data.</li>
+        <li>Costs are power line projects that PJM, ERCOT, MISO and CAISO approved in {g.year} to serve new demand. Texas makes up {bn(texas.total)}, most of it for industry and other new demand.</li>
+        <li>Caused is the study&apos;s reading of each project&apos;s planning record. Billed is its estimate under each grid&apos;s cost-sharing rules. The data center share assumes they run at 80% of capacity.</li>
+        <li>The {bn(a.dataCenters.caused - a.dataCenters.billed)} data centers aren&apos;t billed falls on every other customer, homes included.</li>
+        <li>On PJM, {mn(dom.caused)} of costs came from Dominion&apos;s area in Virginia, nearly all from data centers. Pepco, which serves DC, caused {mn(pepco.caused)} and is billed {mn(pepco.billed)}.</li>
+        <li>The study also finds data centers raised wholesale power prices about 15% in Dominion&apos;s area and 20% in the southern Bay Area by {g.year}.</li>
+        {g.pjmPage && <li>How home prices moved on PJM&apos;s grid: <a href={`${BASE}/insights/pjm-power-prices`}>home power prices by state</a>.</li>}
+      </ul>
+    </section>
+  </>;
+}
+
+const INSIGHT_VIEWS = { 'data-center-grid-costs': DataCenterGridInsight, 'car-fuel-costs': CarFuelInsight, 'pjm-power-prices': PjmPricesInsight, 'investor-owned-utilities': UtilityOwnershipInsight, 'gold-top-export': GoldExportsInsight, 'fuel-minutes-of-work': FuelWorkInsight };
 function Insight({ page }) {
   const View = INSIGHT_VIEWS[page.slug];
   return <View page={page} />;

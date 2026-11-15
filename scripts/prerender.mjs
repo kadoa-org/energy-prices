@@ -117,6 +117,12 @@ function seo(page, path) {
       : `Monthly US exports by Census product category since ${monthLabel(`${g.rows[0].month}-01`)}. ${g.led.length ? `Gold led in ${g.led.length} of the last 12 months. ` : ''}In ${monthLabel(`${l.month}-01`)}: gold ${b(l.gold)}, crude oil ${b(l.crude)}, pharmaceuticals ${b(l.pharma)}.`;
     crumbs.push({ name: 'Insights', url: `${SITE}/energy-prices/insights` }, { name: 'Gold exports', url: canonical });
     ld = [dataset(`US exports of gold, crude oil, pharmaceuticals and aircraft engines, monthly since ${g.rows[0].month.slice(0, 4)}`, description, { temporalCoverage: `${g.rows[0].month}/${l.month}`, isBasedOn: ['https://www.census.gov/foreign-trade/Press-Release/current_press_release/index.html'], distribution: [{ '@type': 'DataDownload', encodingFormat: 'text/csv', contentUrl: `${absolute(dataPath)}/downloads/gold-top-export.csv.gz` }] })];
+  } else if (page.kind === 'insight' && page.slug === 'data-center-grid-costs') {
+    const g = page.grid, a = g.all, b = (v) => `$${(v / 1000).toFixed(2)}B`, pc = (v) => `${Math.round(v)}%`;
+    title = `${page.title}: Who Pays for New Power Lines`;
+    description = `Cost of new power lines approved for new demand on PJM, ERCOT, MISO and CAISO in ${g.year}, by who caused it and who is billed. Data centers caused ${b(a.dataCenters.caused)} (${pc(a.dataCenters.causedShare)}) and are billed ${b(a.dataCenters.billed)}; homes caused ${pc(a.homes.causedShare)} and are billed ${pc(a.homes.billedShare)}. From a Nature Energy study's source data, by grid and PJM utility.`;
+    crumbs.push({ name: 'Insights', url: `${SITE}/energy-prices/insights` }, { name: 'Data center grid costs', url: canonical });
+    ld = [dataset(`New US power line costs caused and billed by customer group, ${g.year}`, description, { temporalCoverage: String(g.year), isBasedOn: [g.study.url, g.study.data], distribution: [{ '@type': 'DataDownload', encodingFormat: 'text/csv', contentUrl: `${absolute(dataPath)}/downloads/data-center-grid-costs.csv.gz` }] })];
   } else if (page.kind === 'insight' && page.slug === 'pjm-power-prices') {
     const p = page.pjm, top = p.rows.slice(0, 4).map((r) => `${r.name} ${pctLabel(r.change)}`).join(', ');
     title = `${page.title}: PJM Capacity Prices and Home Electricity`;

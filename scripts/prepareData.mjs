@@ -7,6 +7,7 @@ import { createGunzip, gzipSync } from 'node:zlib';
 import { BASE, addDays, addMonths, money, monthLabel, monthlySummary, pct, slugify, trailingMean, trailingPrice, weeklySummary } from '../src/model.mjs';
 import { utilityName } from '../src/names.mjs';
 import { CAR_LISTS, CAR_SALES_PERIOD, MILES_A_YEAR, carCosts } from '../src/cars.mjs';
+import { GRID_COSTS, GRID_COSTS_STUDY, PJM_ZONE_COSTS } from '../src/gridCosts.mjs';
 
 const root = resolve(import.meta.dirname, '..');
 // The dataset pipeline lives outside this repository; point ENERGY_DATASET_DIR at its folder (a local .env works).
@@ -841,6 +842,35 @@ if (carFuel) {
   await page(`insights/${slug}`, `${BASE}/insights/${slug}`, { kind: 'insight', slug, title, cars: c });
   const lines = ['make,model,sold_jan_sep_2026,fuel,epa_combined_mpg_or_kwh_per_100mi,epa_configurations,monthly_cost_usd,list'];
   for (const r of c.rows) for (const v of r.versions) lines.push([r.make, r.model, r.sold, v.fuel, v.use, v.configs, v.month, { electric: 'top electric', comparison: 'comparison' }[r.list] ?? 'top 25'].join(','));
+  await writeFile(join(out, `downloads/${slug}.csv.gz`), gzipSync(lines.join('\n') + '\n'));
+}
+// Data center grid costs: who caused the new power lines four grids approved in 2025, and who is billed for them, from
+// a Nature Energy study's source data (src/gridCosts.mjs). Shares are of each grid's total, and of the four together.
+const gridCosts = (() => {
+  const CLASSES = ['dataCenters', 'homes', 'other'];
+  const shares = (name, caused, billed) => {
+    const total = CLASSES.reduce((t, k) => t + caused[k], 0);
+    const billedTotal = CLASSES.reduce((t, k) => t + billed[k], 0);
+    if (Math.abs(billedTotal - total) > total * 0.01) throw new Error(`Grid costs: ${name} bills ${billedTotal} of ${total} caused`);
+    return { name, total: round(total, 1), ...Object.fromEntries(CLASSES.map((k) => [k, { caused: round(caused[k], 1), billed: round(billed[k], 1), causedShare: round((caused[k] / total) * 100, 1), billedShare: round((billed[k] / total) * 100, 1) }])) };
+  };
+  const sum = (key) => Object.fromEntries(CLASSES.map((k) => [k, GRID_COSTS.reduce((t, g) => t + g[key][k], 0)]));
+  return {
+    year: GRID_COSTS_STUDY.year, study: GRID_COSTS_STUDY,
+    all: shares('All four grids', sum('caused'), sum('billed')),
+    grids: GRID_COSTS.map((g) => ({ grid: g.grid, ...shares(g.name, g.caused, g.billed) })),
+    zones: [...PJM_ZONE_COSTS].sort((a, b) => b.billed - a.billed),
+    pjmPage: Boolean(pjmPrices),
+  };
+})();
+{
+  const g = gridCosts, slug = 'data-center-grid-costs', b = (v) => `$${(v / 1000).toFixed(2)}B`;
+  const title = `Data centers drove ${b(g.all.dataCenters.caused)} of new US grid costs in ${g.year} and were billed ${b(g.all.dataCenters.billed)}`;
+  INSIGHTS.unshift({ slug, title, summary: `Who caused the cost of new power lines on four US grids in ${g.year}, and who is billed for it, by grid and by PJM utility, from a Nature Energy study.` });
+  await page(`insights/${slug}`, `${BASE}/insights/${slug}`, { kind: 'insight', slug, title, grid: g });
+  const lines = ['area,customers,caused_usd_million,billed_usd_million'];
+  for (const r of [g.all, ...g.grids]) for (const k of ['dataCenters', 'homes', 'other']) lines.push([r.grid ?? 'all four grids', { dataCenters: 'data centers', homes: 'homes', other: 'other' }[k], r[k].caused, r[k].billed].join(','));
+  for (const z of g.zones) lines.push([`PJM zone ${z.zone}`, 'all', z.caused, z.billed].join(','));
   await writeFile(join(out, `downloads/${slug}.csv.gz`), gzipSync(lines.join('\n') + '\n'));
 }
 if (INSIGHTS.length) await page('insights', `${BASE}/insights`, { kind: 'insights', insights: INSIGHTS });
