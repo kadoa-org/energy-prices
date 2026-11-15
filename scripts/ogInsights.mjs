@@ -20,8 +20,8 @@ if (grid) {
   const a = grid.grid.all, b = (v) => `$${(v / 1000).toFixed(2)}B`;
   images.push({
     out: join(data, 'og-data-center-grid-costs.png'), title: grid.title, source: 'Feng and You, Nature Energy',
-    key: `Cost of new power lines for data center demand on four US grids, ${grid.grid.year}.`,
-    figures: [{ value: b(a.dataCenters.caused), label: 'For data centers', colour: BLUE }, { value: b(a.dataCenters.billed), label: 'Paid by data centers', colour: ORANGE }],
+    key: `New power lines built for data centers on four US grids, ${grid.grid.year}, and who paid.`,
+    figures: [{ value: b(a.dataCenters.billed), label: 'Paid by data centers', colour: BLUE }, { value: b(a.dataCenters.caused - a.dataCenters.billed), label: 'Paid by everyone else', colour: ORANGE }],
   });
 }
 const cars = load('car-fuel-costs');

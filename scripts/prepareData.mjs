@@ -865,12 +865,14 @@ const gridCosts = (() => {
 })();
 {
   const g = gridCosts, slug = 'data-center-grid-costs', b = (v) => `$${(v / 1000).toFixed(2)}B`;
-  const title = `Data centers paid ${b(g.all.dataCenters.billed)} of the ${b(g.all.dataCenters.caused)} in ${g.year} grid costs for data centers`;
-  INSIGHTS.unshift({ slug, title, summary: `Who new power lines on four US grids in ${g.year} were for, and who paid for them, by grid and by PJM utility, from a Nature Energy study.` });
+  const others = Math.round((1 - g.all.dataCenters.billed / g.all.dataCenters.caused) * 100);
+  const title = `Data centers needed ${b(g.all.dataCenters.caused)} of new power lines in ${g.year}. Everyone else paid ${others}%.`;
+  INSIGHTS.unshift({ slug, title, summary: `Who paid for the power lines four US grids built for data centers in ${g.year}, and where PJM utilities' share of the bill went, from a Nature Energy study.` });
   await page(`insights/${slug}`, `${BASE}/insights/${slug}`, { kind: 'insight', slug, title, grid: g });
-  const lines = ['area,customers,cost_for_them_usd_million,paid_usd_million'];
-  for (const r of [g.all, ...g.grids]) for (const k of ['dataCenters', 'homes', 'other']) lines.push([r.grid ?? 'all four grids', { dataCenters: 'data centers', homes: 'homes', other: 'other' }[k], r[k].caused, r[k].billed].join(','));
-  for (const z of g.zones) lines.push([`PJM zone ${z.zone}`, 'all', z.caused, z.billed].join(','));
+  const lines = ['grid,lines_for_data_centers_usd_million,paid_by_data_centers_usd_million,paid_by_everyone_else_usd_million'];
+  for (const r of [g.all, ...g.grids]) lines.push([r.grid ?? 'all four grids', r.dataCenters.caused, r.dataCenters.billed, round(r.dataCenters.caused - r.dataCenters.billed, 1)].join(','));
+  lines.push('', 'pjm_utility_zone,paid_usd_million,lines_in_own_area_usd_million,lines_in_dominion_area_usd_million,lines_in_other_areas_usd_million');
+  for (const z of g.zones) lines.push([z.zone, z.billed, z.ownArea, z.zone === 'DOM' ? '' : z.dominionArea, round(z.billed - z.ownArea - (z.zone === 'DOM' ? 0 : z.dominionArea), 1)].join(','));
   await writeFile(join(out, `downloads/${slug}.csv.gz`), gzipSync(lines.join('\n') + '\n'));
 }
 if (INSIGHTS.length) await page('insights', `${BASE}/insights`, { kind: 'insights', insights: INSIGHTS });
