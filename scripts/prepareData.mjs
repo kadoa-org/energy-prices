@@ -865,10 +865,10 @@ const gridCosts = (() => {
 })();
 {
   const g = gridCosts, slug = 'data-center-grid-costs', b = (v) => `$${(v / 1000).toFixed(2)}B`;
-  const title = `Data centers drove ${b(g.all.dataCenters.caused)} of new US grid costs in ${g.year} and were billed ${b(g.all.dataCenters.billed)}`;
-  INSIGHTS.unshift({ slug, title, summary: `Who caused the cost of new power lines on four US grids in ${g.year}, and who is billed for it, by grid and by PJM utility, from a Nature Energy study.` });
+  const title = `Data centers paid ${b(g.all.dataCenters.billed)} of the ${b(g.all.dataCenters.caused)} in ${g.year} grid costs for data centers`;
+  INSIGHTS.unshift({ slug, title, summary: `Who new power lines on four US grids in ${g.year} were for, and who paid for them, by grid and by PJM utility, from a Nature Energy study.` });
   await page(`insights/${slug}`, `${BASE}/insights/${slug}`, { kind: 'insight', slug, title, grid: g });
-  const lines = ['area,customers,caused_usd_million,billed_usd_million'];
+  const lines = ['area,customers,cost_for_them_usd_million,paid_usd_million'];
   for (const r of [g.all, ...g.grids]) for (const k of ['dataCenters', 'homes', 'other']) lines.push([r.grid ?? 'all four grids', { dataCenters: 'data centers', homes: 'homes', other: 'other' }[k], r[k].caused, r[k].billed].join(','));
   for (const z of g.zones) lines.push([`PJM zone ${z.zone}`, 'all', z.caused, z.billed].join(','));
   await writeFile(join(out, `downloads/${slug}.csv.gz`), gzipSync(lines.join('\n') + '\n'));

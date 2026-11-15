@@ -21,7 +21,7 @@ if (grid) {
   images.push({
     out: join(data, 'og-data-center-grid-costs.png'), title: grid.title, source: 'Feng and You, Nature Energy',
     key: `Cost of new power lines for data center demand on four US grids, ${grid.grid.year}.`,
-    figures: [{ value: b(a.dataCenters.caused), label: 'Caused by data centers', colour: BLUE }, { value: b(a.dataCenters.billed), label: 'Billed to data centers', colour: ORANGE }],
+    figures: [{ value: b(a.dataCenters.caused), label: 'For data centers', colour: BLUE }, { value: b(a.dataCenters.billed), label: 'Paid by data centers', colour: ORANGE }],
   });
 }
 const cars = load('car-fuel-costs');
