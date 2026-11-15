@@ -282,7 +282,8 @@ function Fuel({ page }) {
   // A spot price is a market price, not an average of places: WTI and Brent are named, not called the US average.
   const place = fuel.spot ? 'spot price' : isUS ? 'US average' : location.name;
   return <>
-    <Breadcrumbs items={[{ label: 'Fuel prices', href: `${BASE}/fuel` }, isUS ? { label: fuel.name } : { label: fuel.name, href: fuelUrl(fuel.slug) }, !isUS && { label: location.name }].filter(Boolean)} />
+    {/* The fuel tabs below already name the fuel, so only a state page gets breadcrumbs: its link back to the US page. */}
+    {!isUS && <Breadcrumbs items={[{ label: 'Fuel prices', href: `${BASE}/fuel` }, { label: fuel.name, href: fuelUrl(fuel.slug) }, { label: location.name }]} />}
     <FuelNav current={fuel.slug} />
     <div className="hero detail-hero"><div><h1 className="dk-h1">{isUS ? fuel.title : `${fuel.title} in ${location.name}`}</h1><p className="lede">{fuel.description}</p></div></div>
     <KeyFigures
