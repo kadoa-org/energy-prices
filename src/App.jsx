@@ -1147,7 +1147,7 @@ function DataCenterGridInsight({ page }) {
   const share = (v) => `${Math.round(v)}%`;
   const groupKeys = Object.keys(GRID_GROUP_LABELS);
   const parts = (r, key) => groupKeys.map((k) => ({ label: GRID_GROUP_LABELS[k], value: r[k][key], colour: GRID_GROUP_COLOURS[k], ink: k === 'other' ? '#0b0c0c' : '#fff' }));
-  const gridGroups = [a, ...g.grids].map((r) => ({ label: r.name, note: bn(r.total), rows: [{ name: 'Driven by', parts: parts(r, 'caused') }, { name: 'Charged to', parts: parts(r, 'billed') }] }));
+  const gridGroups = [a, ...g.grids].map((r) => ({ label: r.name, note: bn(r.total), rows: [{ name: 'Cost from their demand', parts: parts(r, 'caused') }, { name: 'Cost on their bills', parts: parts(r, 'billed') }] }));
   const zoneRows = g.zones.map((z) => {
     const own = { label: 'Projects in its own area', value: z.ownArea, colour: GRID_AREA_COLOURS.own, ink: '#0b0c0c' };
     const rest = z.zone === 'DOM'
@@ -1176,8 +1176,8 @@ function DataCenterGridInsight({ page }) {
     <div className="title-block"><h1 className="dk-h1">{page.title}</h1><p className="lede">Four US grids approved {bn(a.total)} of transmission projects for new demand in {g.year}. Data centers drove {share(a.dataCenters.causedShare)} of the cost and are charged {share(a.dataCenters.billedShare)}. Homes drove {share(a.homes.causedShare)} and are charged {share(a.homes.billedShare)}.</p></div>
     <ChartCard
       id="grids-title"
-      title="Who drove the cost of new grid projects, and who is charged"
-      description={`Share of the cost of transmission projects approved in ${g.year} for new demand: whose new demand drove it, and who is charged under each grid's cost-sharing rules.`}
+      title="Where new grid costs come from, and whose bills they land on"
+      description={`Share of the cost of transmission projects approved in ${g.year} for new demand: the share from each group's demand, and the share on its bills under each grid's cost-sharing rules.`}
       tabs={[
         { label: 'Chart', content: <SplitBars groups={gridGroups} keys={gridGroups[0].rows[0].parts} inside={(p, s) => share(s)} /> },
         { label: 'Tabular data', short: 'Tabular', content: <DataTable rows={gridTable} columns={gridColumns} rowKey={(r) => r.key} /> },
@@ -1198,7 +1198,7 @@ function DataCenterGridInsight({ page }) {
       <ul>
         <li>Source: Feng and You (Cornell University), &quot;Data centres asymmetrically exacerbate energy burdens through wholesale price increases and regressive grid cost shifting&quot;, <a href={g.study.url} target="_blank" rel="noreferrer">Nature Energy</a>, November {g.year + 1}. The charts use the study&apos;s published <a href={g.study.data} target="_blank" rel="noreferrer">source data</a>. All figures are study estimates, not billed amounts.</li>
         <li>Costs are estimated capital costs of transmission lines and substations that PJM, ERCOT, MISO and CAISO approved in {g.year} for new demand. Customers pay them through power bills over decades. Texas makes up {bn(texas.total)}.</li>
-        <li>Driven by shares are the study&apos;s estimate of each group&apos;s share of the new demand behind the projects. Charged to shares are its estimate under each grid&apos;s cost-sharing rules. For data centers, it assumes they use 80% of their capacity.</li>
+        <li>Cost from their demand is the study&apos;s estimate of each group&apos;s share of the new demand behind the projects. Cost on their bills is its estimate of who is charged under each grid&apos;s cost-sharing rules. For data centers, it assumes they use 80% of their capacity.</li>
         <li>Data centers are charged {share(ratio('dataCenters') * 100)} of the cost they drove, other new demand {share(ratio('other') * 100)}, and homes {ratio('homes').toFixed(1)} times theirs. Cornell&apos;s summary gives the same 38% as data centers paying {bn(a.dataCenters.billed)} of {bn(a.dataCenters.caused)}.</li>
         <li>Homes&apos; {share(a.homes.billedShare)} is a total across the four grids. The paper&apos;s abstract cites a median of 47% across utility tariffs, a different measure.</li>
         <li>Costs a data center pays directly to connect to the grid aren&apos;t included.</li>
