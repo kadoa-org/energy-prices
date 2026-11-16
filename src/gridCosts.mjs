@@ -40,3 +40,25 @@ export const PJM_ZONE_COSTS = [
   { zone: 'PSEG', name: 'PSE&G (NJ)', caused: 23.1, dataCenters: 0, billed: 129.0, ownArea: 23.1, dominionArea: 41.3 },
   { zone: 'RECO', name: 'Rockland Electric (NJ)', caused: 0, dataCenters: 0, billed: 4.3, ownArea: 0, dominionArea: 1.7 },
 ];
+
+// What the study's cost shifts do to households, from Source Data Fig. 4. Both are in percentage points.
+// By area: increase in the share of a county's households spending more than 6% of income on energy (the study's
+// energy poverty line), as the geometric mean across counties in each Rural-Urban Continuum group (Fig. 4e group
+// summary; it leaves out the 91 of 1,556 counties with no increase).
+// By income: increase in energy spending as a share of household income, as the median across the study's county
+// income records in each band of income relative to the local median (Fig. 4f income points, unweighted, as the study plots them).
+export const ENERGY_BURDEN = {
+  byArea: [
+    { group: 'Rural', counties: 754, increase: 2.889 },
+    { group: 'Suburban', counties: 279, increase: 2.391 },
+    { group: 'Urban', counties: 432, increase: 1.646 },
+  ],
+  byIncome: [
+    { band: '0-30%', name: 'Under 30% of local median', records: 63722, increase: 1.609 },
+    { band: '30-60%', name: '30 to 60%', records: 33594, increase: 0.848 },
+    { band: '60-80%', name: '60 to 80%', records: 15443, increase: 0.645 },
+    { band: '80-100%', name: '80 to 100%', records: 9006, increase: 0.574 },
+    { band: '100-150%', name: '100 to 150%', records: 3784, increase: 0.525 },
+    { band: '150%+', name: 'Over 150%', records: 847, increase: 0.373 },
+  ],
+};

@@ -455,7 +455,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,su
 .split__head{font-size:14px;color:var(--dk-muted);text-align:right}
 .split__name{font-size:16px;line-height:1.25;text-align:right}
 .split__note{color:var(--dk-muted)}
-.split__bar{display:flex;height:28px;background:var(--dk-rule-soft)}
+.split__bar{display:flex;height:28px;background:var(--dk-rule-soft)}.split__bar--value{background:none}
 .split__part{display:flex;align-items:center;padding:0 8px;box-sizing:border-box;overflow:hidden;white-space:nowrap;font-size:15px;font-weight:700;font-variant-numeric:tabular-nums}
 .split__part+.split__part{border-left:2px solid #fff}.split__part--narrow{padding:0 4px}
 .split__total{font-size:16px;text-align:right;font-variant-numeric:tabular-nums}

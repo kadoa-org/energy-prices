@@ -7,7 +7,7 @@ import { createGunzip, gzipSync } from 'node:zlib';
 import { BASE, addDays, addMonths, money, monthLabel, monthlySummary, pct, slugify, trailingMean, trailingPrice, weeklySummary } from '../src/model.mjs';
 import { utilityName } from '../src/names.mjs';
 import { CAR_LISTS, CAR_SALES_PERIOD, MILES_A_YEAR, carCosts } from '../src/cars.mjs';
-import { GRID_COSTS, GRID_COSTS_STUDY, PJM_ZONE_COSTS } from '../src/gridCosts.mjs';
+import { ENERGY_BURDEN, GRID_COSTS, GRID_COSTS_STUDY, PJM_ZONE_COSTS } from '../src/gridCosts.mjs';
 
 const root = resolve(import.meta.dirname, '..');
 // The dataset pipeline lives outside this repository; point ENERGY_DATASET_DIR at its folder (a local .env works).
@@ -860,6 +860,7 @@ const gridCosts = (() => {
     all: shares('All four grids', sum('caused'), sum('billed')),
     grids: GRID_COSTS.map((g) => ({ grid: g.grid, ...shares(g.name, g.caused, g.billed) })),
     zones: [...PJM_ZONE_COSTS].sort((a, b) => b.billed - a.billed),
+    burden: ENERGY_BURDEN,
     pjmPage: Boolean(pjmPrices),
   };
 })();
@@ -872,6 +873,9 @@ const gridCosts = (() => {
   for (const r of [g.all, ...g.grids]) for (const k of ['dataCenters', 'homes', 'other']) lines.push([r.grid ?? 'all four grids', { dataCenters: 'data centers', homes: 'homes', other: 'other new demand' }[k], r[k].caused, r[k].billed].join(','));
   lines.push('', 'pjm_utility_zone,charged_usd_million,projects_in_own_area_usd_million,projects_in_dominion_area_usd_million,projects_in_other_areas_usd_million');
   for (const z of g.zones) lines.push([z.zone, z.billed, z.ownArea, z.zone === 'DOM' ? '' : z.dominionArea, round(z.billed - z.ownArea - (z.zone === 'DOM' ? 0 : z.dominionArea), 1)].join(','));
+  lines.push('', 'household_group,kind,energy_burden_increase_pp');
+  for (const r of g.burden.byArea) lines.push([r.group, 'county area, rise in share of households over 6% of income on energy', r.increase].join(','));
+  for (const r of g.burden.byIncome) lines.push([`income ${r.band} of local median`, 'rise in energy spending as share of income', r.increase].join(','));
   await writeFile(join(out, `downloads/${slug}.csv.gz`), gzipSync(lines.join('\n') + '\n'));
 }
 if (INSIGHTS.length) await page('insights', `${BASE}/insights`, { kind: 'insights', insights: INSIGHTS });
