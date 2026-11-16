@@ -1178,7 +1178,7 @@ function DataCenterGridInsight({ page }) {
     { key: 'dominionArea', header: "Of which Dominion's area", align: 'right', hideBelow: 'sm', render: (r) => (r.zone === 'DOM' ? 'n/a' : mn(r.dominionArea)) },
   ];
   return <>
-    <div className="title-block"><h1 className="dk-h1">{page.title}</h1><p className="lede">A Cornell study in Nature Energy estimates that data centers raised the share of rural households spending over 6% of their income on energy {g.ruralGap.toFixed(0)}% more than in cities. On four US grids, data centers drove {share(a.dataCenters.causedShare)} of the {bn(a.total)} of new transmission projects approved in {g.year} and are charged {share(a.dataCenters.billedShare)}. Homes drove {share(a.homes.causedShare)} and are charged {share(a.homes.billedShare)}.</p><p>Also on the <a href={page.home}>US Datacenter Tracker</a>, with data center capacity by grid.</p></div>
+    <div className="title-block"><h1 className="dk-h1">{page.title}</h1><p className="lede"><a href={g.study.url}>A Cornell study</a> estimates that data centers raised the share of rural households spending over 6% of their income on energy {g.ruralGap.toFixed(0)}% more than in cities. On four US grids, data centers drove {share(a.dataCenters.causedShare)} of the {bn(a.total)} of new transmission projects approved in {g.year} and are charged {share(a.dataCenters.billedShare)}. Homes drove {share(a.homes.causedShare)} and are charged {share(a.homes.billedShare)}.</p><p>Also on the <a href={page.home}>US Datacenter Tracker</a>, with data center capacity by grid.</p></div>
     <ChartCard
       id="area-title"
       title="Rural counties see the biggest rise in households spending over 6% of income on energy"
