@@ -861,13 +861,15 @@ const gridCosts = (() => {
     grids: GRID_COSTS.map((g) => ({ grid: g.grid, ...shares(g.name, g.caused, g.billed) })),
     zones: [...PJM_ZONE_COSTS].sort((a, b) => b.billed - a.billed),
     burden: ENERGY_BURDEN,
+    // How much more the share of households over the energy poverty line rose in rural counties than in urban ones.
+    ruralGap: (() => { const by = Object.fromEntries(ENERGY_BURDEN.byArea.map((r) => [r.group, r.increase])); return round((by.Rural / by.Urban - 1) * 100); })(),
     pjmPage: Boolean(pjmPrices),
   };
 })();
 {
   const g = gridCosts, slug = 'data-center-grid-costs', b = (v) => `$${(v / 1000).toFixed(2)}B`;
-  const title = `Data centers drove ${Math.round(g.all.dataCenters.causedShare)}% of new grid costs but are charged ${Math.round(g.all.dataCenters.billedShare)}%`;
-  INSIGHTS.unshift({ slug, title, summary: `Whose new demand drove the cost of grid projects four US grids approved in ${g.year}, who is charged for it, and where PJM utilities' charges go, from a Nature Energy study.` });
+  const title = `Data centers need power, but rural residents pay the price. The share with high energy bills rose ${Math.round(g.ruralGap)}% more than in cities`;
+  INSIGHTS.unshift({ slug, title, summary: `How data centers' grid costs land on rural and lower-income households, whose new demand drove the cost of grid projects four US grids approved in ${g.year}, and who is charged for it, from a Nature Energy study.` });
   await page(`insights/${slug}`, `${BASE}/insights/${slug}`, { kind: 'insight', slug, title, grid: g });
   const lines = ['grid,group,drove_usd_million,charged_usd_million'];
   for (const r of [g.all, ...g.grids]) for (const k of ['dataCenters', 'homes', 'other']) lines.push([r.grid ?? 'all four grids', { dataCenters: 'data centers', homes: 'homes', other: 'other new demand' }[k], r[k].caused, r[k].billed].join(','));
@@ -886,7 +888,7 @@ await page('about', `${BASE}/about`, { kind: 'about', counts: { series: manifest
 const ANNOUNCE = {
   slug: 'data-center-grid-costs',
   until: '2026-11-30',
-  text: `Data centers drove ${Math.round(gridCosts.all.dataCenters.causedShare)}% of new grid costs, charged ${Math.round(gridCosts.all.dataCenters.billedShare)}%`,
+  text: `Data centers: rural energy poverty rose ${Math.round(gridCosts.ruralGap)}% more than in cities`,
 };
 const announced = INSIGHTS.find((i) => i.slug === ANNOUNCE.slug);
 if (announced && ANNOUNCE.text && new Date().toISOString().slice(0, 10) <= ANNOUNCE.until) common.announce = { key: `insights/${announced.slug}`, href: `${BASE}/insights/${announced.slug}`, title: ANNOUNCE.text };

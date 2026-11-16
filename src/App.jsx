@@ -1180,7 +1180,25 @@ function DataCenterGridInsight({ page }) {
     { key: 'dominionArea', header: "Of which Dominion's area", align: 'right', hideBelow: 'sm', render: (r) => (r.zone === 'DOM' ? 'n/a' : mn(r.dominionArea)) },
   ];
   return <>
-    <div className="title-block"><h1 className="dk-h1">{page.title}</h1><p className="lede">Four US grids approved {bn(a.total)} of transmission projects for new demand in {g.year}. Data centers drove {share(a.dataCenters.causedShare)} of the cost and are charged {share(a.dataCenters.billedShare)}. Homes drove {share(a.homes.causedShare)} and are charged {share(a.homes.billedShare)}.</p></div>
+    <div className="title-block"><h1 className="dk-h1">{page.title}</h1><p className="lede">By the study&apos;s estimate, data centers raised the share of rural households spending over 6% of their income on energy {g.ruralGap.toFixed(0)}% more than in cities. On four US grids they drove {share(a.dataCenters.causedShare)} of the {bn(a.total)} of new transmission projects approved in {g.year} and are charged {share(a.dataCenters.billedShare)}. Homes drove {share(a.homes.causedShare)} and are charged {share(a.homes.billedShare)}.</p></div>
+    <ChartCard
+      id="area-title"
+      title="Rural counties see the biggest rise in households spending over 6% of income on energy"
+      description={`Rise in the share of a county's households spending more than 6% of their income on energy, the study's energy poverty line, from its estimate of data centers' effect on prices and bills, in percentage points. Rural counties: ${pts(rural.increase)}, ${Math.round((rural.increase / urban.increase - 1) * 100)}% more than urban ones.`}
+      tabs={[
+        { label: 'Chart', content: <ValueBars rows={areaRows} colour={SERIES_COLOURS[1]} format={pts} /> },
+        { label: 'Tabular data', short: 'Tabular', content: <DataTable rows={area} columns={[{ key: 'group', header: 'Counties', render: (r) => r.group }, { key: 'counties', header: 'Number', align: 'right', render: (r) => r.counties }, { key: 'increase', header: 'Rise', align: 'right', render: (r) => pts(r.increase) }]} rowKey={(r) => r.group} /> },
+      ]}
+    />
+    <ChartCard
+      id="income-title"
+      title="The poorest households see the biggest rise in energy costs as a share of income"
+      description={`Rise in energy spending as a share of household income from the study's estimate of data centers' effect, by income relative to the local median, in percentage points. Households under 30% of the local median: ${pts2(poorest.increase)}, ${(poorest.increase / richest.increase).toFixed(1)} times the rise for those over 150%.`}
+      tabs={[
+        { label: 'Chart', content: <ValueBars rows={incomeRows} colour={SERIES_COLOURS[1]} format={pts2} /> },
+        { label: 'Tabular data', short: 'Tabular', content: <DataTable rows={income} columns={[{ key: 'name', header: 'Household income', render: (r) => r.name }, { key: 'increase', header: 'Rise', align: 'right', render: (r) => pts2(r.increase) }]} rowKey={(r) => r.band} /> },
+      ]}
+    />
     <ChartCard
       id="grids-title"
       title="Where new grid costs come from, and whose bills they land on"
@@ -1198,24 +1216,6 @@ function DataCenterGridInsight({ page }) {
       tabs={[
         { label: 'Chart', content: <SplitBars rows={zoneRows} keys={zoneRows[1].parts} head="Charged" inside={(p, s) => share(s)} /> },
         { label: 'Tabular data', short: 'Tabular', content: <DataTable rows={g.zones} columns={zoneColumns} rowKey={(r) => r.zone} /> },
-      ]}
-    />
-    <ChartCard
-      id="area-title"
-      title="Rural counties see the biggest rise in households spending over 6% of income on energy"
-      description={`Rise in the share of a county's households spending more than 6% of their income on energy, the study's energy poverty line, from its estimate of data centers' effect on prices and bills, in percentage points. Rural counties: ${pts(rural.increase)}, ${Math.round((rural.increase / urban.increase - 1) * 100)}% more than urban ones.`}
-      tabs={[
-        { label: 'Chart', content: <ValueBars rows={areaRows} colour={SERIES_COLOURS[1]} format={pts} /> },
-        { label: 'Tabular data', short: 'Tabular', content: <DataTable rows={area} columns={[{ key: 'group', header: 'Counties', render: (r) => r.group }, { key: 'counties', header: 'Number', align: 'right', render: (r) => r.counties }, { key: 'increase', header: 'Rise', align: 'right', render: (r) => pts(r.increase) }]} rowKey={(r) => r.group} /> },
-      ]}
-    />
-    <ChartCard
-      id="income-title"
-      title="The poorest households see the biggest rise in energy costs as a share of income"
-      description={`Rise in energy spending as a share of household income from the study's estimate of data centers' effect, by income relative to the local median, in percentage points. Households under 30% of the local median: ${pts2(poorest.increase)}, ${(poorest.increase / richest.increase).toFixed(1)} times the rise for those over 150%.`}
-      tabs={[
-        { label: 'Chart', content: <ValueBars rows={incomeRows} colour={SERIES_COLOURS[1]} format={pts2} /> },
-        { label: 'Tabular data', short: 'Tabular', content: <DataTable rows={income} columns={[{ key: 'name', header: 'Household income', render: (r) => r.name }, { key: 'increase', header: 'Rise', align: 'right', render: (r) => pts2(r.increase) }]} rowKey={(r) => r.band} /> },
       ]}
     />
     <section className="insight-notes">

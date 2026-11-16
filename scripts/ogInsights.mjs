@@ -20,8 +20,8 @@ if (grid) {
   const a = grid.grid.all, pc = (v) => `${Math.round(v)}%`;
   images.push({
     out: join(data, 'og-data-center-grid-costs.png'), title: grid.title, source: 'Feng and You, Nature Energy',
-    key: `Share of the cost of grid projects approved on four US grids in ${grid.grid.year}.`,
-    figures: [{ value: pc(a.dataCenters.causedShare), label: 'Driven by data centers', colour: BLUE }, { value: pc(a.dataCenters.billedShare), label: 'Charged to data centers', colour: ORANGE }],
+    key: `Rise in the share of households spending over 6% of income on energy, ${grid.grid.year}.`,
+    figures: grid.grid.burden.byArea.filter((r) => r.group !== 'Suburban').map((r) => ({ value: `+${r.increase.toFixed(1)} pts`, label: `${r.group} counties`, colour: r.group === 'Rural' ? ORANGE : BLUE })),
   });
 }
 const cars = load('car-fuel-costs');
