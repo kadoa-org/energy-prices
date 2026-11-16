@@ -1147,7 +1147,7 @@ function DataCenterGridInsight({ page }) {
   const share = (v) => `${Math.round(v)}%`;
   const groupKeys = Object.keys(GRID_GROUP_LABELS);
   const parts = (r, key) => groupKeys.map((k) => ({ label: GRID_GROUP_LABELS[k], value: r[k][key], colour: GRID_GROUP_COLOURS[k], ink: k === 'other' ? '#0b0c0c' : '#fff' }));
-  const gridGroups = [a, ...g.grids].map((r) => ({ label: r.name, note: bn(r.total), rows: [{ name: 'Whose demand drove it', parts: parts(r, 'caused') }, { name: 'Who is charged', parts: parts(r, 'billed') }] }));
+  const gridGroups = [a, ...g.grids].map((r) => ({ label: r.name, note: bn(r.total), rows: [{ name: 'Driven by', parts: parts(r, 'caused') }, { name: 'Charged to', parts: parts(r, 'billed') }] }));
   const zoneRows = g.zones.map((z) => {
     const own = { label: 'Projects in its own area', value: z.ownArea, colour: GRID_AREA_COLOURS.own, ink: '#0b0c0c' };
     const rest = z.zone === 'DOM'
@@ -1198,7 +1198,7 @@ function DataCenterGridInsight({ page }) {
       <ul>
         <li>Source: Feng and You (Cornell University), &quot;Data centres asymmetrically exacerbate energy burdens through wholesale price increases and regressive grid cost shifting&quot;, <a href={g.study.url} target="_blank" rel="noreferrer">Nature Energy</a>, November {g.year + 1}. The charts use the study&apos;s published <a href={g.study.data} target="_blank" rel="noreferrer">source data</a>. All figures are study estimates, not billed amounts.</li>
         <li>Costs are estimated capital costs of transmission lines and substations that PJM, ERCOT, MISO and CAISO approved in {g.year} for new demand. Customers pay them through power bills over decades. Texas makes up {bn(texas.total)}.</li>
-        <li>Whose demand drove a cost is the study&apos;s estimate of each group&apos;s share of the new demand behind the projects. Who is charged is its estimate under each grid&apos;s cost-sharing rules. For data centers, it assumes they use 80% of their capacity.</li>
+        <li>Driven by shares are the study&apos;s estimate of each group&apos;s share of the new demand behind the projects. Charged to shares are its estimate under each grid&apos;s cost-sharing rules. For data centers, it assumes they use 80% of their capacity.</li>
         <li>Data centers are charged {share(ratio('dataCenters') * 100)} of the cost they drove, other new demand {share(ratio('other') * 100)}, and homes {ratio('homes').toFixed(1)} times theirs. Cornell&apos;s summary gives the same 38% as data centers paying {bn(a.dataCenters.billed)} of {bn(a.dataCenters.caused)}.</li>
         <li>Homes&apos; {share(a.homes.billedShare)} is a total across the four grids. The paper&apos;s abstract cites a median of 47% across utility tariffs, a different measure.</li>
         <li>Costs a data center pays directly to connect to the grid aren&apos;t included.</li>
