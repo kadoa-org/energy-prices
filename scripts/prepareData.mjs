@@ -867,10 +867,11 @@ const gridCosts = (() => {
   };
 })();
 {
-  const g = gridCosts, slug = 'data-center-grid-costs', b = (v) => `$${(v / 1000).toFixed(2)}B`;
+  // The insight's home is the US Datacenter Tracker, which ranks for data center searches; this copy points there.
+  const g = gridCosts, slug = 'data-center-grid-costs', b = (v) => `$${(v / 1000).toFixed(2)}B`, home = `https://www.kadoa.com/datacenter/insights/${slug}`;
   const title = `Data centers need power, but rural residents pay the price. The share with high energy bills rose ${Math.round(g.ruralGap)}% more than in cities`;
-  INSIGHTS.unshift({ slug, title, summary: `How data centers' grid costs land on rural and lower-income households, whose new demand drove the cost of grid projects four US grids approved in ${g.year}, and who is charged for it, from a Nature Energy study.` });
-  await page(`insights/${slug}`, `${BASE}/insights/${slug}`, { kind: 'insight', slug, title, grid: g });
+  INSIGHTS.unshift({ slug, href: home, title, summary: `How data centers' grid costs land on rural and lower-income households, whose new demand drove the cost of grid projects four US grids approved in ${g.year}, and who is charged for it, from a Nature Energy study.` });
+  await page(`insights/${slug}`, `${BASE}/insights/${slug}`, { kind: 'insight', slug, title, home, grid: g });
   const lines = ['grid,group,drove_usd_million,charged_usd_million'];
   for (const r of [g.all, ...g.grids]) for (const k of ['dataCenters', 'homes', 'other']) lines.push([r.grid ?? 'all four grids', { dataCenters: 'data centers', homes: 'homes', other: 'other new demand' }[k], r[k].caused, r[k].billed].join(','));
   lines.push('', 'pjm_utility_zone,charged_usd_million,projects_in_own_area_usd_million,projects_in_dominion_area_usd_million,projects_in_other_areas_usd_million');
@@ -891,7 +892,7 @@ const ANNOUNCE = {
   text: `Data centers: rural energy poverty rose ${Math.round(gridCosts.ruralGap)}% more than in cities`,
 };
 const announced = INSIGHTS.find((i) => i.slug === ANNOUNCE.slug);
-if (announced && ANNOUNCE.text && new Date().toISOString().slice(0, 10) <= ANNOUNCE.until) common.announce = { key: `insights/${announced.slug}`, href: `${BASE}/insights/${announced.slug}`, title: ANNOUNCE.text };
+if (announced && ANNOUNCE.text && new Date().toISOString().slice(0, 10) <= ANNOUNCE.until) common.announce = { key: `insights/${announced.slug}`, href: announced.href ?? `${BASE}/insights/${announced.slug}`, title: ANNOUNCE.text };
 const commonJson = JSON.stringify(common);
 for (const [key, json] of queued) {
   const file = join(out, `${key}.json`);

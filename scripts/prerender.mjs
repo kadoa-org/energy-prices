@@ -41,7 +41,7 @@ const absolute = (p) => (p.startsWith('http') ? p : SITE + p);
 const NAME = 'US Energy Price Monitor';
 // Titles follow what people search: "gas prices today", "electricity prices in Texas", "average electric bill".
 function seo(page, path) {
-  const c = page.common; const updated = c.generatedAt.slice(0, 10); const canonical = `${SITE}${path}`;
+  const c = page.common; const updated = c.generatedAt.slice(0, 10); let canonical = `${SITE}${path}`;
   const crumbs = [{ name: NAME, url: `${SITE}/energy-prices` }];
   const dataset = (name, description, extra) => ({ '@context': 'https://schema.org', '@type': 'Dataset', name, description, url: canonical, spatialCoverage: 'United States', license: 'https://www.usa.gov/government-works', creator: { '@type': 'Organization', name: 'Kadoa', url: SITE }, dateModified: updated, ...extra });
   let title, description, ld, image = null;
@@ -119,6 +119,8 @@ function seo(page, path) {
     ld = [dataset(`US exports of gold, crude oil, pharmaceuticals and aircraft engines, monthly since ${g.rows[0].month.slice(0, 4)}`, description, { temporalCoverage: `${g.rows[0].month}/${l.month}`, isBasedOn: ['https://www.census.gov/foreign-trade/Press-Release/current_press_release/index.html'], distribution: [{ '@type': 'DataDownload', encodingFormat: 'text/csv', contentUrl: `${absolute(dataPath)}/downloads/gold-top-export.csv.gz` }] })];
   } else if (page.kind === 'insight' && page.slug === 'data-center-grid-costs') {
     const g = page.grid, a = g.all, pc = (v) => `${Math.round(v)}%`;
+    // Its home is the US Datacenter Tracker; this copy names that page as canonical and stays out of the sitemap.
+    canonical = page.home;
     title = page.title;
     description = `The share of rural households spending over 6% of income on energy rose ${Math.round(g.ruralGap)}% more than urban ones. Of the cost of transmission projects PJM, ERCOT, MISO and CAISO approved for new demand in ${g.year}: data centers drove ${pc(a.dataCenters.causedShare)} and are charged ${pc(a.dataCenters.billedShare)}; homes drove ${pc(a.homes.causedShare)} and are charged ${pc(a.homes.billedShare)}. By grid and PJM utility, from a Nature Energy study's source data.`;
     crumbs.push({ name: 'Insights', url: `${SITE}/energy-prices/insights` }, { name: 'Data center grid costs', url: canonical });
@@ -155,7 +157,7 @@ function seo(page, path) {
 const server = await createServer({ root, server: { middlewareMode: true }, appType: 'custom' });
 try {
   const { render } = await server.ssrLoadModule('/src/render.jsx');
-  const lastmod = {};
+  const lastmod = {}, offsite = new Set();
   for (const route of routes) {
     const page = await load(route.key); page.common = { ...page.common, dataPath };
     const body = render(page);
@@ -164,9 +166,10 @@ try {
     const html = template.replace(/<title>.*?<\/title>/, `<title>${esc(`${title} | ${NAME}`)}</title>`).replace(/<meta name="description" content="[^"]*"\s*\/>/, `<meta name="description" content="${esc(description)}"/>`).replace(/<link rel="canonical" href="[^"]*"\s*\/>/, `<link rel="canonical" href="${canonical}"/>`).replace('</head>', `${head}</head>`).replace('<div id="root"></div>', `<div id="root">${body}</div>`);
     const dir = join(dist, route.path.replace(/^\/energy-prices\/?/, '')); await mkdir(dir, { recursive: true }); await writeFile(join(dir, 'index.html'), html); if (route.key !== 'home') await writeFile(dir + '.html', html);
     lastmod[route.path] = page.common.generatedAt.slice(0, 10);
+    if (!canonical.startsWith(`${SITE}${route.path}`)) offsite.add(route.path);
   }
   const priority = (r) => (r.key === 'home' ? '1.0' : r.key === 'electricity' || r.key === 'fuel' || /^fuel\/[a-z-]+$/.test(r.key) ? '0.9' : r.key.startsWith('fuel/') ? '0.7' : r.key.split('/').length === 3 ? '0.7' : r.key.startsWith('electricity/') ? '0.8' : '0.6');
-  await writeFile(join(dist, 'sitemap.xml'), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${routes.map((r) => `  <url><loc>${SITE}${r.path}</loc><lastmod>${lastmod[r.path]}</lastmod><changefreq>weekly</changefreq><priority>${priority(r)}</priority></url>`).join('\n')}\n</urlset>\n`);
+  await writeFile(join(dist, 'sitemap.xml'), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${routes.filter((r) => !offsite.has(r.path)).map((r) => `  <url><loc>${SITE}${r.path}</loc><lastmod>${lastmod[r.path]}</lastmod><changefreq>weekly</changefreq><priority>${priority(r)}</priority></url>`).join('\n')}\n</urlset>\n`);
   await writeFile(join(dist, 'robots.txt'), `User-agent: *\nAllow: /\nSitemap: ${SITE}/energy-prices/sitemap.xml\n`);
   console.log(`Prerendered ${routes.length} pages`);
 } finally { await server.close(); }

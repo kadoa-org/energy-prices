@@ -687,7 +687,7 @@ function ElectricityMap({ page }) {
 function InsightsIndex({ page }) {
   return <>
     <div className="title-block"><h1 className="dk-h1">Insights</h1><p className="lede">Analysis built on the monitor's EIA, BLS and Census data.</p></div>
-    <ul className="insight-cards">{page.insights.map((i) => <li className="insight-card" key={i.slug}><h2 className="insight-card__title"><a href={`${BASE}/insights/${i.slug}`}>{i.title}</a></h2><p className="insight-card__desc">{i.summary}</p></li>)}</ul>
+    <ul className="insight-cards">{page.insights.map((i) => <li className="insight-card" key={i.slug}><h2 className="insight-card__title"><a href={i.href ?? `${BASE}/insights/${i.slug}`}>{i.title}</a></h2><p className="insight-card__desc">{i.summary}</p></li>)}</ul>
   </>;
 }
 // Gold against the biggest US exports since 2020. Values are Census millions of dollars.
@@ -1180,7 +1180,7 @@ function DataCenterGridInsight({ page }) {
     { key: 'dominionArea', header: "Of which Dominion's area", align: 'right', hideBelow: 'sm', render: (r) => (r.zone === 'DOM' ? 'n/a' : mn(r.dominionArea)) },
   ];
   return <>
-    <div className="title-block"><h1 className="dk-h1">{page.title}</h1><p className="lede">By the study&apos;s estimate, data centers raised the share of rural households spending over 6% of their income on energy {g.ruralGap.toFixed(0)}% more than in cities. On four US grids they drove {share(a.dataCenters.causedShare)} of the {bn(a.total)} of new transmission projects approved in {g.year} and are charged {share(a.dataCenters.billedShare)}. Homes drove {share(a.homes.causedShare)} and are charged {share(a.homes.billedShare)}.</p></div>
+    <div className="title-block"><h1 className="dk-h1">{page.title}</h1><p className="lede">By the study&apos;s estimate, data centers raised the share of rural households spending over 6% of their income on energy {g.ruralGap.toFixed(0)}% more than in cities. On four US grids they drove {share(a.dataCenters.causedShare)} of the {bn(a.total)} of new transmission projects approved in {g.year} and are charged {share(a.dataCenters.billedShare)}. Homes drove {share(a.homes.causedShare)} and are charged {share(a.homes.billedShare)}.</p><p>Also on the <a href={page.home}>US Datacenter Tracker</a>, with data center capacity by grid.</p></div>
     <ChartCard
       id="area-title"
       title="Rural counties see the biggest rise in households spending over 6% of income on energy"
