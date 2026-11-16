@@ -459,4 +459,6 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,su
 .split__part{display:flex;align-items:center;padding:0 8px;box-sizing:border-box;overflow:hidden;white-space:nowrap;font-size:15px;font-weight:700;font-variant-numeric:tabular-nums}
 .split__part+.split__part{border-left:2px solid #fff}
 .split__total{font-size:16px;text-align:right;font-variant-numeric:tabular-nums}
-@media (max-width:640px){.split__row{grid-template-columns:min(var(--split-name),34%) minmax(0,1fr) 56px;gap:6px}.split__part{font-size:12px;padding:0 3px}.split__total{font-size:14px}}
+.split__group+.split__group{margin-top:10px;padding-top:10px;border-top:1px solid var(--dk-rule-soft)}
+.split__group-title{margin:4px 0 4px;font-size:17px;font-weight:700}
+@media (max-width:640px){.split__row{grid-template-columns:min(var(--split-name),34%) minmax(0,1fr) 56px;gap:6px}.split__part{font-size:12px;padding:0 3px}.split__part--narrow{font-size:0;padding:0}.split__total{font-size:14px}}

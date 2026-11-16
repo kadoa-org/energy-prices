@@ -17,11 +17,11 @@ const images = [];
 
 const grid = load('data-center-grid-costs');
 if (grid) {
-  const a = grid.grid.all, b = (v) => `$${(v / 1000).toFixed(2)}B`;
+  const a = grid.grid.all, pc = (v) => `${Math.round(v)}%`;
   images.push({
     out: join(data, 'og-data-center-grid-costs.png'), title: grid.title, source: 'Feng and You, Nature Energy',
-    key: `New power lines built for data centers on four US grids, ${grid.grid.year}, and who paid.`,
-    figures: [{ value: b(a.dataCenters.billed), label: 'Paid by data centers', colour: BLUE }, { value: b(a.dataCenters.caused - a.dataCenters.billed), label: 'Paid by everyone else', colour: ORANGE }],
+    key: `Share of the cost of grid projects approved on four US grids in ${grid.grid.year}.`,
+    figures: [{ value: pc(a.dataCenters.causedShare), label: 'Driven by data centers', colour: BLUE }, { value: pc(a.dataCenters.billedShare), label: 'Charged to data centers', colour: ORANGE }],
   });
 }
 const cars = load('car-fuel-costs');

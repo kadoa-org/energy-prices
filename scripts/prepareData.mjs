@@ -865,13 +865,12 @@ const gridCosts = (() => {
 })();
 {
   const g = gridCosts, slug = 'data-center-grid-costs', b = (v) => `$${(v / 1000).toFixed(2)}B`;
-  const others = Math.round((1 - g.all.dataCenters.billed / g.all.dataCenters.caused) * 100);
-  const title = `Data centers needed ${b(g.all.dataCenters.caused)} of new power lines in ${g.year}. Everyone else paid ${others}%.`;
-  INSIGHTS.unshift({ slug, title, summary: `Who paid for the power lines four US grids built for data centers in ${g.year}, and where PJM utilities' share of the bill went, from a Nature Energy study.` });
+  const title = `Data centers drove ${Math.round(g.all.dataCenters.causedShare)}% of new US grid costs in ${g.year}. They're charged ${Math.round(g.all.dataCenters.billedShare)}%.`;
+  INSIGHTS.unshift({ slug, title, summary: `Whose new demand drove the cost of grid projects four US grids approved in ${g.year}, who is charged for it, and where PJM utilities' charges go, from a Nature Energy study.` });
   await page(`insights/${slug}`, `${BASE}/insights/${slug}`, { kind: 'insight', slug, title, grid: g });
-  const lines = ['grid,lines_for_data_centers_usd_million,paid_by_data_centers_usd_million,paid_by_everyone_else_usd_million'];
-  for (const r of [g.all, ...g.grids]) lines.push([r.grid ?? 'all four grids', r.dataCenters.caused, r.dataCenters.billed, round(r.dataCenters.caused - r.dataCenters.billed, 1)].join(','));
-  lines.push('', 'pjm_utility_zone,paid_usd_million,lines_in_own_area_usd_million,lines_in_dominion_area_usd_million,lines_in_other_areas_usd_million');
+  const lines = ['grid,group,drove_usd_million,charged_usd_million'];
+  for (const r of [g.all, ...g.grids]) for (const k of ['dataCenters', 'homes', 'other']) lines.push([r.grid ?? 'all four grids', { dataCenters: 'data centers', homes: 'homes', other: 'other new demand' }[k], r[k].caused, r[k].billed].join(','));
+  lines.push('', 'pjm_utility_zone,charged_usd_million,projects_in_own_area_usd_million,projects_in_dominion_area_usd_million,projects_in_other_areas_usd_million');
   for (const z of g.zones) lines.push([z.zone, z.billed, z.ownArea, z.zone === 'DOM' ? '' : z.dominionArea, round(z.billed - z.ownArea - (z.zone === 'DOM' ? 0 : z.dominionArea), 1)].join(','));
   await writeFile(join(out, `downloads/${slug}.csv.gz`), gzipSync(lines.join('\n') + '\n'));
 }

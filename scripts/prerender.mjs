@@ -118,11 +118,11 @@ function seo(page, path) {
     crumbs.push({ name: 'Insights', url: `${SITE}/energy-prices/insights` }, { name: 'Gold exports', url: canonical });
     ld = [dataset(`US exports of gold, crude oil, pharmaceuticals and aircraft engines, monthly since ${g.rows[0].month.slice(0, 4)}`, description, { temporalCoverage: `${g.rows[0].month}/${l.month}`, isBasedOn: ['https://www.census.gov/foreign-trade/Press-Release/current_press_release/index.html'], distribution: [{ '@type': 'DataDownload', encodingFormat: 'text/csv', contentUrl: `${absolute(dataPath)}/downloads/gold-top-export.csv.gz` }] })];
   } else if (page.kind === 'insight' && page.slug === 'data-center-grid-costs') {
-    const g = page.grid, a = g.all, b = (v) => `$${(v / 1000).toFixed(2)}B`, pc = (v) => `${Math.round(v)}%`;
-    title = `${page.title} Who Pays for New Power Lines`;
-    description = `Cost of new power lines approved for new demand on PJM, ERCOT, MISO and CAISO in ${g.year}, ${b(a.dataCenters.caused)} of it for data centers, which paid ${b(a.dataCenters.billed)}. Other customers paid ${b(a.dataCenters.caused - a.dataCenters.billed)}, and PJM utilities paid for lines far outside their own areas. From a Nature Energy study's source data, by grid and PJM utility.`;
+    const g = page.grid, a = g.all, pc = (v) => `${Math.round(v)}%`;
+    title = `${page.title} Who Pays for New Grid Projects`;
+    description = `Cost of transmission projects PJM, ERCOT, MISO and CAISO approved for new demand in ${g.year}: data centers drove ${pc(a.dataCenters.causedShare)} and are charged ${pc(a.dataCenters.billedShare)}; homes drove ${pc(a.homes.causedShare)} and are charged ${pc(a.homes.billedShare)}. By grid and PJM utility, from a Nature Energy study's source data.`;
     crumbs.push({ name: 'Insights', url: `${SITE}/energy-prices/insights` }, { name: 'Data center grid costs', url: canonical });
-    ld = [dataset(`Who paid for new US power lines built for data centers, ${g.year}`, description, { temporalCoverage: String(g.year), isBasedOn: [g.study.url, g.study.data], distribution: [{ '@type': 'DataDownload', encodingFormat: 'text/csv', contentUrl: `${absolute(dataPath)}/downloads/data-center-grid-costs.csv.gz` }] })];
+    ld = [dataset(`Cost of new US grid projects by whose demand drove it and who is charged, ${g.year}`, description, { temporalCoverage: String(g.year), isBasedOn: [g.study.url, g.study.data], distribution: [{ '@type': 'DataDownload', encodingFormat: 'text/csv', contentUrl: `${absolute(dataPath)}/downloads/data-center-grid-costs.csv.gz` }] })];
   } else if (page.kind === 'insight' && page.slug === 'pjm-power-prices') {
     const p = page.pjm, top = p.rows.slice(0, 4).map((r) => `${r.name} ${pctLabel(r.change)}`).join(', ');
     title = `${page.title}: PJM Capacity Prices and Home Electricity`;
