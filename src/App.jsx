@@ -1172,7 +1172,6 @@ function DataCenterGridInsight({ page }) {
     { key: 'away', header: 'Projects in other areas', align: 'right', render: (r) => `${mn(r.billed - r.ownArea)} (${share(((r.billed - r.ownArea) / r.billed) * 100)})` },
     { key: 'dominionArea', header: "Of which Dominion's area", align: 'right', hideBelow: 'sm', render: (r) => (r.zone === 'DOM' ? 'n/a' : mn(r.dominionArea)) },
   ];
-  const source = <p className="chart-note">Source: Feng and You, <a href={g.study.url} target="_blank" rel="noreferrer">Nature Energy</a> ({g.study.year + 1}), <a href={g.study.data} target="_blank" rel="noreferrer">source data</a>. Study estimates, not billed amounts.</p>;
   return <>
     <div className="title-block"><h1 className="dk-h1">{page.title}</h1><p className="lede">Four US grids approved {bn(a.total)} of transmission projects for new demand in {g.year}. Data centers drove {share(a.dataCenters.causedShare)} of the cost and are charged {share(a.dataCenters.billedShare)}. Homes drove {share(a.homes.causedShare)} and are charged {share(a.homes.billedShare)}.</p></div>
     <ChartCard
@@ -1184,7 +1183,6 @@ function DataCenterGridInsight({ page }) {
         { label: 'Tabular data', short: 'Tabular', content: <DataTable rows={gridTable} columns={gridColumns} rowKey={(r) => r.key} /> },
         { label: 'Download', content: <><p className="download-intro">Cost each group drove and is charged, by grid, and what each PJM utility is charged by where the projects are, in US$ million, as a gzipped CSV.</p><Download file="data-center-grid-costs.csv.gz" common={page.common} /></> },
       ]}
-      footer={source}
     />
     <ChartCard
       id="zones-title"
@@ -1194,12 +1192,11 @@ function DataCenterGridInsight({ page }) {
         { label: 'Chart', content: <SplitBars rows={zoneRows} keys={zoneRows[1].parts} head="Charged" inside={(p, s) => share(s)} /> },
         { label: 'Tabular data', short: 'Tabular', content: <DataTable rows={g.zones} columns={zoneColumns} rowKey={(r) => r.zone} /> },
       ]}
-      footer={source}
     />
     <section className="insight-notes">
       <SectionHeading>About the data</SectionHeading>
       <ul>
-        <li>From Feng and You, &quot;Data centres asymmetrically exacerbate energy burdens through wholesale price increases and regressive grid cost shifting&quot;, <a href={g.study.url} target="_blank" rel="noreferrer">Nature Energy</a>, November {g.year + 1}. The charts use the study&apos;s published <a href={g.study.data} target="_blank" rel="noreferrer">source data</a>.</li>
+        <li>Source: Feng and You (Cornell University), &quot;Data centres asymmetrically exacerbate energy burdens through wholesale price increases and regressive grid cost shifting&quot;, <a href={g.study.url} target="_blank" rel="noreferrer">Nature Energy</a>, November {g.year + 1}. The charts use the study&apos;s published <a href={g.study.data} target="_blank" rel="noreferrer">source data</a>. All figures are study estimates, not billed amounts.</li>
         <li>Costs are estimated capital costs of transmission lines and substations that PJM, ERCOT, MISO and CAISO approved in {g.year} for new demand. Customers pay them through power bills over decades. Texas makes up {bn(texas.total)}.</li>
         <li>Whose demand drove a cost is the study&apos;s estimate of each group&apos;s share of the new demand behind the projects. Who is charged is its estimate under each grid&apos;s cost-sharing rules. For data centers, it assumes they use 80% of their capacity.</li>
         <li>Data centers are charged {share(ratio('dataCenters') * 100)} of the cost they drove, other new demand {share(ratio('other') * 100)}, and homes {ratio('homes').toFixed(1)} times theirs. Cornell&apos;s summary gives the same 38% as data centers paying {bn(a.dataCenters.billed)} of {bn(a.dataCenters.caused)}.</li>

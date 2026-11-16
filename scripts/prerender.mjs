@@ -119,7 +119,7 @@ function seo(page, path) {
     ld = [dataset(`US exports of gold, crude oil, pharmaceuticals and aircraft engines, monthly since ${g.rows[0].month.slice(0, 4)}`, description, { temporalCoverage: `${g.rows[0].month}/${l.month}`, isBasedOn: ['https://www.census.gov/foreign-trade/Press-Release/current_press_release/index.html'], distribution: [{ '@type': 'DataDownload', encodingFormat: 'text/csv', contentUrl: `${absolute(dataPath)}/downloads/gold-top-export.csv.gz` }] })];
   } else if (page.kind === 'insight' && page.slug === 'data-center-grid-costs') {
     const g = page.grid, a = g.all, pc = (v) => `${Math.round(v)}%`;
-    title = `${page.title} Who Pays for New Grid Projects`;
+    title = `${page.title}: Who Pays for New Grid Projects`;
     description = `Cost of transmission projects PJM, ERCOT, MISO and CAISO approved for new demand in ${g.year}: data centers drove ${pc(a.dataCenters.causedShare)} and are charged ${pc(a.dataCenters.billedShare)}; homes drove ${pc(a.homes.causedShare)} and are charged ${pc(a.homes.billedShare)}. By grid and PJM utility, from a Nature Energy study's source data.`;
     crumbs.push({ name: 'Insights', url: `${SITE}/energy-prices/insights` }, { name: 'Data center grid costs', url: canonical });
     ld = [dataset(`Cost of new US grid projects by whose demand drove it and who is charged, ${g.year}`, description, { temporalCoverage: String(g.year), isBasedOn: [g.study.url, g.study.data], distribution: [{ '@type': 'DataDownload', encodingFormat: 'text/csv', contentUrl: `${absolute(dataPath)}/downloads/data-center-grid-costs.csv.gz` }] })];

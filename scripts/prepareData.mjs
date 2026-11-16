@@ -865,7 +865,7 @@ const gridCosts = (() => {
 })();
 {
   const g = gridCosts, slug = 'data-center-grid-costs', b = (v) => `$${(v / 1000).toFixed(2)}B`;
-  const title = `Data centers drove ${Math.round(g.all.dataCenters.causedShare)}% of new US grid costs in ${g.year}. They're charged ${Math.round(g.all.dataCenters.billedShare)}%.`;
+  const title = `Data centers drove ${Math.round(g.all.dataCenters.causedShare)}% of new grid costs but are charged ${Math.round(g.all.dataCenters.billedShare)}%`;
   INSIGHTS.unshift({ slug, title, summary: `Whose new demand drove the cost of grid projects four US grids approved in ${g.year}, who is charged for it, and where PJM utilities' charges go, from a Nature Energy study.` });
   await page(`insights/${slug}`, `${BASE}/insights/${slug}`, { kind: 'insight', slug, title, grid: g });
   const lines = ['grid,group,drove_usd_million,charged_usd_million'];
