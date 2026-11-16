@@ -19,7 +19,7 @@ export default function SplitBars({ rows, groups = [{ rows }], keys, head, insid
             <span className="split__bar">
               {r.parts.map((p) => {
                 const share = total ? (p.value / total) * 100 : 0;
-                return share > 0 && <span className={`split__part${share < 30 ? ' split__part--narrow' : ''}`} key={p.label} style={{ width: `${share}%`, background: p.colour, color: p.ink ?? '#fff' }}>{share >= 12 ? inside(p, share) : null}</span>;
+                return share > 0 && <span className={`split__part${share < 20 ? ' split__part--narrow' : ''}`} key={p.label} style={{ width: `${share}%`, background: p.colour, color: p.ink ?? '#fff' }}>{share >= 5 ? inside(p, share) : null}</span>;
               })}
             </span>
             <span className="split__total">{r.total}</span>

@@ -457,7 +457,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,su
 .split__note{color:var(--dk-muted)}
 .split__bar{display:flex;height:28px;background:var(--dk-rule-soft)}
 .split__part{display:flex;align-items:center;padding:0 8px;box-sizing:border-box;overflow:hidden;white-space:nowrap;font-size:15px;font-weight:700;font-variant-numeric:tabular-nums}
-.split__part+.split__part{border-left:2px solid #fff}
+.split__part+.split__part{border-left:2px solid #fff}.split__part--narrow{padding:0 4px}
 .split__total{font-size:16px;text-align:right;font-variant-numeric:tabular-nums}
 .split__group+.split__group{margin-top:10px;padding-top:10px;border-top:1px solid var(--dk-rule-soft)}
 .split__group-title{margin:4px 0 4px;font-size:17px;font-weight:700}

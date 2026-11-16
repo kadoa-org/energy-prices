@@ -880,9 +880,9 @@ await page('about', `${BASE}/about`, { kind: 'about', counts: { series: manifest
 // here at build time, so the prerendered page and the browser agree. The banner has its own text, about 50
 // characters with the number first, so it fits a phone in one or two lines; the page keeps the full title.
 const ANNOUNCE = {
-  slug: 'investor-owned-utilities',
+  slug: 'data-center-grid-costs',
   until: '2026-11-30',
-  text: utilityOwnership && `Investor-owned utilities charge ${Math.round(utilityOwnership.premium)}% more for power`,
+  text: `Data centers drove ${Math.round(gridCosts.all.dataCenters.causedShare)}% of new grid costs, charged ${Math.round(gridCosts.all.dataCenters.billedShare)}%`,
 };
 const announced = INSIGHTS.find((i) => i.slug === ANNOUNCE.slug);
 if (announced && ANNOUNCE.text && new Date().toISOString().slice(0, 10) <= ANNOUNCE.until) common.announce = { key: `insights/${announced.slug}`, href: `${BASE}/insights/${announced.slug}`, title: ANNOUNCE.text };
