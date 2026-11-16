@@ -1161,8 +1161,6 @@ function DataCenterGridInsight({ page }) {
   const ratio = (k) => a[k].billed / a[k].caused;
   const pts = (v, d = 1) => `+${v.toFixed(d)} pts`, pts2 = (v) => pts(v, 2);
   const area = g.burden.byArea, income = g.burden.byIncome;
-  const rural = area.find((r) => r.group === 'Rural'), urban = area.find((r) => r.group === 'Urban');
-  const poorest = income[0], richest = income[income.length - 1];
   const areaRows = area.map((r) => ({ name: `${r.group} counties`, value: r.increase }));
   const incomeRows = income.map((r) => ({ name: r.name, value: r.increase }));
   const gridTable = [a, ...g.grids].flatMap((r) => groupKeys.map((k) => ({ key: `${r.name}-${k}`, grid: r.name, group: GRID_GROUP_LABELS[k], ...r[k] })));
@@ -1180,11 +1178,11 @@ function DataCenterGridInsight({ page }) {
     { key: 'dominionArea', header: "Of which Dominion's area", align: 'right', hideBelow: 'sm', render: (r) => (r.zone === 'DOM' ? 'n/a' : mn(r.dominionArea)) },
   ];
   return <>
-    <div className="title-block"><h1 className="dk-h1">{page.title}</h1><p className="lede">By the study&apos;s estimate, data centers raised the share of rural households spending over 6% of their income on energy {g.ruralGap.toFixed(0)}% more than in cities. On four US grids they drove {share(a.dataCenters.causedShare)} of the {bn(a.total)} of new transmission projects approved in {g.year} and are charged {share(a.dataCenters.billedShare)}. Homes drove {share(a.homes.causedShare)} and are charged {share(a.homes.billedShare)}.</p><p>Also on the <a href={page.home}>US Datacenter Tracker</a>, with data center capacity by grid.</p></div>
+    <div className="title-block"><h1 className="dk-h1">{page.title}</h1><p className="lede">A Cornell study in Nature Energy estimates that data centers raised the share of rural households spending over 6% of their income on energy {g.ruralGap.toFixed(0)}% more than in cities. On four US grids, data centers drove {share(a.dataCenters.causedShare)} of the {bn(a.total)} of new transmission projects approved in {g.year} and are charged {share(a.dataCenters.billedShare)}. Homes drove {share(a.homes.causedShare)} and are charged {share(a.homes.billedShare)}.</p><p>Also on the <a href={page.home}>US Datacenter Tracker</a>, with data center capacity by grid.</p></div>
     <ChartCard
       id="area-title"
       title="Rural counties see the biggest rise in households spending over 6% of income on energy"
-      description={`Rise in the share of a county's households spending more than 6% of their income on energy, the study's energy poverty line, from its estimate of data centers' effect on prices and bills, in percentage points. Rural counties: ${pts(rural.increase)}, ${Math.round((rural.increase / urban.increase - 1) * 100)}% more than urban ones.`}
+      description={`Rise in households spending over 6% of income on energy, in percentage points.`}
       tabs={[
         { label: 'Chart', content: <ValueBars rows={areaRows} colour={SERIES_COLOURS[1]} format={pts} /> },
         { label: 'Tabular data', short: 'Tabular', content: <DataTable rows={area} columns={[{ key: 'group', header: 'Counties', render: (r) => r.group }, { key: 'counties', header: 'Number', align: 'right', render: (r) => r.counties }, { key: 'increase', header: 'Rise', align: 'right', render: (r) => pts(r.increase) }]} rowKey={(r) => r.group} /> },
@@ -1193,7 +1191,7 @@ function DataCenterGridInsight({ page }) {
     <ChartCard
       id="income-title"
       title="The poorest households see the biggest rise in energy costs as a share of income"
-      description={`Rise in energy spending as a share of household income from the study's estimate of data centers' effect, by income relative to the local median, in percentage points. Households under 30% of the local median: ${pts2(poorest.increase)}, ${(poorest.increase / richest.increase).toFixed(1)} times the rise for those over 150%.`}
+      description={`Rise in energy spending as a share of income, by household income against the local median, in percentage points.`}
       tabs={[
         { label: 'Chart', content: <ValueBars rows={incomeRows} colour={SERIES_COLOURS[1]} format={pts2} /> },
         { label: 'Tabular data', short: 'Tabular', content: <DataTable rows={income} columns={[{ key: 'name', header: 'Household income', render: (r) => r.name }, { key: 'increase', header: 'Rise', align: 'right', render: (r) => pts2(r.increase) }]} rowKey={(r) => r.band} /> },
@@ -1202,7 +1200,7 @@ function DataCenterGridInsight({ page }) {
     <ChartCard
       id="grids-title"
       title="Where new grid costs come from, and whose bills they land on"
-      description={`Share of the cost of transmission projects approved in ${g.year} for new demand: the share from each group's demand, and the share on its bills under each grid's cost-sharing rules.`}
+      description={`Share of the cost of transmission projects approved in ${g.year} for new demand.`}
       tabs={[
         { label: 'Chart', content: <SplitBars groups={gridGroups} keys={gridGroups[0].rows[0].parts} inside={(p, s) => share(s)} /> },
         { label: 'Tabular data', short: 'Tabular', content: <DataTable rows={gridTable} columns={gridColumns} rowKey={(r) => r.key} /> },
@@ -1212,7 +1210,7 @@ function DataCenterGridInsight({ page }) {
     <ChartCard
       id="zones-title"
       title="What PJM utilities are charged for new grid projects, and where the projects are"
-      description={`Each utility's charge for PJM's ${g.year} projects, by the area each project is assigned to. PJM customers are charged ${bn(away)} of ${bn(pjmTotal)} for projects outside their utility's area. Pepco, which serves DC, is charged ${mn(pepco.billed)}, all for projects elsewhere.`}
+      description={`Each utility's charge for PJM's ${g.year} projects, by where the projects are. Pepco, which serves DC, is charged ${mn(pepco.billed)}, all for projects elsewhere.`}
       tabs={[
         { label: 'Chart', content: <SplitBars rows={zoneRows} keys={zoneRows[1].parts} head="Charged" inside={(p, s) => share(s)} /> },
         { label: 'Tabular data', short: 'Tabular', content: <DataTable rows={g.zones} columns={zoneColumns} rowKey={(r) => r.zone} /> },
@@ -1226,7 +1224,7 @@ function DataCenterGridInsight({ page }) {
         <li>Cost from their demand is the study&apos;s estimate of each group&apos;s share of the new demand behind the projects. Cost on their bills is its estimate of who is charged under each grid&apos;s cost-sharing rules. For data centers, it assumes they use 80% of their capacity.</li>
         <li>Data centers are charged {share(ratio('dataCenters') * 100)} of the cost they drove, other new demand {share(ratio('other') * 100)}, and homes {ratio('homes').toFixed(1)} times theirs. Cornell&apos;s summary gives the same 38% as data centers paying {bn(a.dataCenters.billed)} of {bn(a.dataCenters.caused)}.</li>
         <li>Homes&apos; {share(a.homes.billedShare)} is a total across the four grids. The paper&apos;s abstract cites a median of 47% across utility tariffs, a different measure.</li>
-        <li>Costs a data center pays directly to connect to the grid aren&apos;t included.</li>
+        <li>PJM customers are charged {bn(away)} of {bn(pjmTotal)} for projects outside their utility&apos;s area. Costs a data center pays directly to connect to the grid aren&apos;t included.</li>
         <li>The study also finds data centers raised wholesale power prices about 15% in Dominion&apos;s area and 20% in the southern Bay Area by {g.year}.</li>
         <li>The household charts carry the price and cost-sharing estimates through to household energy spending, so they rest on more assumptions than the cost charts. The county figures are the study&apos;s typical (geometric mean) county in each group, leaving out the 91 of 1,556 counties with no rise. The income figures are medians across the study&apos;s county income records. A same-sized bill rise is a bigger share of a smaller income, which is part of why the poorest households see the biggest rise.</li>
         {g.pjmPage && <li>How home prices moved on PJM&apos;s grid: <a href={`${BASE}/insights/pjm-power-prices`}>home power prices by state</a>.</li>}
