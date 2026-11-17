@@ -19,9 +19,9 @@ const grid = load('data-center-grid-costs');
 if (grid) {
   const a = grid.grid.all, pc = (v) => `${Math.round(v)}%`;
   images.push({
-    out: join(data, 'og-data-center-grid-costs.png'), title: grid.title, source: 'Feng and You, Nature Energy',
+    out: join(data, 'og-data-center-grid-costs.png'), title: 'Data centers raise energy burdens most in rural areas', source: 'Feng and You, Nature Energy',
     key: `Rise in the share of households spending over 6% of income on energy, ${grid.grid.year}.`,
-    figures: grid.grid.burden.byArea.filter((r) => r.group !== 'Suburban').map((r) => ({ value: `+${r.increase.toFixed(1)} pts`, label: `${r.group} counties`, colour: r.group === 'Rural' ? ORANGE : BLUE })),
+    figures: grid.grid.burden.byArea.filter((r) => r.group !== 'Suburban').map((r) => ({ value: `+${r.increase.toFixed(1)}`, label: `in every 100 ${r.group.toLowerCase()} households`, colour: r.group === 'Rural' ? ORANGE : BLUE })),
   });
 }
 const cars = load('car-fuel-costs');

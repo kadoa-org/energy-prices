@@ -1178,7 +1178,7 @@ function DataCenterGridInsight({ page }) {
     { key: 'dominionArea', header: "Of which Dominion's area", align: 'right', hideBelow: 'sm', render: (r) => (r.zone === 'DOM' ? 'n/a' : mn(r.dominionArea)) },
   ];
   return <>
-    <div className="title-block"><h1 className="dk-h1">{page.title}</h1><p className="lede"><a href={g.study.url}>A Cornell study</a> estimates that data centers raised the share of rural households spending over 6% of their income on energy {g.ruralGap.toFixed(0)}% more than in cities. On four US grids, data centers drove {share(a.dataCenters.causedShare)} of the {bn(a.total)} of new transmission projects approved in {g.year} and are charged {share(a.dataCenters.billedShare)}. Homes drove {share(a.homes.causedShare)} and are charged {share(a.homes.billedShare)}.</p><p>Also on the <a href={page.home}>US Datacenter Tracker</a>, with data center capacity by grid.</p></div>
+    <div className="title-block"><h1 className="dk-h1">{page.title}</h1><p className="lede"><a href={g.study.url}>A Cornell study</a> estimates that data centers raised the share of rural households spending over 6% of their income on energy {g.ruralGap.toFixed(0)}% more than in cities. On four US grids, data centers drove {share(a.dataCenters.causedShare)} of the {bn(a.total)} of transmission projects approved for new demand in {g.year} and are charged {share(a.dataCenters.billedShare)}. Homes drove {share(a.homes.causedShare)} and are charged {share(a.homes.billedShare)}.</p><p>Also on the <a href={page.home}>US Datacenter Tracker</a>, with data center capacity by grid.</p></div>
     <ChartCard
       id="area-title"
       title="Rural counties see the biggest rise in households spending over 6% of income on energy"
@@ -1200,7 +1200,7 @@ function DataCenterGridInsight({ page }) {
     <ChartCard
       id="grids-title"
       title="Where new grid costs come from, and whose bills they land on"
-      description={`Share of the cost of transmission projects approved in ${g.year} for new demand.`}
+      description={`Share of the cost of transmission projects approved in ${g.year} for new demand. Projects for aging lines or renewables, and existing grid costs, are not included.`}
       tabs={[
         { label: 'Chart', content: <SplitBars groups={gridGroups} keys={gridGroups[0].rows[0].parts} inside={(p, s) => share(s)} /> },
         { label: 'Tabular data', short: 'Tabular', content: <DataTable rows={gridTable} columns={gridColumns} rowKey={(r) => r.key} /> },
