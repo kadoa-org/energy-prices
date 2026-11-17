@@ -5,7 +5,9 @@ import React from 'react';
 export default function ValueBars({ rows, colour, format = (v) => v, head }) {
   const max = Math.max(...rows.map((r) => r.value));
   const nameWidth = `${Math.min(Math.max(...rows.map((r) => r.name.length), 8) + 1, 30)}ch`;
-  return <div className="split" style={{ '--split-name': nameWidth }}>
+  // The value column fits its longest label.
+  const totalWidth = `${Math.max(...rows.map((r) => String(format(r.value)).length)) + 1}ch`;
+  return <div className="split" style={{ '--split-name': nameWidth, '--split-total': totalWidth }}>
     {head && <div className="split__row split__row--head" aria-hidden="true"><span /><span /><span className="split__head">{head}</span></div>}
     <ol className="split__list">
       {rows.map((r) => <li className="split__row" key={r.name}>
