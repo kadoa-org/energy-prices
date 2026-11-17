@@ -870,7 +870,7 @@ const gridCosts = (() => {
   // The insight's home is the US Datacenter Tracker, which ranks for data center searches; this copy points there.
   const g = gridCosts, slug = 'data-center-grid-costs', b = (v) => `$${(v / 1000).toFixed(2)}B`, home = `https://www.kadoa.com/datacenter/insights/${slug}`;
   const by = Object.fromEntries(g.burden.byArea.map((r) => [r.group, r.increase]));
-  const title = `Data centers raise energy burdens most in rural areas: ${by.Rural.toFixed(1)} more households in every 100 spend over 6% of income on energy, against ${by.Urban.toFixed(1)} in cities`;
+  const title = `Data centers raise energy burdens most in rural areas: ${by.Rural.toFixed(1)} more households in 100, against ${by.Urban.toFixed(1)} in cities`;
   INSIGHTS.unshift({ slug, href: home, title, summary: `How data centers' grid costs land on rural and lower-income households, whose new demand drove the cost of grid projects four US grids approved in ${g.year}, and who is charged for it, from a Nature Energy study.` });
   await page(`insights/${slug}`, `${BASE}/insights/${slug}`, { kind: 'insight', slug, title, home, grid: g });
   const lines = ['grid,group,drove_usd_million,charged_usd_million'];
