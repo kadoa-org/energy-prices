@@ -1159,7 +1159,8 @@ function DataCenterGridInsight({ page }) {
   const texas = g.grids.find((r) => r.grid === 'ERCOT'), pepco = g.zones.find((z) => z.zone === 'PEPCO');
   const away = g.zones.reduce((t, z) => t + z.billed - z.ownArea, 0), pjmTotal = g.zones.reduce((t, z) => t + z.billed, 0);
   const ratio = (k) => a[k].billed / a[k].caused;
-  const pts = (v, d = 1) => `+${v.toFixed(d)} pts`, pts2 = (v) => pts(v, 2);
+  // Percentage-point rises in everyday units: more households in every 100, and more cents of every dollar earned.
+  const pts = (v) => `+${v.toFixed(1)} per 100 households`, pts2 = (v) => `+${v.toFixed(1)}¢ per $1`;
   const area = g.burden.byArea, income = g.burden.byIncome;
   const areaRows = area.map((r) => ({ name: `${r.group} counties`, value: r.increase }));
   const incomeRows = income.map((r) => ({ name: r.name, value: r.increase }));
@@ -1182,7 +1183,7 @@ function DataCenterGridInsight({ page }) {
     <ChartCard
       id="area-title"
       title="Rural counties see the biggest rise in households spending over 6% of income on energy"
-      description={`Rise in households spending over 6% of income on energy, in percentage points.`}
+      description={`How many more households in every 100 now spend over 6% of their income on energy.`}
       tabs={[
         { label: 'Chart', content: <ValueBars rows={areaRows} colour={SERIES_COLOURS[1]} format={pts} /> },
         { label: 'Tabular data', short: 'Tabular', content: <DataTable rows={area} columns={[{ key: 'group', header: 'Counties', render: (r) => r.group }, { key: 'counties', header: 'Number', align: 'right', render: (r) => r.counties }, { key: 'increase', header: 'Rise', align: 'right', render: (r) => pts(r.increase) }]} rowKey={(r) => r.group} /> },
@@ -1191,7 +1192,7 @@ function DataCenterGridInsight({ page }) {
     <ChartCard
       id="income-title"
       title="The poorest households see the biggest rise in energy costs as a share of income"
-      description={`Rise in energy spending as a share of income, by household income against the local median, in percentage points.`}
+      description={`How many more cents of every dollar earned go on energy, by household income against the local median.`}
       tabs={[
         { label: 'Chart', content: <ValueBars rows={incomeRows} colour={SERIES_COLOURS[1]} format={pts2} /> },
         { label: 'Tabular data', short: 'Tabular', content: <DataTable rows={income} columns={[{ key: 'name', header: 'Household income', render: (r) => r.name }, { key: 'increase', header: 'Rise', align: 'right', render: (r) => pts2(r.increase) }]} rowKey={(r) => r.band} /> },
