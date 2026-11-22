@@ -11,6 +11,8 @@ const SHOCKS = [
   { years: [2009], name: 'Financial crisis' },
   { years: [2020], name: 'Covid', side: true, phone: true },
 ];
+// Names that need a shorter form to fit a phone's width beside their value.
+const SHORT_NAMES = { 'International flights and shipping': 'Flights and shipping' };
 const pct = (v, d = 1) => `${v < 0 ? '−' : '+'}${Math.abs(v).toFixed(d)}%`;
 
 function useWidth(initial) {
@@ -34,7 +36,7 @@ export default function Co2Changes({ rows, projection }) {
   const x = (year) => P.l + (year - first) * slot + slot / 2;
   const y = (v) => P.t + ((YMAX - v) / (YMAX - YMIN)) * (H - P.t - P.b);
   const by = Object.fromEntries(rows.map(([year, , change]) => [year, change]));
-  const ticks = []; for (let v = YMIN; v <= YMAX; v += narrow ? 4 : 2) ticks.push(v);
+  const ticks = []; for (let v = narrow ? -4 : YMIN; v <= YMAX; v += narrow ? 4 : 2) ticks.push(v);
   const years = []; for (let yr = 1970; yr <= 2020; yr += narrow ? 20 : 10) years.push(yr);
   const px = x(projection.projectionYear), now = by[projection.projectionYear];
   const falls = rows.filter(([year, , c]) => c < 0 && year !== projection.projectionYear).map(([year]) => year);
@@ -75,11 +77,12 @@ export function Co2Ranges({ rows, min = -4.5, max = 7.5 }) {
   const [box, width] = useWidth(900);
   const narrow = width < 640;
   // Name, then the value in its own column, then the plot, so a long range never runs into a label.
+  // On a phone the name and value share a line above the bar, and the bars take the full width.
   const ROW = 34, NAME = narrow ? 0 : 290, VALUE = 64, top = narrow ? 22 : 0, rowH = narrow ? ROW + 20 : ROW;
   const H = rows.length * rowH + 28 + top;
-  const left = NAME + VALUE + 16;
+  const left = narrow ? 12 : NAME + VALUE + 16;
   const x = (v) => left + ((v - min) / (max - min)) * (width - left - 8);
-  const ticks = []; for (let v = Math.ceil(min / 2) * 2; v <= max; v += 2) ticks.push(v);
+  const step = narrow ? 4 : 2, ticks = []; for (let v = Math.ceil(min / step) * step; v <= max; v += step) ticks.push(v);
   return <div ref={box} className="co2-changes">
     <svg width={width} height={H} viewBox={`0 0 ${width} ${H}`} role="img" aria-label={rows.map((r) => `${r.name} ${pct(r.change)}`).join(', ')}>
       {ticks.map((v) => <g key={v}><line x1={x(v)} x2={x(v)} y1={0} y2={H - 24} stroke={v ? GRID : AXIS} /><text x={x(v)} y={H - 6} textAnchor="middle" className="co2-changes__tick">{v ? pct(v, 0) : '0%'}</text></g>)}
@@ -87,8 +90,9 @@ export function Co2Ranges({ rows, min = -4.5, max = 7.5 }) {
         const cy = i * rowH + top + ROW / 2 + (narrow ? 10 : 0), fill = r.change < 0 ? BLUE : ORANGE;
         const x0 = x(Math.min(r.change, 0)), x1 = x(Math.max(r.change, 0));
         return <g key={r.name}>
-          <text x={narrow ? 0 : NAME} y={narrow ? cy - 18 : cy + 5} textAnchor={narrow ? 'start' : 'end'} className="co2-changes__name">{r.name}</text>
-          <text x={NAME + VALUE + (narrow ? 0 : 8)} y={cy + 5} textAnchor="end" className="co2-changes__value" style={{ fill }}>{pct(r.change)}</text>
+          {narrow
+            ? <text x={0} y={cy - 18} className="co2-changes__name">{SHORT_NAMES[r.name] ?? r.name} <tspan className="co2-changes__value" style={{ fill }}>{pct(r.change)}</tspan></text>
+            : <><text x={NAME} y={cy + 5} textAnchor="end" className="co2-changes__name">{r.name}</text><text x={NAME + VALUE + 8} y={cy + 5} textAnchor="end" className="co2-changes__value" style={{ fill }}>{pct(r.change)}</text></>}
           <rect x={x0} y={cy - 9} width={Math.max(x1 - x0, 1)} height={18} fill={fill} />
           {r.low != null && <><line x1={x(r.low)} x2={x(r.high)} y1={cy} y2={cy} stroke={INK} strokeWidth={1.5} />{[r.low, r.high].map((v) => <line key={v} x1={x(v)} x2={x(v)} y1={cy - 6} y2={cy + 6} stroke={INK} strokeWidth={1.5} />)}</>}
         </g>;
