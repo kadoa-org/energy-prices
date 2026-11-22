@@ -885,7 +885,7 @@ const gridCosts = (() => {
 {
   // Global fossil CO2 from the Global Carbon Budget 2026: a fixed annual series, not part of the energy export.
   const slug = 'fossil-co2-2026', now = CO2_ROWS.at(-1);
-  const title = `Global fossil CO2 emissions are set to fall ${Math.abs(now[2]).toFixed(1)}% in ${now[0]}`;
+  const title = `Global fossil CO2 emissions are projected to fall ${Math.abs(now[2]).toFixed(1)}% in ${now[0]}`;
   INSIGHTS.unshift({ slug, title, summary: `Yearly change in global CO2 emissions from coal, oil, gas and cement since ${CO2_ROWS[0][0]}, and the ${now[0]} projection by region and fuel, from the Global Carbon Budget.` });
   await page(`insights/${slug}`, `${BASE}/insights/${slug}`, { kind: 'insight', slug, title, co2: { study: CO2_STUDY, rows: CO2_ROWS, regions: CO2_2026_REGIONS, fuels: CO2_2026_FUELS } });
   const lines = ['year,fossil_co2_billion_tonnes,change_on_year_before_pct,projected', ...CO2_ROWS.map(([y, v, c]) => [y, v, c, y === CO2_STUDY.projectionYear].join(','))];
@@ -899,7 +899,7 @@ await page('about', `${BASE}/about`, { kind: 'about', counts: { series: manifest
 const ANNOUNCE = {
   slug: 'fossil-co2-2026',
   until: '2026-12-10',
-  text: 'Global fossil CO2 emissions set to fall 0.4% in 2026',
+  text: 'Global fossil CO2 emissions projected to fall 0.4% in 2026',
 };
 const announced = INSIGHTS.find((i) => i.slug === ANNOUNCE.slug);
 if (announced && ANNOUNCE.text && new Date().toISOString().slice(0, 10) <= ANNOUNCE.until) common.announce = { key: `insights/${announced.slug}`, href: announced.href ?? `${BASE}/insights/${announced.slug}`, title: ANNOUNCE.text };

@@ -1283,6 +1283,7 @@ function FossilCo2Insight({ page }) {
         <li>Source: Friedlingstein et al., &quot;Global Carbon Budget 2026&quot;, <a href={p.url} target="_blank" rel="noreferrer">Earth System Science Data</a> preprint, November {now[0]}, and its <a href={p.data} target="_blank" rel="noreferrer">published data</a>.</li>
         <li>Fossil emissions cover coal, oil, gas, cement and gas flaring, less the CO2 that cement takes back up over time.</li>
         <li>The {now[0]} figures are projections from data for part of the year. The range covers the growth rate only, and runs from a fall of {Math.abs(p.low)}% to a rise of {p.high}%.</li>
+        <li>Projections can flip. The last two times the project forecast a small fall, for 2015 and 2016, its first estimate with actual data showed small rises; later revisions turned both back into falls.</li>
         <li>Counting deforestation and fires, total CO2 emissions are projected to rise, from 42.8 to 43.3 billion tonnes. The paper puts part of the rise down to Southeast Asia, as El Niño sets in.</li>
         <li>Growth rates correct for the extra day in leap years, as the paper does.</li>
         <li>How the oil price moved this year: <a href={`${BASE}/fuel/crude-oil`}>crude oil prices since 1970</a>.</li>
