@@ -41,12 +41,14 @@ export default function Co2Changes({ rows, projection }) {
   const label = `Yearly change in global fossil CO2 emissions since ${first}. Emissions fell in ${falls.join(', ')}. ${projection.projectionYear} is projected at ${pct(now)}, with a range of ${pct(projection.low)} to ${pct(projection.high)}.`;
   return <div ref={box} className="co2-changes">
     <svg width={width} height={H} viewBox={`0 0 ${width} ${H}`} role="img" aria-label={label}>
+      <defs><pattern id="co2-hatch" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="5" height="5" fill="#fff" /><line x1="0" y1="0" x2="0" y2="5" stroke={ORANGE} strokeWidth="3" /></pattern></defs>
       {ticks.map((v) => <g key={v}><line x1={P.l} x2={width - P.r} y1={y(v)} y2={y(v)} stroke={v ? GRID : AXIS} /><text x={P.l - 6} y={y(v) + 4} textAnchor="end" className="co2-changes__tick">{v ? pct(v, 0) : '0%'}</text></g>)}
       {years.map((yr) => <text key={yr} x={x(yr)} y={H - 8} textAnchor="middle" className="co2-changes__tick">{yr}</text>)}
       {rows.map(([year, , c]) => {
-        const fill = year === projection.projectionYear ? ORANGE : c < 0 ? BLUE : RISE;
+        // The projected year is hatched and outlined, so it reads as an estimate rather than a measured year.
+        const projected = year === projection.projectionYear;
         const y0 = y(Math.max(c, 0)), y1 = y(Math.min(c, 0));
-        return <rect key={year} x={x(year) - bw / 2} y={y0} width={bw} height={Math.max(y1 - y0, 1)} fill={fill}><title>{`${year}: ${pct(c)}`}</title></rect>;
+        return <rect key={year} x={x(year) - bw / 2} y={y0} width={bw} height={Math.max(y1 - y0, 1)} fill={projected ? 'url(#co2-hatch)' : c < 0 ? BLUE : RISE} stroke={projected ? ORANGE : undefined} strokeWidth={projected ? 1.5 : undefined}><title>{`${year}: ${pct(c)}`}</title></rect>;
       })}
       <line x1={px} x2={px} y1={y(projection.high)} y2={y(projection.low)} stroke={INK} strokeWidth={1.5} />
       {[projection.low, projection.high].map((v) => <line key={v} x1={px - 5} x2={px + 5} y1={y(v)} y2={y(v)} stroke={INK} strokeWidth={1.5} />)}
@@ -57,8 +59,8 @@ export default function Co2Changes({ rows, projection }) {
         const ty = s.side ? y(worst) - 14 : y(worst) + 20, anchor = s.side ? (narrow ? 'end' : 'start') : 'middle';
         return <g key={s.name} className="co2-changes__label"><text x={cx} y={ty} textAnchor={anchor} className="co2-changes__value">{pct(worst)}</text><text x={cx} y={ty + 18} textAnchor={anchor} className="co2-changes__note">{s.name}</text></g>;
       })}
-      {/* The projection's label sits above the 2020s bars, joined to the whisker by a leader line. */}
-      <line x1={px} x2={px} y1={P.t - 18 + 26} y2={y(projection.high) - 4} stroke={MUTED} />
+      {/* The projection's label sits above the 2020s bars, over its column. No leader line: one would run into the
+          whisker and read as part of the range. */}
       <g className="co2-changes__label">
         <text x={px + 4} y={P.t - 32} textAnchor="end" className="co2-changes__value co2-changes__value--now">{projection.projectionYear}: {pct(now)}</text>
         <text x={px + 4} y={P.t - 14} textAnchor="end" className="co2-changes__note">Projected, {pct(projection.low)} to {pct(projection.high)}</text>
