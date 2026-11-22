@@ -125,6 +125,13 @@ function seo(page, path) {
     description = `The share of rural households spending over 6% of income on energy rose ${Math.round(g.ruralGap)}% more than urban ones. Of the cost of transmission projects PJM, ERCOT, MISO and CAISO approved for new demand in ${g.year}: data centers drove ${pc(a.dataCenters.causedShare)} and are charged ${pc(a.dataCenters.billedShare)}; homes drove ${pc(a.homes.causedShare)} and are charged ${pc(a.homes.billedShare)}. By grid and PJM utility, from a Nature Energy study's source data.`;
     crumbs.push({ name: 'Insights', url: `${SITE}/energy-prices/insights` }, { name: 'Data center grid costs', url: canonical });
     ld = [dataset(`Cost of new US grid projects by whose demand drove it and who is charged, ${g.year}`, description, { temporalCoverage: String(g.year), isBasedOn: [g.study.url, g.study.data], distribution: [{ '@type': 'DataDownload', encodingFormat: 'text/csv', contentUrl: `${absolute(dataPath)}/downloads/data-center-grid-costs.csv.gz` }] })];
+  } else if (page.kind === 'insight' && page.slug === 'fossil-co2-2026') {
+    const c = page.co2, rows = c.rows, now = rows.at(-1), prev = rows.at(-2), by = Object.fromEntries(rows.map(([y, , v]) => [y, v]));
+    const fuel = (name) => c.fuels.find((f) => f.name === name).change;
+    title = `${page.title}: Global Carbon Budget`;
+    description = `Global fossil CO2 emissions are projected at ${now[1].toFixed(1)} billion tonnes in ${now[0]}, ${pctLabel(now[2])} on ${prev[0]}, against ${pctLabel(by[2009])} in 2009 and ${pctLabel(by[2020])} in 2020. Oil ${pctLabel(fuel('Oil'))}, coal ${pctLabel(fuel('Coal'))}. Yearly change since ${rows[0][0]} and the ${now[0]} projection by fuel and region, from the Global Carbon Budget ${now[0]}.`;
+    crumbs.push({ name: 'Insights', url: `${SITE}/energy-prices/insights` }, { name: 'Fossil CO2 emissions', url: canonical });
+    ld = [dataset(`Global fossil CO2 emissions, yearly since ${rows[0][0]}`, description, { temporalCoverage: `${rows[0][0]}/${now[0]}`, isBasedOn: [c.study.url, c.study.data], distribution: [{ '@type': 'DataDownload', encodingFormat: 'text/csv', contentUrl: `${absolute(dataPath)}/downloads/fossil-co2-2026.csv.gz` }] })];
   } else if (page.kind === 'insight' && page.slug === 'pjm-power-prices') {
     const p = page.pjm, top = p.rows.slice(0, 4).map((r) => `${r.name} ${pctLabel(r.change)}`).join(', ');
     title = `${page.title}: PJM Capacity Prices and Home Electricity`;
