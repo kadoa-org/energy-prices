@@ -6,6 +6,7 @@ import LineChart, { SERIES_COLOURS } from './LineChart';
 import CommandPalette from './CommandPalette';
 import StateExplorer from './StateExplorer';
 import OilShocks from './OilShocks';
+import Co2Changes, { Co2Ranges } from './Co2Changes';
 import FuelWork from './FuelWork';
 import PriceSpread from './PriceSpread';
 import GapDots from './GapDots';
@@ -1234,7 +1235,63 @@ function DataCenterGridInsight({ page }) {
   </>;
 }
 
-const INSIGHT_VIEWS = { 'data-center-grid-costs': DataCenterGridInsight, 'car-fuel-costs': CarFuelInsight, 'pjm-power-prices': PjmPricesInsight, 'investor-owned-utilities': UtilityOwnershipInsight, 'gold-top-export': GoldExportsInsight, 'fuel-minutes-of-work': FuelWorkInsight };
+function FossilCo2Insight({ page }) {
+  const c = page.co2, p = c.study, rows = c.rows, now = rows.at(-1), prev = rows.at(-2);
+  const signed = (v) => `${v < 0 ? '−' : '+'}${Math.abs(v).toFixed(1)}%`;
+  const fuel = (name) => c.fuels.find((f) => f.name === name).change;
+  const india = c.regions.find((r) => r.name === 'India').change;
+  const table = [...rows].reverse().map(([year, value, change]) => ({ year, value, change }));
+  const range = (r) => (r.low == null ? 'not given' : `${signed(r.low)} to ${signed(r.high)}`);
+  const rangeColumns = (head) => [
+    { key: 'name', header: head, render: (r) => r.name },
+    { key: 'change', header: 'Projected change', align: 'right', render: (r) => signed(r.change) },
+    { key: 'range', header: 'Range', align: 'right', render: range },
+  ];
+  return <>
+    <div className="title-block"><h1 className="dk-h1">{page.title}</h1><p className="lede">The Global Carbon Project projects {now[1].toFixed(1)} billion tonnes of CO2 from fossil fuels and cement in {now[0]}, down from a record {prev[1].toFixed(1)} billion in {prev[0]}. Emissions from oil fall {Math.abs(fuel('Oil')).toFixed(1)}% while coal rises {fuel('Coal').toFixed(1)}%. India&apos;s emissions grow {india.toFixed(1)}%.</p></div>
+    <ChartCard
+      id="co2-years-title"
+      title="Yearly change in global fossil CO2 emissions"
+      description={`Change on the year before. ${now[0]} is a projection.`}
+      tabs={[
+        { label: 'Chart', content: <Co2Changes rows={rows} projection={p} /> },
+        { label: 'Tabular data', short: 'Tabular', content: <ShowMore total={table.length} initial={15} step={60} noun="years">{(n) => <DataTable rows={table.slice(0, n)} columns={[{ key: 'year', header: 'Year', render: (r) => (r.year === p.projectionYear ? `${r.year} (projected)` : r.year) }, { key: 'value', header: 'Billion tonnes of CO2', align: 'right', render: (r) => r.value.toFixed(2) }, { key: 'change', header: 'Change', align: 'right', render: (r) => signed(r.change) }]} rowKey={(r) => r.year} />}</ShowMore> },
+        { label: 'Download', content: <><p className="download-intro">Global fossil CO2 emissions every year since {rows[0][0]}, in billion tonnes, and the change on the year before, as a gzipped CSV.</p><Download file="fossil-co2-2026.csv.gz" common={page.common} /></> },
+      ]}
+    />
+    <ChartCard
+      id="co2-fuels-title"
+      title={`Projected change in emissions by fuel, ${now[0]}`}
+      description={`Change on ${prev[0]}, with the range of the projection.`}
+      tabs={[
+        { label: 'Chart', content: <Co2Ranges rows={c.fuels} /> },
+        { label: 'Tabular data', short: 'Tabular', content: <DataTable rows={c.fuels} columns={rangeColumns('Fuel')} rowKey={(r) => r.name} /> },
+      ]}
+    />
+    <ChartCard
+      id="co2-regions-title"
+      title={`Projected change in emissions by region, ${now[0]}`}
+      description={`Change on ${prev[0]}, with the range of the projection.`}
+      tabs={[
+        { label: 'Chart', content: <Co2Ranges rows={c.regions} /> },
+        { label: 'Tabular data', short: 'Tabular', content: <DataTable rows={c.regions} columns={rangeColumns('Region')} rowKey={(r) => r.name} /> },
+      ]}
+    />
+    <section className="insight-notes">
+      <SectionHeading>About the data</SectionHeading>
+      <ul>
+        <li>Source: Friedlingstein et al., &quot;Global Carbon Budget 2026&quot;, <a href={p.url} target="_blank" rel="noreferrer">Earth System Science Data</a> preprint, November {now[0]}, and its <a href={p.data} target="_blank" rel="noreferrer">published data</a>.</li>
+        <li>Fossil emissions cover coal, oil, gas, cement and gas flaring, less the CO2 that cement takes back up over time.</li>
+        <li>The {now[0]} figures are projections from data for part of the year. The range covers the growth rate only, and runs from a fall of {Math.abs(p.low)}% to a rise of {p.high}%.</li>
+        <li>Counting deforestation and fires, total CO2 emissions are projected to rise, from 42.8 to 43.3 billion tonnes. The paper puts part of the rise down to Southeast Asia, as El Niño sets in.</li>
+        <li>Growth rates correct for the extra day in leap years, as the paper does.</li>
+        <li>How the oil price moved this year: <a href={`${BASE}/fuel/crude-oil`}>crude oil prices since 1970</a>.</li>
+      </ul>
+    </section>
+  </>;
+}
+
+const INSIGHT_VIEWS = { 'fossil-co2-2026': FossilCo2Insight, 'data-center-grid-costs': DataCenterGridInsight, 'car-fuel-costs': CarFuelInsight, 'pjm-power-prices': PjmPricesInsight, 'investor-owned-utilities': UtilityOwnershipInsight, 'gold-top-export': GoldExportsInsight, 'fuel-minutes-of-work': FuelWorkInsight };
 function Insight({ page }) {
   const View = INSIGHT_VIEWS[page.slug];
   return <View page={page} />;

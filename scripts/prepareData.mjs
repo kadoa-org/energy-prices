@@ -8,6 +8,7 @@ import { BASE, addDays, addMonths, money, monthLabel, monthlySummary, pct, slugi
 import { utilityName } from '../src/names.mjs';
 import { CAR_LISTS, CAR_SALES_PERIOD, MILES_A_YEAR, carCosts } from '../src/cars.mjs';
 import { ENERGY_BURDEN, GRID_COSTS, GRID_COSTS_STUDY, PJM_ZONE_COSTS } from '../src/gridCosts.mjs';
+import { CO2_2026_FUELS, CO2_2026_REGIONS, CO2_ROWS, CO2_STUDY } from '../src/co2Emissions.mjs';
 
 const root = resolve(import.meta.dirname, '..');
 // The dataset pipeline lives outside this repository; point ENERGY_DATASET_DIR at its folder (a local .env works).
@@ -881,15 +882,24 @@ const gridCosts = (() => {
   for (const r of g.burden.byIncome) lines.push([`income ${r.band} of local median`, 'rise in energy spending as share of income', r.increase].join(','));
   await writeFile(join(out, `downloads/${slug}.csv.gz`), gzipSync(lines.join('\n') + '\n'));
 }
+{
+  // Global fossil CO2 from the Global Carbon Budget 2026: a fixed annual series, not part of the energy export.
+  const slug = 'fossil-co2-2026', now = CO2_ROWS.at(-1);
+  const title = `Global fossil CO2 emissions are set to fall ${Math.abs(now[2]).toFixed(1)}% in ${now[0]}`;
+  INSIGHTS.unshift({ slug, title, summary: `Yearly change in global CO2 emissions from coal, oil, gas and cement since ${CO2_ROWS[0][0]}, and the ${now[0]} projection by region and fuel, from the Global Carbon Budget.` });
+  await page(`insights/${slug}`, `${BASE}/insights/${slug}`, { kind: 'insight', slug, title, co2: { study: CO2_STUDY, rows: CO2_ROWS, regions: CO2_2026_REGIONS, fuels: CO2_2026_FUELS } });
+  const lines = ['year,fossil_co2_billion_tonnes,change_on_year_before_pct,projected', ...CO2_ROWS.map(([y, v, c]) => [y, v, c, y === CO2_STUDY.projectionYear].join(','))];
+  await writeFile(join(out, `downloads/${slug}.csv.gz`), gzipSync(lines.join('\n') + '\n'));
+}
 if (INSIGHTS.length) await page('insights', `${BASE}/insights`, { kind: 'insights', insights: INSIGHTS });
 await page('about', `${BASE}/about`, { kind: 'about', counts: { series: manifest.series, rows: manifest.rows, states: states.length } });
 // The newest insight, announced in a banner under the navigation on every other page until the date given. Decided
 // here at build time, so the prerendered page and the browser agree. The banner has its own text, about 50
 // characters with the number first, so it fits a phone in one or two lines; the page keeps the full title.
 const ANNOUNCE = {
-  slug: 'data-center-grid-costs',
-  until: '2026-11-30',
-  text: 'Data centers raise energy burdens most in rural areas',
+  slug: 'fossil-co2-2026',
+  until: '2026-12-10',
+  text: 'Global fossil CO2 emissions set to fall 0.4% in 2026',
 };
 const announced = INSIGHTS.find((i) => i.slug === ANNOUNCE.slug);
 if (announced && ANNOUNCE.text && new Date().toISOString().slice(0, 10) <= ANNOUNCE.until) common.announce = { key: `insights/${announced.slug}`, href: announced.href ?? `${BASE}/insights/${announced.slug}`, title: ANNOUNCE.text };

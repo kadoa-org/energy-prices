@@ -24,6 +24,17 @@ if (grid) {
     figures: grid.grid.burden.byArea.filter((r) => r.group !== 'Suburban').map((r) => ({ value: `+${r.increase.toFixed(1)}`, label: `in every 100 ${r.group.toLowerCase()} households`, colour: r.group === 'Rural' ? ORANGE : BLUE })),
   });
 }
+const co2 = load('fossil-co2-2026');
+if (co2) {
+  // The projected fall against the two biggest recent ones.
+  const by = Object.fromEntries(co2.co2.rows.map(([y, , c]) => [y, c])), now = co2.co2.study.projectionYear;
+  const fall = (v) => `−${Math.abs(v).toFixed(1)}%`;
+  images.push({
+    out: join(data, 'og-fossil-co2-2026.png'), title: co2.title, source: 'Global Carbon Budget 2026',
+    key: 'Change in global fossil CO2 emissions on the year before.',
+    figures: [[`${now}, projected`, by[now], ORANGE], ['2009, financial crisis', by[2009], BLUE], ['2020, Covid', by[2020], BLUE]].map(([label, v, colour]) => ({ value: fall(v), label, colour })),
+  });
+}
 const cars = load('car-fuel-costs');
 if (cars) {
   // The furthest and shortest runs on $100, with the furthest hybrid between them.

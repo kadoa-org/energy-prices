@@ -462,3 +462,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,su
 .split__group+.split__group{margin-top:10px;padding-top:10px;border-top:1px solid var(--dk-rule-soft)}
 .split__group-title{margin:4px 0 4px;font-size:17px;font-weight:700}
 @media (max-width:640px){.split__row{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"name total" "bar bar";gap:4px 8px;min-height:0;margin-bottom:12px}.split__name{grid-area:name;text-align:left;font-size:15px}.split__total{grid-area:total;font-size:15px}.split__bar{grid-area:bar}.split__row--head{display:none}.split__part{font-size:13px;padding:0 4px}.split__part--narrow{padding:0 3px}.split__part--small{font-size:11px;padding:0;justify-content:center;letter-spacing:-0.02em}.split__part--tiny{font-size:0;padding:0}}
+.co2-changes{width:100%;overflow:hidden}.co2-changes svg{display:block}
+.co2-changes text{paint-order:stroke;stroke:#fff;stroke-width:4px;stroke-linejoin:round}
+.co2-changes__tick{font-size:14px;fill:#6b7276}.co2-changes__note{font-size:14px;fill:#0b0c0c}.co2-changes__name{font-size:16px;fill:#0b0c0c}
+.co2-changes__value{font-size:16px;font-weight:700;fill:#12436d}.co2-changes__value--now{fill:#c84c04}
